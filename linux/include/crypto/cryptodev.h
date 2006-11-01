@@ -195,6 +195,9 @@ struct crypt_kop {
 
 #define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
 
+#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
+#include "openswan.h"
+#endif
 
 struct cryptotstat {
 	struct timespec	acc;		/* total accumulated time */

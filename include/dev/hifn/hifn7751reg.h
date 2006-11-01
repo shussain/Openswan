@@ -43,11 +43,15 @@
 #ifndef __HIFN_H__
 #define	__HIFN_H__
 
+#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
+#include <openswan.h>
+#endif
+
 #ifdef linux
 #include <endian.h>
-#else
-#include <sys/endian.h>
-#endif
+/*#else 
+#include <sys/endian.h> */
+#endif 
 
 /*
  * Some PCI configuration space offset defines.  The names were made
