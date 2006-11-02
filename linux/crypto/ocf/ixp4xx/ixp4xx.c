@@ -32,7 +32,9 @@
  * and/or fitness for purpose.
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/list.h>
@@ -1141,7 +1143,9 @@ ixp_init(void)
 	 */
 	ixCryptoAccPkeEauExpConfig(0, 0);
 	crypto_kregister(ixp_id, CRK_MOD_EXP, 0, ixp_kprocess, NULL);
+#ifdef CONFIG_OCF_RANDOMHARVEST
 	crypto_rregister(ixp_id, ixp_read_random, NULL);
+#endif
 #endif
 
 	return 0;

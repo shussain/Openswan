@@ -1,7 +1,9 @@
+*.bak
+*.rej
 *~
 OBJ.*
-*.rej
-*.bak
+OBJ.freebsd.i386
+OBJ.linux.i386
 TAGS
 UMLPOOL
 testing/.*/OUTPUT/.*

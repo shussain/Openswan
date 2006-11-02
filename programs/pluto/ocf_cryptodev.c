@@ -76,12 +76,17 @@
 #include "keys.h"
 #include "log.h"
 #include "ocf_cryptodev.h"
+#include "pluto_crypt.h"
+#include "server.h"
 
-static u_int32_t cryptodev_asymfeat = 0;
 struct cryptodev_meth cryptodev;
+bool accel_avail;            /* if we found something to use */
+bool use_pk_accel=TRUE;      /* policy: should we try PK operations? */
+bool use_ipsec_accel=TRUE;   /* policy: should we try IPsec operations? */
 
 #undef DEBUG
 
+#if 0
 /*
  * Convert a BIGNUM to the representation that /dev/crypto needs.
  *
@@ -149,20 +154,9 @@ crparam2bn(struct crparam *crp, BIGNUM *a)
 
 	return (0);
 }
+#endif
 
-static void
-zapparams(struct crypt_kop *kop)
-{
-	int i;
-
-	for (i = 0; i < kop->crk_iparams + kop->crk_oparams; i++) {
-		if (kop->crk_param[i].crp_p)
-			free(kop->crk_param[i].crp_p);
-		kop->crk_param[i].crp_p = NULL;
-		kop->crk_param[i].crp_nbits = 0;
-	}
-}
-
+#if 0
 /* Convert from MP_INT to BIGNUM */
 static int
 mp2bn(const MP_INT *mp, BIGNUM *a)
@@ -192,6 +186,7 @@ bn2mp(const BIGNUM *a, MP_INT *mp)
 	mp->_mp_d = a->d;
 	return 1;
 }
+#endif
 
 /*
  * Return a fd if /dev/crypto seems usable, 0 otherwise.
@@ -235,90 +230,41 @@ get_dev_crypto(void)
 	return (retfd);
 }
 
+static int asym_fd = -1;
 /* Caching version for asym operations */
-static int
-get_asym_dev_crypto(void)
+static int get_asym_dev_crypto(void)
 {
-	static int fd = -1;
-
-	if (fd == -1)
-		fd = get_dev_crypto();
-	return fd;
+	if (asym_fd == -1)
+		asym_fd = get_dev_crypto();
+	return asym_fd;
 }
+
+/* clear things out */
+void asym_close(void)
+{
+	close(asym_fd);
+	asym_fd=-1;
+}
+	
 
 /*
  * Perform the ioctl 
  */
-static int
-cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
+int cryptodev_asym(struct crypt_kop *kop)
 {
 	int fd, ret = -1;
 	
 	if ((fd = get_asym_dev_crypto()) < 0)
 		return (ret);
 	
-	if (r) {
-		kop->crk_param[kop->crk_iparams].crp_p = calloc(rlen, sizeof(char));
-		kop->crk_param[kop->crk_iparams].crp_nbits = rlen * 8;
-		kop->crk_oparams++;
-	}
-	if (s) {
-		kop->crk_param[kop->crk_iparams+1].crp_p = calloc(slen, sizeof(char));
-		kop->crk_param[kop->crk_iparams+1].crp_nbits = slen * 8;
-		kop->crk_oparams++;
-	}
-
 	if (ioctl(fd, CIOCKEY, kop) == 0) {
-		if (r) {
-			crparam2bn(&kop->crk_param[kop->crk_iparams], r);
-		} if (s)
-			crparam2bn(&kop->crk_param[kop->crk_iparams+1], s);
 		ret = 0;
 	}
 
 	return (ret);
 }
 
-/*
- * Set up the modular exponentiation operation.
- */
-static int
-cryptodev_mod_exp_setup(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx)
-{
-	struct crypt_kop kop;
-	int ret = 1;
-
-	/* Currently, we know we can do mod exp iff we can do any
-	 * asymmetric operations at all.
-	 */
-	if (cryptodev_asymfeat == 0) {
-		ret = BN_mod_exp(r, a, p, m, ctx);
-		return (ret);
-	}
-
-	memset(&kop, 0, sizeof kop);
-	kop.crk_op = CRK_MOD_EXP;
-
-	/* inputs: a^p % m */
-	if (bn2crparam(a, &kop.crk_param[0]))
-		goto err;
-	if (bn2crparam(p, &kop.crk_param[1]))
-		goto err;
-	if (bn2crparam(m, &kop.crk_param[2]))
-		goto err;
-	kop.crk_iparams = 3;
-
-	if (cryptodev_asym(&kop, BN_num_bytes(m), r, 0, NULL) == -1) {
-
-		/* TODO need to do it in software */
-	}
-
-err:
-	zapparams(&kop);
-	return (ret);
-}
-
+#if 0
 /*
  * Do the modular exponentiatin without Chinese Remainder Theorem in hardware
  */
@@ -401,32 +347,93 @@ cryptodev_mod_exp(BIGNUM *r0, MP_INT *mp_g
 
 	return (r);
 }
+#endif
 
+/* reverse order of bytes in the number */
+void chunk_reversebytes(chunk_t c)
+{
+	int b,e;
+
+	b=0; e=c.len-1;
+	while(b < e) {
+		unsigned char tmp;
+		tmp = c.ptr[b];
+		c.ptr[b]=c.ptr[e];
+		c.ptr[e]=tmp;
+		b++;
+		e--;
+	}
+}
+
+void decode_acceleration_string(const char *str)
+{
+	if(strcasecmp(str, "never")==0) {
+		use_pk_accel = FALSE;
+		use_ipsec_accel = FALSE;
+	} else if(strcasecmp(str, "ipsec")==0) {
+		use_pk_accel = FALSE;
+		use_ipsec_accel = TRUE;
+	} else if(strcasecmp(str, "pk")==0) {
+		use_pk_accel    = TRUE;
+		use_ipsec_accel = FALSE;
+	} else if(strcasecmp(str, "available")==0) {
+		use_pk_accel    = TRUE;
+		use_ipsec_accel = TRUE;
+	} else {
+		openswan_log("Invalid acceleration= value: '%s'\n", str);
+	}
+}
+		
 /*
  * Find out what we can support and use it.
  */
 void load_cryptodev(void)
 {
 	int fd;
+	u_int32_t cryptodev_asymfeat = 0;
+	static bool logged=0;
 
+	/* reset FD here */
+	asym_fd = -1;
+#if 0
 	cryptodev.rsa_mod_exp_crt = cryptodev_rsa_mod_exp_crt_sw;
 	cryptodev.mod_exp = cryptodev_mod_exp_sw;
+#endif
 
-	if((fd = get_dev_crypto()) < 0) {
+	if(!use_pk_accel) {
+		if(!logged) openswan_log("Performing all cryptographic operations in software (administively defined).");
+		logged=TRUE;
+		return;
+	}
+		
+
+	if((fd = get_asym_dev_crypto()) < 0) {
+	none:
+		if(!logged) openswan_log("Performing all cryptographic operations in software (no hardware found).");
+		logged=TRUE;
 		return;
 	}
 
 	/* find out what asymmetric crypto algorithms we support */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		close(fd);
-		return;
+		DBG(DBG_CRYPT, DBG_log("failed to find cryptographic accelerator with PK operations"));
+		asym_close();
+		goto none;
 	}
-	close(fd);
 
 	if (cryptodev_asymfeat & CRF_MOD_EXP) {
 		/* Use modular exponentiation */
+#if 0		
 		cryptodev.mod_exp = cryptodev_mod_exp;
 		cryptodev.rsa_mod_exp_crt = cryptodev_rsa_mod_exp_nocrt;
-		openswan_log("Performing modular exponentiation acceleration in hardware");
+#endif
+#ifndef VULCAN_PK
+		cryptodev.calc_dh_shared = calc_dh_shared_ocf;
+#endif
+		if(!logged) openswan_log("Performing modular exponentiation acceleration in hardware {fd=%d}", fd);
+		logged=TRUE;
+	} else {
+		if(!logged) openswan_log("Performing all cryptographic operations in software (no capable hardware found, features=%08x).", cryptodev_asymfeat);
+		logged=TRUE;
 	}
 }
