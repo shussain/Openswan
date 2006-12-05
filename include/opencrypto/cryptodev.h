@@ -70,7 +70,9 @@
 #ifndef _CRYPTO_CRYPTODEV_H_
 #define _CRYPTO_CRYPTODEV_H_
 
+#if defined(__FreeBSD_) || defined(__NetBSD__)
 #include <sys/ioccom.h>
+#endif
 
 /* Hash values */
 #define	NULL_HASH_LEN		16
