@@ -418,8 +418,6 @@ out_sa(pb_stream *outs
 		    if (p->protoid != PROTO_IPCOMP
 		    || st->st_policy & POLICY_TUNNEL)
 		    {
-#ifdef NAT_TRAVERSAL
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 			if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 				(!(st->st_policy & POLICY_TUNNEL))) {
 				/* Inform user that we will not respect policy and only
@@ -429,25 +427,9 @@ out_sa(pb_stream *outs
 					"Transport Mode not allowed due to security concerns -- "
 					"using Tunnel mode.  Rebuild Openswan with USE_NAT_TRAVERSAL_TRANSPORT_MODE=true in Makefile.inc to support transport mode.");
 			}
-#endif
-#endif
 
 			out_attr(ENCAPSULATION_MODE
-#ifdef NAT_TRAVERSAL
-#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 			    , NAT_T_ENCAPSULATION_MODE(st,st->st_policy)
-#else
-				/* If NAT-T is detected, use UDP_TUNNEL as long as Transport
-				 * Mode has security concerns.
-				 *
-				 * User has been informed of that
-				 */
-			    , NAT_T_ENCAPSULATION_MODE(st,POLICY_TUNNEL)
-#endif
-#else /* ! NAT_TRAVERSAL */
-			    , st->st_policy & POLICY_TUNNEL
-			      ? ENCAPSULATION_MODE_TUNNEL : ENCAPSULATION_MODE_TRANSPORT
-#endif
 			    , attr_desc, attr_val_descs
 			    , &trans_pbs);
 		    }
@@ -1563,13 +1545,11 @@ parse_ipsec_transform(struct isakmp_transform *trans
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 				loglog(RC_LOG_SERIOUS,
 					"NAT-Traversal: Transport mode disabled due "
 					"to security concerns");
 				return FALSE;
 				break;
-#endif
 
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
@@ -1591,13 +1571,11 @@ parse_ipsec_transform(struct isakmp_transform *trans
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 				loglog(RC_LOG_SERIOUS,
 					"NAT-Traversal: Transport mode disabled due "
 					"to security concerns");
 				return FALSE;
 				break;
-#endif
 
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
