@@ -238,10 +238,6 @@ ifeq ($(USE_NAT_TRAVERSAL),true)
 NAT_DEFS=-DNAT_TRAVERSAL -DVIRTUAL_IP 
 endif
 
-ifeq ($(USE_NAT_TRAVERSAL_TRANSPORT_MODE),true)
-NAT_DEFS+=-DI_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-endif
-
 ifeq ($(USE_LIBCURL),true)
 # This compile option activates dynamic URL fetching
 # with libcurl in the source code
