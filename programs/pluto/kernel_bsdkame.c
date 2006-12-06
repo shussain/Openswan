@@ -337,6 +337,21 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 			       alg->sadb_alg_minbits,
 			       alg->sadb_alg_maxbits,
 			       ret));
+	break;
+
+    case SADB_SATYPE_IPCOMP:
+	DBG(DBG_KLIPS, DBG_log("ipcomp algregister(%p) alg_id=%d, "
+			       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
+			       "ret=%d",
+			       alg,
+			       alg->sadb_alg_id,
+			       alg->sadb_alg_ivlen,
+			       alg->sadb_alg_minbits,
+			       alg->sadb_alg_maxbits,
+			       ret));
+	can_do_IPcomp = TRUE;
+	break;
+
     default: 
 	return;
     }
