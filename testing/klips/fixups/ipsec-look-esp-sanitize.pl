@@ -328,6 +328,7 @@ sub sanitize_sadata {
   $rest =~ s/ref=\S*//g;
   $rest =~ s/seq=\S*//g;
   $rest =~ s/ratio=\S*//g;
+  $rest =~ s/refhim=\S*//g;
 
   $rest;
 }
