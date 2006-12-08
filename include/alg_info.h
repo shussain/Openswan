@@ -34,6 +34,8 @@ enum parser_state_esp {
 	ST_AA_END,
 	ST_AK,		/* auth. key length */
 	ST_AK_END,
+	ST_CA,		/* compression algorithm */
+	ST_CA_END,
 	ST_MODP,	/* modp spec */
 	ST_FLAG_STRICT,
 	ST_END,
@@ -48,28 +50,33 @@ struct parser_context {
 	char ealg_buf[16];
 	char aalg_buf[16];
 	char modp_buf[16];
+	char calg_buf[16];
 	int (*ealg_getbyname)(const char *const str, int len);
 	int (*aalg_getbyname)(const char *const str, int len);
 	int (*modp_getbyname)(const char *const str, int len);
+	int (*calg_getbyname)(const char *const str, int len);
 	char *ealg_str;
 	char *aalg_str;
 	char *modp_str;
+    char *calg_str;
 	int eklen;
 	int aklen;
     bool ealg_permit;
     bool aalg_permit;
+    bool calg_permit;
 	int ch;
 	const char *err;
 };
 
 struct esp_info {
-        bool     esp_default; 
-	u_int8_t transid;	/* ESP transform */
-	u_int16_t auth;		/* AUTH */
-	u_int32_t enckeylen;	/* keylength for ESP transform (bytes)*/
-	u_int32_t authkeylen;	/* keylength for AUTH (bytes)*/
-	u_int8_t encryptalg;	/* normally  encryptalg=transid */
-	u_int8_t authalg;	/* normally  authalg=auth+1 */
+    bool     esp_default; 
+    u_int8_t transid;	        /* ESP transform */
+    u_int16_t auth;		/* AUTH */
+    u_int32_t enckeylen;	/* keylength for ESP transform (bytes)*/
+    u_int32_t authkeylen;	/* keylength for AUTH (bytes)*/
+    u_int8_t encryptalg;	/* normally  encryptalg=transid */
+    u_int8_t authalg;	        /* normally  authalg=auth+1 */
+    u_int8_t ipcomp_calg_id;    /* kernel IPCOMP transform */
 };
 
 struct ike_info {
@@ -155,7 +162,7 @@ extern int alg_info_parse_str (struct alg_info *alg_info
 			       , void (*alg_info_add)(struct alg_info *alg_info
 						      , int ealg_id, int ek_bits
 						      , int aalg_id, int ak_bits
-						      , int modp_id
+						      , int modp_id, int calg_id
 						      , bool permitmann)
 			       , const struct oakley_group_desc *(*lookup_group)(u_int16_t group)
 			       , bool permitmann);
