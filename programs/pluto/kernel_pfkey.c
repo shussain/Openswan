@@ -355,14 +355,14 @@ klips_pfkey_register_response(const struct sadb_msg *msg)
      */
     switch (msg->sadb_msg_satype)
     {
-    case SADB_SATYPE_AH:
+    case K_SADB_SATYPE_AH:
 	break;
-    case SADB_SATYPE_ESP:
+    case K_SADB_SATYPE_ESP:
 #ifdef KERNEL_ALG
 	kernel_alg_register_pfkey(msg, sizeof (pfkey_buf));
 #endif
 	break;
-    case SADB_X_SATYPE_COMP:
+    case K_SADB_X_SATYPE_COMP:
 	/* ??? There ought to be an extension to list the
 	 * supported algorithms, but RFC 2367 doesn't
 	 * list one for IPcomp.  KLIPS uses K_SADB_X_CALG_DEFLATE.
@@ -370,7 +370,7 @@ klips_pfkey_register_response(const struct sadb_msg *msg)
 	 */
 	can_do_IPcomp = TRUE;
 	break;
-    case SADB_X_SATYPE_IPIP:
+    case K_SADB_X_SATYPE_IPIP:
 	break;
     default:
 	break;
@@ -780,11 +780,11 @@ static int kernelop2klips(enum pluto_sadb_operations op)
 
 void klips_pfkey_register(void)
 {
-    pfkey_register_proto(SADB_SATYPE_AH, "AH");
-    pfkey_register_proto(SADB_SATYPE_ESP, "ESP");
+    pfkey_register_proto(K_SADB_SATYPE_AH, "AH");
+    pfkey_register_proto(K_SADB_SATYPE_ESP, "ESP");
     can_do_IPcomp = FALSE;  /* until we get a response from KLIPS */
-    pfkey_register_proto(SADB_X_SATYPE_COMP, "IPCOMP");
-    pfkey_register_proto(SADB_X_SATYPE_IPIP, "IPIP");
+    pfkey_register_proto(K_SADB_X_SATYPE_COMP, "IPCOMP");
+    pfkey_register_proto(K_SADB_X_SATYPE_IPIP, "IPIP");
 }
 
 bool

@@ -1182,7 +1182,7 @@ netlink_sag_eroute(struct state *st, struct spd_route *sr
 
         inner_spi = st->st_tunnel_out_spi;
         inner_proto = SA_IPIP;
-        inner_satype = SADB_X_SATYPE_IPIP;
+        inner_satype = K_SADB_X_SATYPE_IPIP;     /* weird KLIPS dependancy */
 
         proto_info[i].encapsulation = ENCAPSULATION_MODE_TUNNEL;
         for (j = i + 1; proto_info[j].proto; j++)
