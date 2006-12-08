@@ -252,14 +252,15 @@ enum_names esp_transformid_names =
 /* IPCOMP transform values */
 
 static const char *const ipcomp_transform_name[] = {
+    "IPCOMP_NONE",
 	"IPCOMP_OUI",
-	"IPCOMP_DEFLAT",
+	"IPCOMP_DEFLATE",
 	"IPCOMP_LZS",
 	"IPCOMP_V42BIS",
     };
 
 enum_names ipcomp_transformid_names =
-    { IPCOMP_OUI, IPCOMP_V42BIS, ipcomp_transform_name, NULL };
+    { IPCOMP_NONE, IPCOMP_V42BIS, ipcomp_transform_name, NULL };
 
 /* Identification type values */
 
