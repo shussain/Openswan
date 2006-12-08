@@ -54,6 +54,9 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
+#include "alg_info.h"
+#include "kernel_alg.h"
+
 
 #ifdef XAUTH_USEPAM
 #include <security/pam_appl.h>
@@ -91,6 +94,110 @@ const struct pfkey_proto_info null_proto_info[2] = {
                 reqid: 0
         }
 };
+
+static const struct esp_info default_esp_info[] = {
+    { esp_default : FALSE,
+      transid     : ESP_NULL,
+      auth        : AUTH_ALGORITHM_HMAC_MD5,
+      enckeylen   : 0,
+      authkeylen  : HMAC_MD5_KEY_LEN,
+      encryptalg  : SADB_EALG_NULL,
+      authalg     : SADB_AALG_MD5HMAC
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_NULL,
+      .auth        = AUTH_ALGORITHM_HMAC_SHA1,
+      .enckeylen   = 0,
+      .authkeylen  = HMAC_SHA1_KEY_LEN,
+      .encryptalg  = SADB_EALG_NULL,
+      .authalg     = SADB_AALG_SHA1HMAC,
+    },
+
+    
+    { .esp_default = FALSE,
+      .transid     = ESP_DES, 
+      .auth        = AUTH_ALGORITHM_NONE, 
+      .enckeylen   = DES_CBC_BLOCK_SIZE, 
+      .authkeylen  = 0, 
+      .encryptalg  = SADB_EALG_DESCBC, 
+      .authalg     = SADB_AALG_NONE,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_DES, 
+      .auth        = AUTH_ALGORITHM_HMAC_MD5,
+      .enckeylen   = DES_CBC_BLOCK_SIZE, 
+      .authkeylen  = HMAC_MD5_KEY_LEN, 
+      .encryptalg  = SADB_EALG_DESCBC, 
+      .authalg     = SADB_AALG_MD5HMAC,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_DES, 
+      .auth        = AUTH_ALGORITHM_HMAC_SHA1,
+      .enckeylen   = DES_CBC_BLOCK_SIZE, 
+      .authkeylen  = HMAC_SHA1_KEY_LEN, 
+      .encryptalg  = SADB_EALG_DESCBC, 
+      .authalg     = SADB_AALG_SHA1HMAC,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_3DES, 
+      .auth        = AUTH_ALGORITHM_NONE,
+      .enckeylen   = DES_CBC_BLOCK_SIZE * 3, 
+      .authkeylen  = 0,
+      .encryptalg  = SADB_EALG_3DESCBC, 
+      .authalg     = SADB_AALG_NONE,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_3DES, 
+      .auth        = AUTH_ALGORITHM_HMAC_MD5,
+      .enckeylen   = DES_CBC_BLOCK_SIZE * 3, 
+      .authkeylen  = HMAC_MD5_KEY_LEN,
+      .encryptalg  = SADB_EALG_3DESCBC, 
+      .authalg     = SADB_AALG_MD5HMAC,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_3DES, 
+      .auth        = AUTH_ALGORITHM_HMAC_SHA1,
+      .enckeylen   = DES_CBC_BLOCK_SIZE * 3,
+      .authkeylen  = HMAC_SHA1_KEY_LEN,
+      .encryptalg  = SADB_EALG_3DESCBC,
+      .authalg     = SADB_AALG_SHA1HMAC,
+    },
+
+
+    { .esp_default = FALSE,
+      .transid     = ESP_AES, 
+      .auth        = AUTH_ALGORITHM_NONE,                
+      .enckeylen   = AES_CBC_BLOCK_SIZE, 
+      .authkeylen  = 0,                
+      .encryptalg  = SADB_X_EALG_AESCBC, 
+      .authalg     = SADB_AALG_NONE,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_AES, 
+      .auth        = AUTH_ALGORITHM_HMAC_MD5,         
+      .enckeylen   = AES_CBC_BLOCK_SIZE, 
+      .authkeylen  = HMAC_MD5_KEY_LEN,                
+      .encryptalg  = SADB_X_EALG_AESCBC, 
+      .authalg     = SADB_AALG_MD5HMAC,
+    },
+
+    { .esp_default = FALSE,
+      .transid     = ESP_AES, 
+      .auth        = AUTH_ALGORITHM_HMAC_SHA1,                
+      .enckeylen   = AES_CBC_BLOCK_SIZE, 
+      .authkeylen  = HMAC_SHA1_KEY_LEN,                
+      .encryptalg  = SADB_X_EALG_AESCBC, 
+      .authalg     = SADB_AALG_SHA1HMAC,
+    },
+};
+
 
 static struct bare_shunt *bare_shunts = NULL;
 
@@ -693,10 +800,6 @@ unroute_connection(struct connection *c)
             (void) do_command(c, sr, "unroute", NULL);
     }
 }
-
-#include "alg_info.h"
-#include "kernel_alg.h"
-
 
 static void
 set_text_said(char *text_said, const ip_address *dst, ipsec_spi_t spi, int proto)
@@ -1344,45 +1447,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         const struct esp_info *ei;
         u_int16_t key_len;
 
-        static const struct esp_info esp_info[] = {
-            { FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_MD5,
-                0, HMAC_MD5_KEY_LEN,
-                SADB_EALG_NULL, SADB_AALG_MD5HMAC },
-            { FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_SHA1,
-                0, HMAC_SHA1_KEY_LEN,
-                SADB_EALG_NULL, SADB_AALG_SHA1HMAC },
-
-            { FALSE, ESP_DES, AUTH_ALGORITHM_NONE,
-                DES_CBC_BLOCK_SIZE, 0,
-                SADB_EALG_DESCBC, SADB_AALG_NONE },
-            { FALSE, ESP_DES, AUTH_ALGORITHM_HMAC_MD5,
-                DES_CBC_BLOCK_SIZE, HMAC_MD5_KEY_LEN,
-                SADB_EALG_DESCBC, SADB_AALG_MD5HMAC },
-            { FALSE, ESP_DES, AUTH_ALGORITHM_HMAC_SHA1,
-                DES_CBC_BLOCK_SIZE,
-                HMAC_SHA1_KEY_LEN, SADB_EALG_DESCBC, SADB_AALG_SHA1HMAC },
-
-            { FALSE, ESP_3DES, AUTH_ALGORITHM_NONE,
-                DES_CBC_BLOCK_SIZE * 3, 0,
-                SADB_EALG_3DESCBC, SADB_AALG_NONE },
-            { FALSE, ESP_3DES, AUTH_ALGORITHM_HMAC_MD5,
-                DES_CBC_BLOCK_SIZE * 3, HMAC_MD5_KEY_LEN,
-                SADB_EALG_3DESCBC, SADB_AALG_MD5HMAC },
-            { FALSE, ESP_3DES, AUTH_ALGORITHM_HMAC_SHA1,
-                DES_CBC_BLOCK_SIZE * 3, HMAC_SHA1_KEY_LEN,
-                SADB_EALG_3DESCBC, SADB_AALG_SHA1HMAC },
-
-            { FALSE, ESP_AES, AUTH_ALGORITHM_NONE,
-                AES_CBC_BLOCK_SIZE, 0,
-                SADB_X_EALG_AESCBC, SADB_AALG_NONE },
-            { FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_MD5,
-                AES_CBC_BLOCK_SIZE, HMAC_MD5_KEY_LEN,
-                SADB_X_EALG_AESCBC, SADB_AALG_MD5HMAC },
-            { FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_SHA1,
-                AES_CBC_BLOCK_SIZE, HMAC_SHA1_KEY_LEN,
-                SADB_X_EALG_AESCBC, SADB_AALG_SHA1HMAC },
-        };
-	//static const int esp_max = elemsof(esp_info);
+	//static const int esp_max = elemsof(default_esp_info);
 	//int esp_count;
 
 #ifdef NAT_TRAVERSAL
@@ -1415,11 +1480,11 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 		      , st->st_esp.attrs.key_len
 		      , st->st_esp.attrs.auth));
 		    
-        for (ei = esp_info; ; ei++)
+        for (ei = default_esp_info; ; ei++)
         {
 	    
 	    /* if it is the last key entry, then ask algo */
-            if (ei == &esp_info[elemsof(esp_info)])
+            if (ei == &default_esp_info[elemsof(default_esp_info)])
             {
                 /* Check for additional kernel alg */
 #ifdef KERNEL_ALG
