@@ -156,9 +156,10 @@ out:
 	ctx->max_attrs = max_attrs;
 	ctx->trans_cur = ctx->trans0;
 	ctx->attrs_cur = ctx->attrs0;
-	ctx->prop.protoid = protoid;
-	ctx->prop.trans = ctx->trans0;
-	ctx->prop.trans_cnt = 0;
+	ctx->prop_cnt  = 0;
+	ctx->prop[ctx->prop_cnt].protoid = protoid;
+	ctx->prop[ctx->prop_cnt].trans = ctx->trans0;
+	ctx->prop[ctx->prop_cnt].trans_cnt = 0;
 	return ret;
 }
 
@@ -179,7 +180,8 @@ db_trans_expand(struct db_context *ctx, int delta_trans)
 	memcpy(new_trans, old_trans, ctx->max_trans * sizeof(struct db_trans));
 	
 	/* update trans0 (obviously) */
-	ctx->trans0 = ctx->prop.trans = new_trans;
+	ctx->trans0 = ctx->prop[ctx->prop_cnt].trans = new_trans;
+
 	/* update trans_cur (by offset) */
 	offset = (char *)(new_trans) - (char *)(old_trans);
 
@@ -233,7 +235,7 @@ db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	}
 
 	/* for each transform, rewrite attrs pointer by offsetting it */
-	for (t=ctx->prop.trans, ti=0; ti < ctx->prop.trans_cnt; t++, ti++) {
+	for (t=ctx->prop[ctx->prop_cnt].trans, ti=0; ti < ctx->prop[ctx->prop_cnt].trans_cnt; t++, ti++) {
 	  {
 	    char *actx = (char *)(t->attrs);
 	  
@@ -264,6 +266,25 @@ db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 out:
 	return ctx;
 }
+
+void db_prop_next(struct db_context *ctx, int protoid)
+{
+	ctx->prop_cnt++;
+	passert(ctx->prop_cnt < MAX_PROP_CNT);
+
+	/* reset transforms and attributes */
+	ctx->trans0 = NULL;
+	ctx->attrs0 = NULL;
+	ctx->max_trans = 0;
+	ctx->max_attrs = 0;
+	ctx->trans_cur = NULL;
+	ctx->attrs_cur = NULL;
+
+	ctx->prop[ctx->prop_cnt].protoid = protoid;
+	ctx->prop[ctx->prop_cnt].trans = ctx->trans0;
+	ctx->prop[ctx->prop_cnt].trans_cnt = 0;
+}	
+
 
 /*	Free a db object */
 void
@@ -297,7 +318,7 @@ db_trans_add(struct db_context *ctx, u_int8_t transid)
 	ctx->trans_cur->transid = transid;
 	ctx->trans_cur->attrs=ctx->attrs_cur;
 	ctx->trans_cur->attr_cnt = 0;
-	ctx->prop.trans_cnt++;
+	ctx->prop[ctx->prop_cnt].trans_cnt++;
 	return 0;
 }
 
@@ -404,7 +425,8 @@ void db_print(struct db_context *ctx)
 	DBG_log("trans_cur diff=%d, attrs_cur diff=%d\n", 
 			ctx->trans_cur - ctx->trans0,
 			ctx->attrs_cur - ctx->attrs0);
-	db_prop_print(&ctx->prop);
+	db_prop_print(&ctx->prop[0]);
+	db_prop_print(&ctx->prop[1]);
 }
 #endif
 

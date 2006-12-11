@@ -7,14 +7,16 @@
 /*
  * 	Main db object, (quite proposal "oriented")
  */
+#define MAX_PROP_CNT 2
 struct db_context {
-	struct db_prop prop;		/* proposal buffer (not pointer) */
+	struct db_prop prop[MAX_PROP_CNT]; /* proposal buffer (not pointer) */
 	struct db_trans *trans0;	/* transf. list, dynamically sized */
 	struct db_trans *trans_cur;	/* current transform ptr */
 	struct db_attr *attrs0;		/* attr. list, dynamically sized */
 	struct db_attr *attrs_cur;	/* current attribute ptr */
 	int max_trans;			/* size of trans list */
 	int max_attrs;			/* size of attrs list */
+	int prop_cnt;
 };
 
 /*
@@ -37,11 +39,13 @@ int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val);
 
 /*	Get proposal from db object */
 static __inline__ struct db_prop *db_prop_get(struct db_context *ctx) {
-	return &ctx->prop;
+	return &ctx->prop[0];
 }
 /*	Show stats (allocation, etc) */
 int db_ops_show_status(void);
 
 extern void db_print(struct db_context *ctx);
+extern void db_prop_next(struct db_context *ctx, int protoid);
+
 
 #endif /* _DB_OPS_H */

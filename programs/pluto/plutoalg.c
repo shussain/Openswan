@@ -552,6 +552,17 @@ kernel_alg_db_new(struct alg_info_esp *alg_info, lset_t policy, bool logit)
 		}
 	}
 
+	if(policy & POLICY_COMPRESS) {
+	    
+	    /* advance to next proposal! */
+	    db_prop_next(ctx_new, PROTO_IPCOMP);
+
+	    ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		/* open new transformation */
+		db_trans_add(ctx_new, esp_info->ipcomp_calg_id);
+	    }
+	}
+
 	if(success == FALSE) {
 	    /* NO algorithms were found. oops */
 	    db_destroy(ctx_new);
@@ -743,7 +754,6 @@ struct db_sa *
 kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei, bool logit)
 {
     struct db_context *dbnew;
-    struct db_prop *p;
     struct db_prop_conj pc;
     struct db_sa t, *n;
 
@@ -759,16 +769,8 @@ kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei, bool logit)
 	return NULL;
     }
     
-    p = db_prop_get(dbnew);
-
-    if(!p) {
-	DBG(DBG_CONTROL, DBG_log("failed to get proposal from context, returning empty"));
-	db_destroy(dbnew);
-	return NULL;
-    }
-    
-    pc.prop_cnt = 1;
-    pc.props = p;
+    pc.prop_cnt = dbnew->prop_cnt+1;
+    pc.props = dbnew->prop;
     t.prop_conj_cnt = 1;
     t.prop_conjs = &pc;
 
@@ -778,7 +780,7 @@ kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei, bool logit)
     db_destroy(dbnew);
 
     DBG(DBG_CONTROL
-	, DBG_log("returning new proposal from esp_info"));
+	, DBG_log("returning new proposal from esp_info cnt=%u", dbnew->prop_cnt));
     return n;
 }
 

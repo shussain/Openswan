@@ -165,7 +165,7 @@ out_sa(pb_stream *outs
 
 	sa.isasa_np = np;
 	st->st_doi = sa.isasa_doi = ISAKMP_DOI_IPSEC;	/* all we know */
-	if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
+	if (!out_struct_where(&sa, &isakmp_sa_desc, outs, &sa_pbs, "out-sa:SA header"))
 	    return_on(ret, FALSE);
     }
 
@@ -256,8 +256,8 @@ out_sa(pb_stream *outs
 	    }
 
 	    proposal.isap_notrans = p->trans_cnt;
-	    if (!out_struct(&proposal, &isakmp_proposal_desc
-			    , &sa_pbs, &proposal_pbs))
+	    if (!out_struct_where(&proposal, &isakmp_proposal_desc
+				  , &sa_pbs, &proposal_pbs, "out_sa-proposal"))
 		return_on(ret, FALSE);
 
 	    /* Per-protocols stuff:
