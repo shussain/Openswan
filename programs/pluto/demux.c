@@ -2522,8 +2522,9 @@ static void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_
     if(st->st_ipcomp.present)
     {
 	snprintf(b, sad_len-(b-sadetails)-1
-		 , "%sIPCOMP=>0x%08lx <0x%08lx"
+		 , "%sIPCOMP(%s)=>0x%08lx <0x%08lx"
 		 , ini
+		 , enum_name(&ipcomp_transformid_names, st->st_ipcomp.attrs.transid)+sizeof("IPCOMP")
 		 , (unsigned long)ntohl(st->st_ipcomp.attrs.spi)
 		 , (unsigned long)ntohl(st->st_ipcomp.our_spi));
 	ini = " ";
