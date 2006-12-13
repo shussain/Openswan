@@ -19,7 +19,8 @@
 #include "openswan/ipsec_sa.h"
 
 #ifdef CONFIG_KLIPS_OCF
-#include <crypto/cryptodev.h>
+#include <opencrypto/crypto.h>
+#include <opencrypto/cryptodev.h>
 #endif
 
 enum ipsec_xmit_value
@@ -114,6 +115,7 @@ struct ipsec_xmit_state
 	short physmtu;
 	short cur_mtu;          /* copy of prv->mtu, cause prv may == NULL */
 	short mtudiff;
+        __u8 next_header;               /* protocol of the nested header */
 #ifdef NET_21
 	struct rtable *route;
 #endif /* NET_21 */

@@ -1491,6 +1491,12 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 #endif /* !CONFIG_KLIPS_ESP */
 #ifdef CONFIG_KLIPS_IPCOMP
 	case IPPROTO_COMP:
+
+#ifdef CONFIG_KLIPS_OCF
+		if (ipsec_ocf_comp_sa_init(ipsp, ipsp->ips_compalg))
+		    break;
+#endif
+
 		ipsp->ips_xformfuncs = ipcomp_xform_funcs;
 		ipsp->ips_comp_adapt_tries = 0;
 		ipsp->ips_comp_adapt_skip = 0;
