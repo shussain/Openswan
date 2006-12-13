@@ -91,8 +91,13 @@ extern bool in_struct(void *struct_ptr, struct_desc *sd,
     pb_stream *ins, pb_stream *obj_pbs);
 extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name);
 
-extern bool out_struct(const void *struct_ptr, struct_desc *sd,
-    pb_stream *outs, pb_stream *obj_pbs);
+#define out_struct(struct_ptr, sd, outs, obj_pbs) \
+	out_struct_where(struct_ptr, sd, outs, obj_pbs, __FUNCTION__)
+
+extern bool out_struct_where(const void *struct_ptr, struct_desc *sd
+			     , pb_stream *outs, pb_stream *obj_pbs
+			     , const char *where);
+
 extern bool out_generic(u_int8_t np, struct_desc *sd,
     pb_stream *outs, pb_stream *obj_pbs);
 extern bool out_generic_raw(u_int8_t np, struct_desc *sd,

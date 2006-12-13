@@ -45,8 +45,10 @@
 /* ALG storage */
 struct sadb_alg esp_aalg[SADB_AALG_MAX+1];
 struct sadb_alg esp_ealg[SADB_EALG_MAX+1];
+struct sadb_alg ipcomp_calg[SADB_EALG_MAX+1];
 int esp_ealg_num=0;
 int esp_aalg_num=0;
+int ipcomp_calg_num=0;
 
 static struct sadb_alg *
 sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
@@ -57,11 +59,22 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
 			if (alg_id<=SADB_AALG_MAX)
 				break;
 			goto fail;		
+
 		case SADB_EXT_SUPPORTED_ENCRYPT:
 			if (alg_id<=SADB_EALG_MAX)
 				break;
 			goto fail;		
+
+#if 0
+			/* no such definition yet! */
+		case SADB_EXT_SUPPORTED_COMPRESS:
+			if (alg_id<=SADB_EALG_MAX)
+				break;
+			goto fail;	
+#endif	
+
 		default:
+		    if(satype != SADB_X_SATYPE_COMP) 
 			goto fail;
 	}
 
@@ -76,8 +89,16 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
 					esp_ealg_num++ : esp_aalg_num++;
 			}
 			break;
-		default:
-			goto fail;
+
+	case SADB_X_SATYPE_COMP:
+	    alg_p=&ipcomp_calg[alg_id];
+	    if (rw) {
+		ipcomp_calg_num++;
+	    }
+	    break;
+	    
+	default:
+	    goto fail;
 	}
 fail:
 	return alg_p;
@@ -88,6 +109,7 @@ kernel_alg_sadb_alg_get(int satype, int exttype, int alg_id)
 {
 	return sadb_alg_ptr(satype, exttype, alg_id, 0);
 }
+
 /*
  * 	Forget previous registration
  */
@@ -101,7 +123,27 @@ kernel_alg_init(void)
 		&esp_ealg,  (int)sizeof (esp_ealg)));
 	memset (&esp_aalg, 0, sizeof (esp_aalg));
 	memset (&esp_ealg, 0, sizeof (esp_ealg));
+	memset (&ipcomp_calg, 0, sizeof(ipcomp_calg));
 	esp_ealg_num=esp_aalg_num=0;
+	ipcomp_calg_num=0;
+
+	/*
+	 * unfortunately, we have no way of knowing what compression
+	 * algorithms might be available at present.
+	 */
+	{
+	    struct sadb_alg calg;
+
+	    /* assumed to be present */
+	    memset(&calg, 0, sizeof(calg));
+	    calg.sadb_alg_id = IPCOMP_DEFLATE;
+	    kernel_alg_add(SADB_X_SATYPE_COMP, 0, &calg);
+
+	    /* add this one, as many hardware supports it */
+	    memset(&calg, 0, sizeof(calg));
+	    calg.sadb_alg_id = IPCOMP_LZS;
+	    kernel_alg_add(SADB_X_SATYPE_COMP, 0, &calg);
+	}
 }
 
 int
@@ -449,6 +491,24 @@ none:
 		transid, auth));
 	return NULL;
 }
+
+/*
+ * Compression algorithm support 
+ */
+err_t
+kernel_alg_ipcomp_ok(int comp, 
+		     struct alg_info_esp *alg_info __attribute__((unused)))
+{
+	int ret=(IPCOMP_CALG_PRESENT(comp));
+
+	if(ret) {
+	    return NULL;
+	} else {
+	    return "bad auth alg";
+	}
+}
+
+
 
 /*
  * Local Variables:

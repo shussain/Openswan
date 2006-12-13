@@ -242,7 +242,7 @@ static char *connection_name (struct starter_conn *conn)
 	return conn->name;
 }
 
-static void set_whack_end(struct starter_config *cfg
+static bool set_whack_end(struct starter_config *cfg
 			  , char *lr
 			  , struct whack_end *w
 			  , struct starter_end *l)
@@ -272,10 +272,14 @@ static void set_whack_end(struct starter_config *cfg
 	case KH_ANY:
 		anyaddr(l->addr_family, &w->host_addr);
 		break;
+
+	case KH_NOTSET:
+		printf("no valid %s= was set. Conn can not be loaded\n", lr);
+		return FALSE;
 		
 	default:
 		printf("%s: do something with host case: %d\n", lr, l->addrtype);
-		break;
+		return FALSE;
 	}
 
 	switch(l->nexttype) {
@@ -320,6 +324,20 @@ static void set_whack_end(struct starter_config *cfg
 	w->virt = l->virt;
 
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
+
+	if(l->options_set[KNCF_XAUTHSERVER]) {
+		w->xauth_server = l->options[KNCF_XAUTHSERVER];
+	}
+	if(l->options_set[KNCF_XAUTHCLIENT]) {
+		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
+	}
+	if(l->options_set[KNCF_MODECONFIGSERVER]) {
+		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
+	}
+	if(l->options_set[KNCF_MODECONFIGCLIENT]) {
+		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
+	}
+	return TRUE;
 }
 
 static int starter_whack_add_pubkey (struct starter_config *cfg,
@@ -425,8 +443,35 @@ int starter_whack_add_conn (struct starter_config *cfg
 
 	msg.policy = conn->policy;
 
-	set_whack_end(cfg, "left",  &msg.left, &conn->left);
-	set_whack_end(cfg, "right", &msg.right, &conn->right);
+	if(conn->options_set[KBF_DPDDELAY] &&
+	   conn->options_set[KBF_DPDTIMEOUT]) {
+		msg.dpd_delay   = conn->options[KBF_DPDDELAY];
+		msg.dpd_timeout = conn->options[KBF_DPDTIMEOUT];
+
+		if(conn->options_set[KBF_DPDACTION]) {
+			msg.dpd_action = conn->options[KBF_DPDACTION];
+		} else {
+			/*
+			 * there is a default DPD action, but DPD is only
+			 * enabled if there is a dpd delay set.
+			 */
+			msg.dpd_action = DPD_ACTION_HOLD;
+		}
+
+	} else {
+		if(conn->options_set[KBF_DPDDELAY]  ||
+		   conn->options_set[KBF_DPDTIMEOUT]||
+		   conn->options_set[KBF_DPDACTION])
+		{
+			starter_log(LOG_LEVEL_ERR, "conn: \"%s\" warning dpd settings are not ignored unless dpdtimeout= and dpddelay= are set"
+				    , conn->name);
+		}
+	}
+
+	if(!set_whack_end(cfg, "left",  &msg.left, &conn->left) ||
+	   !set_whack_end(cfg, "right", &msg.right, &conn->right)) {
+		return -234;
+	}
 
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;

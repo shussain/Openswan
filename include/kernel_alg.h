@@ -63,8 +63,10 @@ extern struct esp_info *kernel_alg_esp_info(u_int8_t transid
 
 extern struct sadb_alg esp_aalg[];
 extern struct sadb_alg esp_ealg[];
+extern struct sadb_alg ipcomp_calg[];
 extern int esp_ealg_num;
 extern int esp_aalg_num;
+extern int ipcomp_calg_num;
 
 #define ESP_EALG_PRESENT(algo) (((algo)<=SADB_EALG_MAX)&&(esp_ealg[(algo)].sadb_alg_id==(algo)))
 #define ESP_EALG_FOR_EACH(algo) \
@@ -80,6 +82,11 @@ extern int esp_aalg_num;
 #define ESP_AALG_FOR_EACH_UPDOWN(algo) \
 	for (algo=SADB_AALG_MAX; algo >0 ; algo--) \
 		if (ESP_AALG_PRESENT(algo))
+
+#define IPCOMP_CALG_PRESENT(algo) (((algo)<=SADB_X_CALG_MAX)&&(ipcomp_calg[(algo)].sadb_alg_id==(algo)))
+#define IPCOMP_CALG_FOR_EACH(algo) \
+	for (algo=1; algo <= SADB_X_CALG_MAX; algo++) \
+		if (IPCOMP_CALG_PRESENT(algo))
 
 extern int
 kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg);

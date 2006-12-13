@@ -149,7 +149,7 @@ static void
 alg_info_ike_add (struct alg_info *alg_info
 		  , int ealg_id, int ek_bits
 		  , int aalg_id, int ak_bits
-		  , int modp_id, int permitmann UNUSED)
+		  , int modp_id, int calg_id UNUSED, int permitmann UNUSED)
 {
 	int i=0, n_groups;
 	n_groups=elemsof(default_ike_groups);
@@ -221,12 +221,13 @@ alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
 	    if (!aklen) 
 		aklen=kernel_alg_esp_auth_keylen(esp_info->esp_aalg_id)*BITS_PER_BYTE;
 	    
-	    ret=snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d"
+	    ret=snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d-%s"
 			 , sep
 			 , enum_name(&esp_transformid_names, esp_info->esp_ealg_id)+sizeof("ESP")
 			 , esp_info->esp_ealg_id, eklen
 			 , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
-			 , esp_info->esp_aalg_id, aklen);
+			 , esp_info->esp_aalg_id, aklen
+			 , enum_name(&ipcomp_transformid_names, esp_info->ipcomp_calg_id)+sizeof("IPCOMP"));
 	    ptr+=ret;
 	    buflen-=ret;
 	    if (buflen<0) break;
@@ -551,6 +552,17 @@ kernel_alg_db_new(struct alg_info_esp *alg_info, lset_t policy, bool logit)
 		}
 	}
 
+	if(policy & POLICY_COMPRESS) {
+	    
+	    /* advance to next proposal! */
+	    db_prop_next(ctx_new, PROTO_IPCOMP);
+
+	    ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		/* open new transformation */
+		db_trans_add(ctx_new, esp_info->ipcomp_calg_id);
+	    }
+	}
+
 	if(success == FALSE) {
 	    /* NO algorithms were found. oops */
 	    db_destroy(ctx_new);
@@ -659,6 +671,15 @@ void kernel_alg_show_status(void)
 			, alg_p->sadb_alg_maxbits
 		 );
 	}
+
+	IPCOMP_CALG_FOR_EACH(sadb_id) {
+	    id=sadb_id;
+	    alg_p=&ipcomp_calg[sadb_id];
+	    whack_log(RC_COMMENT, "algorithm IPCOMP compress attr: id=%d, name=%s "
+			, id
+			, enum_name(&ipcomp_transformid_names, id)
+		 );
+	}
 }
 void
 kernel_alg_show_connection(struct connection *c, const char *instance)
@@ -733,7 +754,6 @@ struct db_sa *
 kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei, bool logit)
 {
     struct db_context *dbnew;
-    struct db_prop *p;
     struct db_prop_conj pc;
     struct db_sa t, *n;
 
@@ -749,16 +769,8 @@ kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei, bool logit)
 	return NULL;
     }
     
-    p = db_prop_get(dbnew);
-
-    if(!p) {
-	DBG(DBG_CONTROL, DBG_log("failed to get proposal from context, returning empty"));
-	db_destroy(dbnew);
-	return NULL;
-    }
-    
-    pc.prop_cnt = 1;
-    pc.props = p;
+    pc.prop_cnt = dbnew->prop_cnt+1;
+    pc.props = dbnew->prop;
     t.prop_conj_cnt = 1;
     t.prop_conjs = &pc;
 
@@ -768,7 +780,7 @@ kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei, bool logit)
     db_destroy(dbnew);
 
     DBG(DBG_CONTROL
-	, DBG_log("returning new proposal from esp_info"));
+	, DBG_log("returning new proposal from esp_info cnt=%u", dbnew->prop_cnt));
     return n;
 }
 

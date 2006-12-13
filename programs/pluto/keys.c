@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 
 #include <glob.h>
 #ifndef GLOB_ABORTED
@@ -106,7 +106,7 @@ static int print_secrets(struct secret *secret
 {
     char idb1[IDTOA_BUF];
     char idb2[IDTOA_BUF];
-    const char *kind;
+    const char *kind = "?";
     
     switch(pks->kind) {
     case PPK_PSK: kind="PSK"; break;

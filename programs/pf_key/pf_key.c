@@ -213,10 +213,10 @@ main(int argc, char *argv[])
 			pfkey_register(SADB_SATYPE_ESP);
 		}
 		if(ipip_register) {
-			pfkey_register(SADB_X_SATYPE_IPIP);
+			pfkey_register(K_SADB_X_SATYPE_IPIP);
 		}
 		if(ipcomp_register) {
-			pfkey_register(SADB_X_SATYPE_COMP);
+			pfkey_register(K_SADB_X_SATYPE_COMP);
 		}
 
 		if(fork_after_register) {

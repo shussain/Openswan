@@ -51,7 +51,8 @@
  */
 
 #include <sys/types.h>
-#include <crypto/cryptodev.h>
+#include <sys/time.h>
+#include <opencrypto/cryptodev.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <stdio.h>
@@ -79,6 +80,7 @@
 #include "pluto_crypt.h"
 #include "server.h"
 
+u_int32_t cryptodev_asymfeat = 0;
 struct cryptodev_meth cryptodev;
 bool accel_avail;            /* if we found something to use */
 bool use_pk_accel=TRUE;      /* policy: should we try PK operations? */

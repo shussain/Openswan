@@ -106,6 +106,7 @@ alg_enum_search_prefix (enum_names *ed, const char *prefix, const char *str, int
 	ret=enum_search(ed, buf);
 	return ret;
 }
+
 /*
  * 	Search enum_name array with in prefixed and postfixed uppercase
  */
@@ -169,6 +170,19 @@ aalg_getbyname_esp(const char *const str, int len)
 out:
 	return ret;
 }
+
+static int
+calg_getbyname_ipcomp(const char *const str, int len)
+{
+	int ret=-1;
+	if (!str||!*str)
+		goto out;
+	ret=alg_enum_search_prefix(&ipcomp_transformid_names, "IPCOMP_", str, len);
+out:
+	return ret;
+}
+
+
 static int
 modp_getbyname_esp(const char *const str, int len)
 {
@@ -193,7 +207,8 @@ alg_info_free(struct alg_info *alg_info) {
 static void
 __alg_info_esp_add (struct alg_info_esp *alg_info
 		    , int ealg_id, unsigned ek_bits
-		    , int aalg_id, unsigned ak_bits)
+		    , int aalg_id, unsigned ak_bits
+		    , int calg_id)
 {
 	struct esp_info *esp_info=alg_info->esp;
 	unsigned cnt=alg_info->alg_info_cnt, i;
@@ -213,6 +228,7 @@ __alg_info_esp_add (struct alg_info_esp *alg_info
 	/* sadb values */
 	esp_info[cnt].encryptalg=ealg_id;
 	esp_info[cnt].authalg=alg_info_esp_aa2sadb(aalg_id);
+	esp_info[cnt].ipcomp_calg_id = calg_id;
 	alg_info->alg_info_cnt++;
 	DBG(DBG_CRYPT, DBG_log("__alg_info_esp_add() "
 				"ealg=%d aalg=%d cnt=%d",
@@ -226,7 +242,7 @@ static void
 alg_info_esp_add (struct alg_info *alg_info,
 		  int ealg_id, int ek_bits,
 		  int aalg_id, int ak_bits,
-		  int modp_id, bool permit_manconn)
+		  int modp_id, int calg_id, bool permit_manconn)
 {
 	/*	Policy: default to 3DES */
 	if (ealg_id==0)
@@ -238,18 +254,20 @@ alg_info_esp_add (struct alg_info *alg_info,
 	       (permit_manconn && aalg_id == 0))
 		{
 			__alg_info_esp_add((struct alg_info_esp *)alg_info,
-					ealg_id, ek_bits,
-					aalg_id, ak_bits);
+					   ealg_id, ek_bits,
+					   aalg_id, ak_bits, calg_id);
 		}
 	    else
 		{
 			/*	Policy: default to MD5 and SHA1 */
 			__alg_info_esp_add((struct alg_info_esp *)alg_info,
-					ealg_id, ek_bits, \
-					AUTH_ALGORITHM_HMAC_MD5, ak_bits);
+					   ealg_id, ek_bits,		
+					   AUTH_ALGORITHM_HMAC_MD5, ak_bits,
+					   calg_id);
 			__alg_info_esp_add((struct alg_info_esp *)alg_info,
-					ealg_id, ek_bits, \
-					AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
+					   ealg_id, ek_bits, 
+					   AUTH_ALGORITHM_HMAC_SHA1, ak_bits,
+					   calg_id);
 		}
 	}
 }
@@ -261,24 +279,25 @@ static void
 alg_info_ah_add (struct alg_info *alg_info,
 		  int ealg_id, int ek_bits,
 		  int aalg_id, int ak_bits,
-		  int modp_id, bool permit_manconn)
+		 int modp_id, int calg_id, bool permit_manconn)
 {
     if(aalg_id > 0 ||
        (permit_manconn && aalg_id == 0))
     {
 	__alg_info_esp_add((struct alg_info_esp *)alg_info,
 			   ealg_id, ek_bits,
-			   aalg_id, ak_bits);
+			   aalg_id, ak_bits, calg_id);
     }
     else
     {
 	/*	Policy: default to MD5 and SHA1 */
 	__alg_info_esp_add((struct alg_info_esp *)alg_info,
-			   ealg_id, ek_bits,				\
-			   AUTH_ALGORITHM_HMAC_MD5, ak_bits);
+			   ealg_id, ek_bits,			
+			   AUTH_ALGORITHM_HMAC_MD5, ak_bits,
+			   calg_id);
 	__alg_info_esp_add((struct alg_info_esp *)alg_info,
-			   ealg_id, ek_bits,				\
-			   AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
+			   ealg_id, ek_bits,			
+			   AUTH_ALGORITHM_HMAC_SHA1, ak_bits, calg_id);
     }
 }
 
@@ -293,6 +312,8 @@ static const char *parser_state_esp_names[] = {
 	"ST_AA_END",
 	"ST_AK",
 	"ST_AK_END",
+	"ST_CA",
+	"ST_CA_END",
 	"ST_MOPD",
 	"ST_FLAG_STRICT",
 	"ST_END",
@@ -329,6 +350,7 @@ parser_machine(struct parser_context *p_ctx)
 	    case ST_EK:
 	    case ST_AA:
 	    case ST_AK: 
+	    case ST_CA: 
 	    case ST_MODP:
 	    case ST_FLAG_STRICT:
 		{
@@ -389,6 +411,7 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="No valid char found after enc alg string";
 	    goto err;
+
 	case ST_EA_END:
 	    if (isdigit(ch)) {
 		/* bravely switch to enc keylen */
@@ -401,6 +424,7 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="No alphanum char found after enc alg separator";
 	    goto err;
+
 	case ST_EK:
 	    if (ch=='-') {
 		parser_set_state(p_ctx, ST_EK_END);
@@ -412,6 +436,7 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="Non digit or valid separator found while reading enc keylen";
 	    goto err;
+
 	case ST_EK_END:
 	    if (isalpha(ch)) {
 		parser_set_state(p_ctx, ST_AA);
@@ -419,7 +444,9 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="Non alpha char found after enc keylen end separator";
 	    goto err;
-	case ST_AA:
+
+
+	case ST_AA:                 /* authentication algorithm */
 	    if (ch=='-') {
 		*(p_ctx->aalg_str++)=0;
 		parser_set_state(p_ctx, ST_AA_END);
@@ -431,6 +458,7 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="Non alphanum or valid separator found in auth string";
 	    goto err;
+
 	case ST_AA_END:
 	    if (isdigit(ch)) {
 		parser_set_state(p_ctx, ST_AK);
@@ -443,8 +471,17 @@ parser_machine(struct parser_context *p_ctx)
 		parser_set_state(p_ctx, ST_MODP);
 		goto re_eval;
 	    }
+	    /* otherwise, only allow compression algorithm if
+	     * we have a way to do that (phase 2)
+	     */
+	    if((p_ctx->calg_getbyname) && isalpha(ch)) {
+		parser_set_state(p_ctx, ST_CA);
+		goto re_eval;
+	    }
+
 	    p_ctx->err="Non initial digit found for auth keylen";
 	    goto err;
+
 	case ST_AK:
 	    if (ch=='-') {
 		parser_set_state(p_ctx, ST_AK_END);
@@ -456,16 +493,43 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="Non digit found for auth keylen";
 	    goto err;
+
 	case ST_AK_END:
 	    /* Only allow modpXXXX string if we have
-	     * a modp_getbyname method
+	     * a modp_getbyname method (phase 1)
 	     */
 	    if ((p_ctx->modp_getbyname) && isalpha(ch)) {
 		parser_set_state(p_ctx, ST_MODP);
 		goto re_eval;
 	    }
+	    
+	    /* otherwise, only allow compression algorithm if
+	     * we have a way to do that (phase 2)
+	     */
+	    if((p_ctx->calg_getbyname) && isalpha(ch)) {
+		parser_set_state(p_ctx, ST_CA);
+		goto re_eval;
+	    }
 	    p_ctx->err="Non alpha char found after auth keylen";
 	    goto err;
+
+	case ST_CA:
+	    if (ch=='-') {
+		*(p_ctx->calg_str++)=0;
+		parser_set_state(p_ctx, ST_AA_END);
+		break;
+	    }
+	    if (isalnum(ch) || ch=='_') {
+		*(p_ctx->calg_str++)=ch;
+		break;
+	    }
+	    p_ctx->err="Non alphanum or valid separator found in compress string";
+	    goto err;
+
+	case ST_CA_END:
+	    p_ctx->err="Non alphanum or valid separator found in compres string";
+	    goto err;
+
 	case ST_MODP:
 	    if (isalnum(ch)) {
 		*(p_ctx->modp_str++)=ch;
@@ -506,14 +570,16 @@ parser_init_esp(struct parser_context *p_ctx)
     p_ctx->protoid=PROTO_IPSEC_ESP;
     p_ctx->ealg_str=p_ctx->ealg_buf;
     p_ctx->aalg_str=p_ctx->aalg_buf;
+    p_ctx->calg_str=p_ctx->calg_buf;
     p_ctx->modp_str=p_ctx->modp_buf;
     p_ctx->ealg_permit = TRUE;
     p_ctx->aalg_permit = TRUE;
+    p_ctx->calg_permit = TRUE;
     p_ctx->state=ST_INI;
     
     p_ctx->ealg_getbyname=ealg_getbyname_esp;
     p_ctx->aalg_getbyname=aalg_getbyname_esp;
-
+    p_ctx->calg_getbyname=calg_getbyname_ipcomp;
 }
 
 /*	
@@ -530,12 +596,14 @@ parser_init_ah(struct parser_context *p_ctx)
     p_ctx->ealg_permit = FALSE;
     p_ctx->aalg_str=p_ctx->aalg_buf;
     p_ctx->aalg_permit = TRUE;
+    p_ctx->calg_str=p_ctx->calg_buf;
+    p_ctx->calg_permit = TRUE;
     p_ctx->modp_str=p_ctx->modp_buf;
     p_ctx->state=ST_INI_AA;
     
     p_ctx->ealg_getbyname=NULL;
     p_ctx->aalg_getbyname=aalg_getbyname_esp;
-
+    p_ctx->calg_getbyname=calg_getbyname_ipcomp;
 }
 
 static int
@@ -544,13 +612,14 @@ parser_alg_info_add(struct parser_context *p_ctx
 		    , void (*alg_info_add)(struct alg_info *alg_info
 					  , int ealg_id, int ek_bits
 					  , int aalg_id, int ak_bits
-					  , int modp_id
+					   , int modp_id, int calg_id
 					  , bool permitmann)
 		    , const struct oakley_group_desc *(*lookup_group)(u_int16_t group)
 		    , bool permitike)
 {
 	int ealg_id, aalg_id;
 	int modp_id = 0;
+	int calg_id = IPCOMP_NONE;
 	const struct oakley_group_desc *gd;
 
 	ealg_id=aalg_id=-1;
@@ -580,6 +649,19 @@ parser_alg_info_add(struct parser_context *p_ctx
 				   p_ctx->aalg_buf,
 				   aalg_id));
 	}
+
+	if (p_ctx->calg_permit && *p_ctx->calg_buf) {
+	    calg_id=p_ctx->calg_getbyname(p_ctx->calg_buf, strlen(p_ctx->calg_buf));
+	    if (calg_id<0) {
+		p_ctx->err="ipcomp alg not found";
+		goto out;
+	    }
+	    DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
+				   "calg_getbyname(\"%s\")=%d",
+				   p_ctx->calg_buf,
+				   calg_id));
+	}
+
 	if (p_ctx->modp_getbyname && *p_ctx->modp_buf) {
 	    modp_id=p_ctx->modp_getbyname(p_ctx->modp_buf, strlen(p_ctx->modp_buf));
 	    if (modp_id<0) {
@@ -601,7 +683,7 @@ parser_alg_info_add(struct parser_context *p_ctx
 	(*alg_info_add)(alg_info
 			,ealg_id, p_ctx->eklen
 			,aalg_id, p_ctx->aklen
-			,modp_id, permitike);
+			,modp_id, calg_id, permitike);
 	return 0;
  out:
 	return -1;
@@ -615,7 +697,7 @@ alg_info_parse_str (struct alg_info *alg_info
 		    , void (*alg_info_add)(struct alg_info *alg_info
 					  , int ealg_id, int ek_bits
 					  , int aalg_id, int ak_bits
-					  , int modp_id
+					   , int modp_id, int calg_id
 					  , bool permitmann)
 		    , const struct oakley_group_desc *(*lookup_group)(u_int16_t group)
 		    , bool permitmann)
@@ -632,7 +714,7 @@ alg_info_parse_str (struct alg_info *alg_info
 
 	/* use default if nul esp string */
 	if (!*alg_str) {
-	    (*alg_info_add)(alg_info, 0, 0, 0, 0, 0, 0);
+	    (*alg_info_add)(alg_info, 0, 0, 0, 0, 0, 0, 0);
 	}
 
 	for(ret=0,ptr=alg_str;ret<ST_EOF;) {

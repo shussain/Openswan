@@ -1,4 +1,4 @@
-/testing/pluto/basic-pluto-01/eroutewait.sh trap
+/testing/pluto/bin/wait-for-pluto-started
 ipsec auto --up  westnet-eastnet-aes128
 
 ipsec look

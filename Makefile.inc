@@ -197,6 +197,7 @@ INSTCONFFLAGS=
 
 # extra compile flags, for userland and kernel stuff, e.g. -g for debug info
 # you can add to this in the defaults file using +=
+WALL?=-Wall
 USERCOMPILE?=-g ${WERROR} ${PORTDEFINE}
 #USERCOMPILE?=-g -O3 ${WERROR} 
 KLIPSCOMPILE=-O3
@@ -263,18 +264,6 @@ RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
 
 ## build environment variations
 ##
-
-# set this to a place where you have installed a bind9.3 
-# snapshot (20021115 or better). A bind 9.2, particularly a RedHat
-# installed one in RH 7.2, won't work - you wind up depending upon
-# openssl.
-
-BIND9STATICLIBDIR?=/usr/lib
-
-# if you install elsewere, you may need to point the include files to it.
-#BIND9STATICLIBDIR?=/sandel/lib
-#BIND9INCDIR?=/sandel/include
-
 
 #
 # USE_ variables determine if features are compiled into Openswan.
@@ -472,6 +461,9 @@ ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+=${LIBSHA2} ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
 endif
 
+# some OSs do not need this.
+LIBCRYPT?=-lcrypt
+
 LIBPOLICYDIR=${OPENSWANSRCDIR}/linux/lib/libipsecpolicy
 POLICYLIB=${OBJDIRTOP}/lib/libipsecpolicy/libipsecpolicy.a
 
@@ -486,6 +478,12 @@ export LIBMD5 LIBMD2 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
+
+
+# NEED_ things are compile time things. Just provide defaults as documentation.
+
+# needs getopt_long_only() function.
+NEEDS_GETOPT?=false
 
 # for emacs
 #

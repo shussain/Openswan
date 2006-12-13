@@ -1014,8 +1014,9 @@ in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
  */
 
 bool
-out_struct(const void *struct_ptr, struct_desc *sd
-	   , pb_stream *outs, pb_stream *obj_pbs)
+out_struct_where(const void *struct_ptr, struct_desc *sd
+		 , pb_stream *outs, pb_stream *obj_pbs
+		 , const char *where)
 {
     err_t ugh = NULL;
     const u_int8_t *inp = struct_ptr;
@@ -1174,7 +1175,7 @@ out_struct(const void *struct_ptr, struct_desc *sd
     }
 
     /* some failure got us here: report it */
-    loglog(RC_LOG_SERIOUS, ugh);	/* ??? serious, but errno not relevant */
+    loglog(RC_LOG_SERIOUS, "out_struct from %s - %s", where, ugh);	/* ??? serious, but errno not relevant */
     return FALSE;
 }
 
@@ -1296,3 +1297,11 @@ close_output_pbs(pb_stream *pbs)
     if (pbs->container != NULL)
 	pbs->container->cur = pbs->cur;	/* pass space utilization up */
 }
+
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */

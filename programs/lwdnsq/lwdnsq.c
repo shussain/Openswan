@@ -44,9 +44,7 @@ char tncfg_c_version[] = "RCSID $Id: lwdnsq.c,v 1.23 2005/08/26 19:13:48 mcr Exp
 #include <lwres/netdb.h>
 #include <lwres/async.h>
 
-#if defined(__CYGWIN__) || (defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-#define getopt_long_only getopt_long
-#endif
+#include "getoptlong.h"
 
 #include "lwdnsq.h"
 
@@ -153,7 +151,7 @@ static int cmdparse(dnskey_glob *gs,
 	argc=0;
 	
 	/* skip initial spaces */
-	while(cmdline && isspace(*cmdline)) {
+	while(cmdline && isspace((int)*cmdline)) {
 		cmdline++;
 	}
 
@@ -165,7 +163,7 @@ static int cmdparse(dnskey_glob *gs,
 	     */
 	    argv[argc++]=arg;
 	  }
-	  while(cmdline && isspace(*cmdline)) {
+	  while(cmdline && isspace((int)*cmdline)) {
 	    cmdline++;
 	  }
 	}
@@ -217,11 +215,11 @@ static int cmdread(dnskey_glob *gs,
 		gs->cmdloc=0;
 		return 0;
 	}
-	memcpy(gs->cmdbuf+gs->cmdloc, buf, len);
+	memcpy((unsigned char *)gs->cmdbuf+gs->cmdloc, (unsigned char *)buf, len);
 	gs->cmdloc+=len;
 	gs->cmdbuf[gs->cmdloc]='\0';
 
-	while((nl = strchr(gs->cmdbuf, '\n')) != NULL) {
+	while((nl = strchr((char *)gs->cmdbuf, '\n')) != NULL) {
 		/* found a newline, so turn it into a \0, and process the
 		 * command, and then we will pull the rest of the buffer
 		 * up.
@@ -229,10 +227,10 @@ static int cmdread(dnskey_glob *gs,
 		*nl='\0';
 		cmdlen= nl - gs->cmdbuf +1;
 
-		cmdparse(gs, gs->cmdbuf);
+		cmdparse(gs, (char *)gs->cmdbuf);
 
 		gs->cmdloc -= cmdlen;
-		memmove(gs->cmdbuf, gs->cmdbuf+cmdlen, gs->cmdloc);
+		memmove((unsigned char *)gs->cmdbuf, (unsigned char *)gs->cmdbuf+cmdlen, gs->cmdloc);
 	}
 	return 1;
 }
@@ -294,7 +292,7 @@ main(int argc, char *argv[])
 		exit(5);
 	}
 
-	while((c = getopt_long_only(argc, argv, "dgl:siXZ", longopts, 0)) != EOF) {
+	while((c = getopt_long(argc, argv, "dgl:siXZ", longopts, 0)) != EOF) {
 		switch(c) {
 		case 'd':
 			gs.debug+=2;
