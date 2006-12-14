@@ -51,6 +51,12 @@
 #include <sys/endian.h>
 #endif
 
+/**
+ * macro used to align offset or pointer 'n' on 'a' bytes.
+ * a must be a power of 2 and greater then 1.
+ */
+#define HIFN_ALIGN(n,a) (((n)+((a)-1)) & ~((a)-1))
+
 /*
  * Some PCI configuration space offset defines.  The names were made
  * identical to the names used by the Linux kernel.
@@ -83,13 +89,15 @@
  * any command the driver implements.
  *
  * MAX_COMMAND = base command + mac command + encrypt command +
- *			mac-key + rc4-key
- * MAX_RESULT  = base result + mac result + mac + encrypt result
+ *                      compress command + mac-key + rc4-key
+ * MAX_RESULT  = base result + mac result + mac + encrypt result +
+ *                      compress result
  *			
- *
+ * Because the dma engine can only dma to locations aligned on 4 bytes, the
+ * sizes are bumped up a bit.
  */
-#define	HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 260)
-#define	HIFN_MAX_RESULT		(8 + 4 + 20 + 4)
+#define	HIFN_MAX_COMMAND	HIFN_ALIGN(8 + 8 + 8 + 8 + 64 + 260, 4)
+#define	HIFN_MAX_RESULT		HIFN_ALIGN(8 + 4 + 20 + 4 + 2,       4)
 
 /*
  * hifn_desc_t
@@ -124,7 +132,7 @@ typedef struct hifn_desc {
 #define	HIFN_0_PUSTAT		0x14	/* Processing Unit Status/Chip ID */
 #define	HIFN_0_FIFOSTAT		0x18	/* FIFO Status */
 #define	HIFN_0_FIFOCNFG		0x1c	/* FIFO Configuration */
-#define HIFN_0_PUCTRL2          0x28    /* Processing Unit Control -- second mapping */
+#define HIFN_0_PUCTRL2          0x28    /* Processing Unit Control -- 64-bit compat mapping */
 #define HIFN_0_MUTE1            0x80
 #define HIFN_0_MUTE2            0x90
 #define	HIFN_0_SPACESIZE	0x100	/* Register space size */
@@ -156,7 +164,7 @@ typedef struct hifn_desc {
 #define	HIFN_PUCNFG_DSZ_2M	0x6000	/* 2m dram */
 #define	HIFN_PUCNFG_DSZ_4M	0x8000	/* 4m dram */
 #define	HIFN_PUCNFG_DSZ_8M	0xa000	/* 8m dram */
-#define	HIFN_PUNCFG_DSZ_16M	0xc000	/* 16m dram */
+#define	HIFN_PUCNFG_DSZ_16M	0xc000	/* 16m dram */
 #define	HIFN_PUCNFG_DSZ_32M	0xe000	/* 32m dram */
 #define	HIFN_PUCNFG_DRAMREFRESH	0x1800	/* DRAM refresh rate mask */
 #define	HIFN_PUCNFG_DRFR_512	0x0000	/* 512 divisor of ECLK */
@@ -406,9 +414,9 @@ typedef struct hifn_desc {
 #define	HIFN_PUBOPe_OP_COPY  	15	/*  copy */
 
 /* Public operand length register (HIFN_1_PUB_OPLEN) */
-#define	HIFN_PUBOPeLEN_MOD_SHIFT 24	
+#define	HIFN_PUBOPeLEN_MOD_SHIFT 0	
 #define	HIFN_PUBOPeLEN_EXP_SHIFT 8
-#define	HIFN_PUBOPeLEN_RED_SHIFT 0
+#define	HIFN_PUBOPeLEN_RED_SHIFT 24
 
 /* Public status register (HIFN_1_PUB_STATUS) */
 #define	HIFN_PUBSTS_DONE	0x00000001	/* operation done */
@@ -482,25 +490,110 @@ typedef struct hifn_desc {
 /*
  * Structure to help build up the command data structure.
  */
-typedef struct hifn_base_command {
+typedef struct __attribute__((packed)) hifn_base_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t session_num;
 	volatile u_int16_t total_source_count;
 	volatile u_int16_t total_dest_count;
 } hifn_base_command_t;
 
-#define	HIFN_BASE_CMD_MAC		0x0400
-#define	HIFN_BASE_CMD_CRYPT		0x0800
-#define	HIFN_BASE_CMD_DECODE		0x2000
-#define	HIFN_BASE_CMD_SRCLEN_M		0xc000
-#define	HIFN_BASE_CMD_SRCLEN_S		14
-#define	HIFN_BASE_CMD_DSTLEN_M		0x3000
-#define	HIFN_BASE_CMD_DSTLEN_S		12
-#define	HIFN_BASE_CMD_LENMASK_HI	0x30000
-#define	HIFN_BASE_CMD_LENMASK_LO	0x0ffff
+// bits in masks
+#define HIFN_BASE_CMD_IGNORE_DEST_COUNT 0x0001
+#define HIFN_BASE_CMD_DEST_ALIGN_M      0x0030
+#define HIFN_BASE_CMD_DEST_ALIGN_S      3
+#define HIFN_BASE_CMD_COMP              0x0100
+#define HIFN_BASE_CMD_PAD               0x0200
+#define HIFN_BASE_CMD_MAC               0x0400
+#define HIFN_BASE_CMD_CRYPT             0x0800
+#define HIFN_BASE_CMD_DISABLE_DEST_FIFO 0x1000
+#define HIFN_BASE_CMD_COMMAND_MASK      0xE000
+#define HIFN_BASE_CMD_ENCODE            0x0000
+#define HIFN_BASE_CMD_DECODE            0x2000
+#define HIFN_BASE_CMD_READ_RAM          0x4000
+#define HIFN_BASE_CMD_WRITE_RAM         0x6000
+
+// bits in session_num and src/dst counts
+#define HIFN_BASE_CMD_SRCLEN_M          0xc000
+#define HIFN_BASE_CMD_SRCLEN_S          14
+#define HIFN_BASE_CMD_DSTLEN_M          0x3000
+#define HIFN_BASE_CMD_DSTLEN_S          12
+#define HIFN_BASE_CMD_SESSION_NUM       0x00FF
+
+#define HIFN_BASE_CMD_LENMASK_S         16
+#define HIFN_BASE_CMD_LENMASK_HI        0x30000
+#define HIFN_BASE_CMD_LENMASK_LO        0x0ffff
+
+#define HIFN_BASE_CMD_SRCLEN_FROM_CMD(cmd) \
+        /* bottom bits */ \
+        (unsigned)(le16_to_cpu(cmd->total_source_count)) + \
+        /* top bits */ \
+        ((((unsigned)le16_to_cpu(cmd->session_num) & HIFN_BASE_CMD_SRCLEN_M) >> HIFN_BASE_CMD_SRCLEN_S) << HIFN_BASE_CMD_LENMASK_S)
+#define HIFN_BASE_CMD_DSTLEN_FROM_CMD(cmd) \
+        /* bottom bits */ \
+        (unsigned)(le16_to_cpu(cmd->total_dest_count)) + \
+        /* top bits */ \
+        ((((unsigned)le16_to_cpu(cmd->session_num) & HIFN_BASE_CMD_DSTLEN_M) >> HIFN_BASE_CMD_DSTLEN_S) << HIFN_BASE_CMD_LENMASK_S)
+
+typedef struct __attribute__((packed)) hifn_base_result {
+        volatile u_int16_t masks;
+        volatile u_int16_t session_num;
+        volatile u_int16_t total_source_count;
+        volatile u_int16_t total_dest_count;
+} hifn_base_result_t;
+
+#define HIFN_BASE_RES_SRCLEN_FROM_RES(res) \
+        /* bottom bits */ \
+        (unsigned)(le16_to_cpu(res->total_source_count)) + \
+        /* top bits */ \
+        ((((unsigned)le16_to_cpu(res->session_num) & HIFN_BASE_CMD_SRCLEN_M) >> HIFN_BASE_CMD_SRCLEN_S) << HIFN_BASE_CMD_LENMASK_S)
+#define HIFN_BASE_RES_DSTLEN_FROM_RES(res) \
+        /* bottom bits */ \
+        (unsigned)(le16_to_cpu(res->total_dest_count)) + \
+        /* top bits */ \
+        ((((unsigned)le16_to_cpu(res->session_num) & HIFN_BASE_CMD_DSTLEN_M) >> HIFN_BASE_CMD_DSTLEN_S) << HIFN_BASE_CMD_LENMASK_S)
+
+
+// bits in masks
+#define HIFN_BASE_RES_DEST_OVERRUN      0x0100
+
+// bits in session num
+#define HIFN_BASE_RES_SRCLEN_M          0xc000
+#define HIFN_BASE_RES_SRCLEN_S          14
+#define HIFN_BASE_RES_DSTLEN_M          0x3000
+#define HIFN_BASE_RES_DSTLEN_S          12
+#define HIFN_BASE_RES_SESSION_NUM       0x00FF
 
 /*
- * Structure to help build up the command data structure.
+ * Structure to help build up the compression command data structure.
+ */
+typedef struct hifn_comp_command {
+	volatile u_int16_t masks;
+	volatile u_int16_t header_skip;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
+} hifn_comp_command_t;
+
+#define	HIFN_COMP_CMD_SRCLEN_M          0xc000
+#define	HIFN_COMP_CMD_SRCLEN_S          14
+#define HIFN_COMP_CMD_CLEAR_HIST        0x0010
+#define HIFN_COMP_CMD_UPDATE_HIST       0x0008
+#define HIFN_COMP_CMD_STRIP_0_RESTART   0x0004
+#define HIFN_COMP_CMD_MPPC              0x0001
+
+typedef struct hifn_comp_result {
+        volatile u_int16_t masks;
+        volatile u_int16_t crc;
+} hifn_comp_result_t;
+
+// bits in masks
+#define HIFN_COMP_RES_LCB_M             0xFF00
+#define HIFN_COMP_RES_LCB_S             8
+#define HIFN_COMP_RES_RESTART           0x0004
+#define HIFN_COMP_RES_DCMP_SUCCESS      0x0002
+#define HIFN_COMP_RES_SOURCE_NOT_ZERO   0x0001
+
+/*
+ * Structure to help build up the encryption command data structure.
  */
 typedef struct hifn_crypt_command {
 	volatile u_int16_t masks;
@@ -531,8 +624,16 @@ typedef struct hifn_crypt_command {
 #define	HIFN_CRYPT_CMD_KSZ_192		0x0200		/*   192 bit */
 #define	HIFN_CRYPT_CMD_KSZ_256		0x0400		/*   256 bit */
 
+typedef struct hifn_crypt_result {
+        volatile u_int16_t masks;
+        volatile u_int16_t reserved;
+} hifn_crypt_result_t;
+
+//bits in masks
+#define HIFN_CRYPT_RES_SOURCE_NOT_ZERO  0x0001
+
 /*
- * Structure to help build up the command data structure.
+ * Structure to help build up the hashing command data structure.
  */
 typedef struct hifn_mac_command {
 	volatile u_int16_t masks;
@@ -554,6 +655,17 @@ typedef struct hifn_mac_command {
 #define	HIFN_MAC_CMD_APPEND		0x0040
 #define	HIFN_MAC_CMD_SRCLEN_M		0xc000
 #define	HIFN_MAC_CMD_SRCLEN_S		14
+
+typedef struct hifn_mac_result {
+        volatile u_int16_t masks;
+        volatile u_int16_t reserved;
+        volatile u_int16_t mac[0];
+} hifn_mac_result_t;
+
+//bits in masks
+#define HIFN_MAC_RES_MISCOMPARE       0x0002
+#define HIFN_MAC_RES_SOURCE_NOT_ZERO  0x0001
+
 
 /*
  * MAC POS IPsec initiates authentication after encryption on encodes

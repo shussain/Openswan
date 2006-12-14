@@ -96,7 +96,7 @@ struct hifn_dma {
 	struct hifn_command	*hifn_commands[HIFN_D_RES_RSIZE];
 
 	u_char			command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
-	u_char			result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
+	u_char			result_bufs[HIFN_D_RES_RSIZE][HIFN_MAX_RESULT];
 	u_int32_t		slop[HIFN_D_CMD_RSIZE];
 
 	u_int64_t		test_src, test_dst;
@@ -115,19 +115,16 @@ struct hifn_session {
 	u_int8_t hs_iv[HIFN_MAX_IV_LENGTH];
 };
 
-#define	HIFN_RING_SYNC(sc, r, i, f)					\
-	/* DAVIDM bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap, (f)) */
+#define	HIFN_RING_SYNC(sc, r, i, f)	wmb()
 
 #define	HIFN_CMDR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), cmdr, (i), (f))
 #define	HIFN_RESR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), resr, (i), (f))
 #define	HIFN_SRCR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), srcr, (i), (f))
 #define	HIFN_DSTR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), dstr, (i), (f))
 
-#define	HIFN_CMD_SYNC(sc, i, f)						\
-	/* DAVIDM bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap, (f)) */
+#define	HIFN_CMD_SYNC(sc, i, f)		wmb()				
 
-#define	HIFN_RES_SYNC(sc, i, f)						\
-	/* DAVIDM bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap, (f)) */
+#define	HIFN_RES_SYNC(sc, i, f)		wmb()
 
 typedef int bus_size_t;
 
@@ -161,6 +158,7 @@ struct hifn_softc {
 	int			sc_irq;
 
 	u_int32_t		sc_dmaier;
+        u_int32_t               sc_puier;
 	u_int32_t		sc_drammodel;	/* 1=dram, 0=sram */
 	u_int32_t		sc_pllconfig;	/* 7954/7955/7956 PLL config */
 
@@ -198,7 +196,9 @@ struct hifn_softc {
 	struct list_head	sc_pk_q;        /* queue of PK requests */
 	spinlock_t		sc_pk_lock;	/* PK lock (queue + feed) */
 	struct hifn_pkq	       *sc_pk_qcur;	/* current processing request*/
-	
+	struct timer_list       sc_pk_timer;	/* timer for PK engine failure */
+
+	unsigned int            sc_pk_spurious;
 
 	struct miscdevice       sc_miscdev;
 };
@@ -288,17 +288,20 @@ struct hifn_operand {
 
 struct hifn_command {
 	u_int16_t session_num;
-	u_int16_t base_masks, cry_masks, mac_masks;
+	u_int16_t base_masks, comp_masks, cry_masks, mac_masks;
 	u_int8_t iv[HIFN_MAX_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 	int cklen;
 	int sloplen, slopidx;
+        int dstu, dsti;         // which buffers the command used
+        int mac_len;            // bytes returned for alg chosen
+        int init_dest_count;    // dest buf len given to the chip
 
 	struct hifn_operand src;
 	struct hifn_operand dst;
 
 	struct hifn_softc *softc;
 	struct cryptop *crp;
-	struct cryptodesc *enccrd, *maccrd;
+	struct cryptodesc *compcrd, *enccrd, *maccrd;
 };
 
 #define	src_skb		src.u.skb

@@ -208,7 +208,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 	 * The spinlock is to prevent any other process from accessing or deleting
 	 * the eroute while we are using and updating it.
 	 */
-	spin_lock(&eroute_lock);
+	spin_lock_bh(&eroute_lock);
 	
 	ixs->eroute = ipsec_findroute(&ixs->matcher);
 
@@ -420,7 +420,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			ixs->eroute->er_last = ixs->skb;
 			ixs->skb = NULL;
 			ixs->stats->tx_dropped++;
-			spin_unlock(&eroute_lock);
+			spin_unlock_bh(&eroute_lock);
 			return IPSEC_XMIT_STOLEN;
 		}
 		ixs->outgoing_said = ixs->eroute->er_said;
@@ -447,7 +447,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 					       "Failed, tried to allocate %d bytes for source ident.\n", 
 					       len);
 					ixs->stats->tx_dropped++;
-					spin_unlock(&eroute_lock);
+					spin_unlock_bh(&eroute_lock);
 					return IPSEC_XMIT_ERRMEMALLOC;
 				}
 				memcpy(ixs->ips.ips_ident_s.data, ixs->eroute->er_ident_s.data, len);
@@ -467,7 +467,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 					       "Failed, tried to allocate %d bytes for dest ident.\n", 
 					       len);
 					ixs->stats->tx_dropped++;
-					spin_unlock(&eroute_lock);
+					spin_unlock_bh(&eroute_lock);
 					return IPSEC_XMIT_ERRMEMALLOC;
 				}
 				memcpy(ixs->ips.ips_ident_d.data, ixs->eroute->er_ident_d.data, len);
@@ -475,7 +475,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		}
 	}
 
-	spin_unlock(&eroute_lock);
+	spin_unlock_bh(&eroute_lock);
 	return IPSEC_XMIT_OK;
 }
 
@@ -727,7 +727,7 @@ ipsec_tunnel_xsm_complete(
 	ixs->matcher.sen_proto = ixs->iph->protocol;
 	ipsec_extract_ports(ixs->iph, &ixs->matcher);
 
-	spin_lock(&eroute_lock);
+	spin_lock_bh(&eroute_lock);
 	ixs->eroute = ipsec_findroute(&ixs->matcher);
 	if(ixs->eroute) {
 		ixs->outgoing_said = ixs->eroute->er_said;
@@ -735,7 +735,7 @@ ipsec_tunnel_xsm_complete(
 		ixs->eroute->er_count++;
 		ixs->eroute->er_lasttime = jiffies/HZ;
 	}
-	spin_unlock(&eroute_lock);
+	spin_unlock_bh(&eroute_lock);
 
 	KLIPS_PRINT((debug_tunnel & DB_TN_XMIT) &&
 			/* ((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc)) */

@@ -331,8 +331,9 @@ ipsec_spi_get_info(char *buffer,
 			}
 			
 			if(sa_p->ocf_in_use) {
-				len += ipsec_snprintf(buffer+len, length-len, " cryptoid=%d",
-					       sa_p->ocf_cryptoid);
+				len += ipsec_snprintf(buffer+len, length-len, " cryptoid=%u/%u",
+						      (sa_p->ocf_cryptoid>>32),
+						      ( sa_p->ocf_cryptoid&0xffffffff));
 			}
 			
 			len += ipsec_snprintf(buffer+len, length-len, " life(c,s,h)=");
@@ -609,13 +610,6 @@ ipsec_tncfg_get_info(char *buffer,
 		len = length;
 	return len;
 }
-
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-unsigned int natt_available = 1;
-#else
-unsigned int natt_available = 0;
-#endif
-module_param(natt_available, int, 0444);
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
 int

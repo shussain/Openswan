@@ -92,14 +92,15 @@ void ipsec_dmp_block(char *s, caddr_t bb, int len)
 {
 	int i;
 	unsigned char *b = bb;
-  
-	printk(KERN_INFO "klips_dmp: "
+
+	printk("klips_dmp: "
 	       "at %s, len=%d:\n", s, len);
 	
+        //if (len>512) len = 512;
+  
 	for(i = 0; i < len; i++ /*, c++*/) {
 		if(!(i % 16)) {
-			printk(KERN_INFO
-			       "klips_debug:   @%03x:",
+			printk("klips_debug:   @%03x:",
 			       i);
 		}
 		printk(" %02x", b[i]);

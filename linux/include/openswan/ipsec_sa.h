@@ -151,6 +151,7 @@ struct ipsec_sa
 	__u32		ips_pid;		/* PID of process that initiated this SA */
 	__u8		ips_authalg;		/* auth algorithm for this SA */
 	__u8		ips_encalg;		/* enc algorithm for this SA */
+	__u8		ips_compalg;		/* comp algorithm for this SA */
 
 	struct ipsec_stats ips_errs;
 

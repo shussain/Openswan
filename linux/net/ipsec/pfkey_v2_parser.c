@@ -189,7 +189,9 @@ pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 {
         int rc;
 	KLIPS_PRINT(debug_pfkey, "Calling SA_INIT\n");
+printk ("*** pfkey_ipsec_sa_init calling ipsec_sa_init()\n");
 	rc = ipsec_sa_init(ipsp);
+printk ("*** pfkey_ipsec_sa_init rc=%d\n", rc);
         return rc;
 }
 

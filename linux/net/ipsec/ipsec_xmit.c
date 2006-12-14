@@ -637,6 +637,8 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	ixs->iph = (struct iphdr *)ixs->dat;
 	ixs->iph->tot_len = htons(ixs->skb->len);
 
+        ixs->skb->nh.iph = ixs->iph;
+
 	return IPSEC_XMIT_OK;
 }
 
@@ -977,6 +979,11 @@ ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
 	unsigned int old_tot_len;
 #endif
 	int flags = 0;
+
+#ifdef CONFIG_KLIPS_OCF
+       if (ixs->ipsp->ocf_in_use)
+               return(ipsec_ocf_xmit(ixs));
+#endif
 
 #ifdef CONFIG_KLIPS_DEBUG
 	old_tot_len = ntohs(ixs->iph->tot_len);
@@ -1947,7 +1954,7 @@ ipsec_xsm(struct ipsec_xmit_state *ixs)
 	/*
 	 * make sure nothing is removed from underneath us
 	 */
-	spin_lock(&tdb_lock);
+	spin_lock_bh(&tdb_lock);
 
 	/*
 	 * if we have a valid said,  then we must check it here to ensure it
@@ -1981,7 +1988,7 @@ ipsec_xsm(struct ipsec_xmit_state *ixs)
 			 * things are on hold until we return here in the next/new state
 			 * we check our SA is valid when we return
 			 */
-			spin_unlock(&tdb_lock);
+			spin_unlock_bh(&tdb_lock);
 			return;
 		} else {
 			/* bad result, force state change to done */
@@ -1995,7 +2002,7 @@ ipsec_xsm(struct ipsec_xmit_state *ixs)
 	/*
 	 * all done with anything needing locks
 	 */
-	spin_unlock(&tdb_lock);
+	spin_unlock_bh(&tdb_lock);
 
 	/* we are done with this SA */
 	if (ixs->ipsp) {

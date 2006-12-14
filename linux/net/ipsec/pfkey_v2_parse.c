@@ -98,9 +98,9 @@ struct satype_tbl {
 #else /* __KERNEL__ */
 	{ SA_ESP,	SADB_SATYPE_ESP,	"ESP"  },
 	{ SA_AH,	SADB_SATYPE_AH,		"AH"   },
-	{ SA_IPIP,	K_SADB_X_SATYPE_IPIP,	"IPIP" },
-	{ SA_COMP,	K_SADB_X_SATYPE_COMP,	"COMP" },
-	{ SA_INT,	K_SADB_X_SATYPE_INT,	"INT" },
+	{ SA_IPIP,	SADB_X_SATYPE_IPIP,	"IPIP" },
+	{ SA_COMP,	SADB_X_SATYPE_COMP,	"COMP" },
+	{ SA_INT,	SADB_X_SATYPE_INT,	"INT" },
 #endif /* __KERNEL__ */
 	{ 0,		0,			"UNKNOWN" }
 };

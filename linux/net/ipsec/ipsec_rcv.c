@@ -1048,7 +1048,7 @@ ipsec_rcv_auth_calc(struct ipsec_rcv_state *irs)
 
 	if(irs->authfuncs ||
 #ifdef CONFIG_KLIPS_OCF
-			irs->ipsp->ocf_in_use ||
+			(irs->ipsp->ocf_in_use && irs->ipsp->ips_authalg) ||
 #endif
 			irs->ixt_a) {
 		if(!irs->authenticator) {
@@ -1098,14 +1098,14 @@ ipsec_rcv_auth_chk(struct ipsec_rcv_state *irs)
 
 	if(irs->authfuncs ||
 #ifdef CONFIG_KLIPS_OCF
-			irs->ipsp->ocf_in_use ||
+			(irs->ipsp->ocf_in_use && irs->ipsp->ips_authalg) ||
 #endif
 			irs->ixt_a) {
 		if (memcmp(irs->hash, irs->authenticator, irs->authlen)) {
 			irs->ipsp->ips_errs.ips_auth_errs += 1;
-			KLIPS_PRINT(debug_rcv & DB_RX_INAU,
+			KLIPS_ERROR(debug_rcv & DB_RX_INAU,
 				    "klips_debug:ipsec_rcv: "
-				    "auth failed on incoming packet from %s: hash=%08x%08x%08x auth=%08x%08x%08x, dropped\n",
+				    "auth failed on incoming packet from %s: calculated=%08x%08x%08x packetauth=%08x%08x%08x, dropped\n",
 				    irs->ipsaddr_txt,
 				    ntohl(*(__u32*)&irs->hash[0]),
 				    ntohl(*(__u32*)&irs->hash[4]),
@@ -1195,7 +1195,7 @@ ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	ipp = irs->ipp = skb->nh.iph;
 	irs->iphlen = ipp->ihl<<2;
 	skb->h.raw = skb->nh.raw + irs->iphlen;
-	
+
 	/* zero any options that there might be */
 	memset(&(IPCB(skb)->opt), 0, sizeof(struct ip_options));
 
@@ -1700,7 +1700,7 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 	/*
 	 * make sure nothing is removed from underneath us
 	 */
-	spin_lock(&tdb_lock);
+	spin_lock_bh(&tdb_lock);
 
 	/*
 	 * if we have a valid said,  then we must check it here to ensure it
@@ -1734,13 +1734,13 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 			 * things are on hold until we return here in the next/new state
 			 * we check our SA is valid when we return
 			 */
-			spin_unlock(&tdb_lock);
+			spin_unlock_bh(&tdb_lock);
 			return;
 		} else {
 			/* bad result, force state change to done */
 			KLIPS_PRINT(debug_rcv,
-					"klips_debug:ipsec_rsm: "
-					"processing completed due to error %d.\n", rc);
+					"klips_debug:ipsec_rsm: processing irs->state=%d "
+                                        "completed due to error %d.\n", irs->state, rc);
 			irs->state = IPSEC_RSM_DONE;
 		}
 	}
@@ -1748,7 +1748,7 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 	/*
 	 * all done with anything needing locks
 	 */
-	spin_unlock(&tdb_lock);
+	spin_unlock_bh(&tdb_lock);
 
 	if (irs->skb) {
 		ipsec_kfree_skb(irs->skb);

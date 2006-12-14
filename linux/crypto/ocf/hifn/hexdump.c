@@ -69,3 +69,4 @@ void hexdump(const unsigned char *base, unsigned int offset, int len)
 		hexdump_printf("\n");
 	}
 }
+

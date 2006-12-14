@@ -299,8 +299,8 @@ struct sadb_protocol {
 #define SADB_EXT_MAX                  30
 
 /*
- * NOTE that there is a limit of 63 extensions due to current implementation
- * in pfkeyv2_ext_bits.c (not a long long)
+ * NOTE that there is a limit of 31 extensions due to current implementation
+ * in pfkeyv2_ext_bits.c
  */
 enum sadb_extension_t {
 	K_SADB_EXT_RESERVED=SADB_RESERVED,
@@ -367,6 +367,7 @@ enum sadb_extension_t {
 #define SADB_SATYPE_OSPFV2    6
 #define SADB_SATYPE_RIPV2     7
 #define SADB_SATYPE_MIP       8
+#define SADB_X_SATYPE_IPIP    9
 #ifdef KERNEL26_HAS_KAME_DUPLICATES
 #define SADB_X_SATYPE_IPCOMP  9   /* ICK! */
 #endif
@@ -384,9 +385,9 @@ enum sadb_satype {
 	K_SADB_SATYPE_MIP=SADB_SATYPE_MIP,
 	K_SADB_X_SATYPE_IPIP=9,
 	K_SADB_X_SATYPE_COMP=10,
-	K_SADB_X_SATYPE_INT=11,
-	K_SADB_X_SATYPE_MAX
+	K_SADB_X_SATYPE_INT=11
 };
+#define K_SADB_SATYPE_MAX       11
 
 enum sadb_sastate {
   K_SADB_SASTATE_LARVAL=0,
