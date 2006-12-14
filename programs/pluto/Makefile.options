@@ -217,9 +217,7 @@ ifeq ($(USE_XAUTH),true)
 XAUTH_DEFS=-DXAUTH -DMODECFG
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
-ifneq ($(BUILDENV), darwin)
-XAUTH_LLIBS=-lcrypt
-endif
+XAUTH_LLIBS=${LIBCRYPT}
 # if we use pam for password checking then add it too
 ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_USEPAM
@@ -238,10 +236,6 @@ endif
 
 ifeq ($(USE_NAT_TRAVERSAL),true)
 NAT_DEFS=-DNAT_TRAVERSAL -DVIRTUAL_IP 
-endif
-
-ifeq ($(USE_NAT_TRAVERSAL_TRANSPORT_MODE),true)
-NAT_DEFS+=-DI_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 endif
 
 ifeq ($(USE_LIBCURL),true)

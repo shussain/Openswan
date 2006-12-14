@@ -4,7 +4,7 @@ MANSRCDIR=${OPENSWANSRCDIR}/lib/libopenswan
 
 LEX=flex
 ifeq ($(USE_YACC),true)
-BISON=yacc -b parser
+BISON="yacc -b parser"
 else
 BISON=bison
 endif
@@ -15,12 +15,10 @@ OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 # Original flags
 INCLUDES+=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR}
 INCLUDES+=-I${OPENSWANSRCDIR}/include 
-CFLAGS+=${PORTINCLUDE} ${INCLUDES} 
+CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${PORTLASTINCLUDE}
 CFLAGS+=-DDEBUG
 CFLAGS+= $(USERCOMPILE)
-ifneq ($(BUILDENV),darwin)
-CFLAGS+= -Wall
-endif
+CFLAGS+= ${WALL}
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wpointer-arith

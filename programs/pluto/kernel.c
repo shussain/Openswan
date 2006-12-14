@@ -1380,6 +1380,12 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                 compalg = SADB_X_CALG_DEFLATE;
                 break;
 
+#if 1
+            case IPCOMP_LZS:
+                compalg = SADB_X_CALG_LZS;
+                break;
+#endif
+
             default:
                 loglog(RC_LOG_SERIOUS, "IPCOMP transform %s not implemented"
                     , enum_name(&ipcomp_transformid_names, st->st_ipcomp.attrs.transid));
@@ -1395,6 +1401,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst_client = &dst_client;
         said_next->spi = ipcomp_spi;
         said_next->esatype = ET_IPCOMP;
+	DBG_log("setting 'encalg' to compalg=%u\n", compalg);
         said_next->encalg = compalg;
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid + 2;
