@@ -339,7 +339,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 			       ret));
 	break;
 
-    case SADB_SATYPE_IPCOMP:
+    case SADB_X_SATYPE_IPCOMP:
 	DBG(DBG_KLIPS, DBG_log("ipcomp algregister(%p) alg_id=%d, "
 			       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
 			       "ret=%d",
