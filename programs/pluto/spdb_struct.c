@@ -2282,6 +2282,11 @@ parse_ipsec_sa_body(
 		    case IPCOMP_DEFLATE:    /* all we can handle! */
 			break;
 
+		    case IPCOMP_LZS:        /* can be handled if we have hardware.
+					     * Need to make sure we have hardware XXXX
+					     */
+			break;
+
 		    default:
 			DBG(DBG_CONTROL | DBG_CRYPT
 			    , DBG_log("unsupported IPCOMP Transform %s from %s"
