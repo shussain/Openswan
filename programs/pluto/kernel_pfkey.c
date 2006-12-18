@@ -845,6 +845,8 @@ pfkey_raw_eroute(const ip_address *this_host
     case ET_IPIP:
 	    satype = K_SADB_X_SATYPE_IPIP;
 	    break;
+    default:
+	bad_case(esatype);
     }
 
     if (!pfkey_msg_start(klips_op & KLIPS_OP_MASK, satype
@@ -1234,7 +1236,7 @@ pfkey_shunt_eroute(struct connection *c
 			      , htonl(spi)
 			      , SA_INT
 			      , sr->this.protocol
-			      , SADB_X_SATYPE_INT
+			      , ET_INT
 			      , null_proto_info, 0, op, buf2);
     }
 }
