@@ -1,5 +1,6 @@
-/* FreeS/WAN config file parser (parser.h)
+/* Openswan config file parser (parser.h)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
+ * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -50,6 +51,7 @@ enum keyword_string_config_field {
     KSF_ALSO,
     KSF_ALSOFLIP,
     KSF_ACCELERATION,
+    KSF_CONNALIAS,
     KSF_MAX
 };
 
@@ -93,6 +95,7 @@ enum keyword_numeric_config_field {
     KBF_IKELIFETIME,
     KBF_AGGRMODE,
     KBF_MODECONFIGPULL,
+    KBF_FORCEENCAP,
     KBF_MAX         
 };
 
@@ -122,7 +125,9 @@ enum keyword_string_conn_field {
     KSCF_ESPENCKEY    = 13,
     KSCF_ESPAUTHKEY   = 14,
     KSCF_SOURCEIP     = 15,
-    KSCF_MAX          = 16
+    KSCF_XAUTHUSERNAME= 16,
+    KSCF_SUBNETS      = 17,
+    KSCF_MAX          
 };
 
 
@@ -148,15 +153,16 @@ enum keyword_numeric_conn_field {
 
 /* these are bits set in a word */
 enum keyword_valid {
-    kv_config = LELEM(0),
-    kv_conn   = LELEM(1),
-    kv_leftright = LELEM(2),
-    kv_auto   = LELEM(3),
-    kv_manual = LELEM(4),
-    kv_alias  = LELEM(5),
+    kv_config = LELEM(0),     /* may be present in config section */
+    kv_conn   = LELEM(1),     /* may be present in conn section */
+    kv_leftright = LELEM(2),  /* comes in leftFOO and rightFOO varients */
+    kv_auto   = LELEM(3),     /* valid when keyingtype=auto */
+    kv_manual = LELEM(4),     /* valid when keyingtype=manual */
+    kv_alias  = LELEM(5),     /* is an alias for another keyword */
     kv_policy = LELEM(6),     /* is a policy affecting verb, processed specially */
     kv_processed = LELEM(7),  /* is processed, do not output literal string */
 };
+#define KV_CONTEXT_MASK (kv_config|kv_conn|kv_leftright)
 
 /* values keyexchange= */
 enum keyword_keyexchange {
@@ -185,6 +191,7 @@ enum keyword_satype {
 enum keyword_type {
     kt_string,             /* value is some string */
     kt_appendstring,       /* value is some string, append duplicates */
+    kt_appendlist,         /* value is some list, append duplicates */
     kt_filename,           /* value is a filename string */
     kt_dirname,            /* value is a dir name string */
     kt_bool,               /* value is an on/off type */
@@ -200,6 +207,7 @@ enum keyword_type {
     kt_subnet,             /* an IP address subnet */
     kt_idtype,             /* an ID type */
     kt_bitstring,          /* an encryption/authentication key */
+    kt_comment,            /* a value which is a cooked comment */
 };
 
 #define NOT_ENUM NULL
