@@ -29,7 +29,7 @@
 
 /****************************************************************************/
 
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 #include <unistd.h>
 #include <stdlib.h>
 
