@@ -159,18 +159,17 @@ pfkey_msg_hdr_build(struct sadb_ext**	pfkey_ext,
 	}
 
 	if(msg_type > SADB_MAX) {
-		DEBUGGING(PF_KEY_DEBUG_BUILD,
-			"pfkey_msg_hdr_build: "
+		ERROR("pfkey_msg_hdr_build: "
 			"msg type too large:%d.\n",
 			msg_type);
 		SENDERR(EINVAL);
 	}
 
 	if(satype > SADB_SATYPE_MAX) {
-		DEBUGGING(PF_KEY_DEBUG_BUILD,
-			"pfkey_msg_hdr_build: "
+		ERROR("pfkey_msg_hdr_build: "
 			"satype %d > max %d\n", 
 			satype, SADB_SATYPE_MAX);
+		abort();
 		SENDERR(EINVAL);
 	}
 
@@ -262,7 +261,8 @@ pfkey_sa_ref_build(struct sadb_ext **		pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
-#if SADB_EALG_MAX < 255	
+#if SADB_EALG_MAX < 255
+	/* note: encrypt can also be compression algorithm */
 	if(encrypt > SADB_EALG_MAX) {
 		DEBUGGING(PF_KEY_DEBUG_BUILD,
 			"pfkey_sa_build: "
