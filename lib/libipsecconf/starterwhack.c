@@ -349,6 +349,8 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 	struct whack_message msg;
 	int ret;
 
+	ret=0;
+
 	init_whack_msg(&msg);
 
 	msg.whack_key = TRUE;
