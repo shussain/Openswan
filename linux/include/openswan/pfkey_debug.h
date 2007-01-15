@@ -26,7 +26,7 @@
 # define DEBUGGING(level,args...) \
          KLIPS_PRINT(debug_pfkey, "klips_debug:" args)
 
-# define ERROR(args...) printk_ratelimit(KERN_ERR "klips:" args)
+# define ERROR(args...) if(printk_ratelimit()) printk(KERN_ERR "klips:" args)
 
 #else
 

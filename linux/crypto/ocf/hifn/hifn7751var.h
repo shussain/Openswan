@@ -201,6 +201,8 @@ struct hifn_softc {
 	unsigned int            sc_pk_spurious;
 
 	struct miscdevice       sc_miscdev;
+
+        uint32_t                sc_active_ops;
 };
 
 #define	HIFN_LOCK(_sc)		spin_lock_irqsave(&(_sc)->sc_mtx, l_flags)
@@ -277,7 +279,7 @@ struct hifn_operand {
 		struct uio *io;
 		unsigned char *buf;
 	} u;
-	void		*map;
+	dma_addr_t	map;
 	bus_size_t	mapsize;
 	int		nsegs;
 	struct {
@@ -290,6 +292,7 @@ struct hifn_command {
 	u_int16_t session_num;
 	u_int16_t base_masks, comp_masks, cry_masks, mac_masks;
 	u_int8_t iv[HIFN_MAX_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
+	u_int8_t using_mac, using_crypt, using_comp, is_encode;
 	int cklen;
 	int sloplen, slopidx;
         int dstu, dsti;         // which buffers the command used

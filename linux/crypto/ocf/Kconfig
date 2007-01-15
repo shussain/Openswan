@@ -98,4 +98,11 @@ config OCF_BENCH
 	  of OCF.  Also includes code to benchmark the IXP Access library
 	  for comparison.
 
+config OCF_PROFILE
+	bool "OCF operation profiling"
+	depends on OCF_OCF && X86_TSC
+	help
+	  Keep track of how much time is spent in each state of the OCF engine.
+          Report min/avarage/max values in /sysfs.
+
 endmenu

@@ -169,7 +169,6 @@ pfkey_msg_hdr_build(struct sadb_ext**	pfkey_ext,
 		ERROR("pfkey_msg_hdr_build: "
 			"satype %d > max %d\n", 
 			satype, SADB_SATYPE_MAX);
-		abort();
 		SENDERR(EINVAL);
 	}
 

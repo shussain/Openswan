@@ -20,6 +20,7 @@ obj-$(CONFIG_OCF_TALITOS)    += $(obj-base)talitos/
 obj-$(CONFIG_OCF_OCFNULL)    += $(obj-base)ocfnull/
 
 obj-$(CONFIG_OCF_BENCH)      += $(obj-base)ocf-bench.o
+obj-$(CONFIG_OCF_PROFILE)    += $(obj-base)cryptoprof.o
 
 obj-$(CONFIG_OCF_RANDOMHARVEST) += $(obj-base)random.o
 

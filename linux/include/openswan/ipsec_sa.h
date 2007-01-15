@@ -224,7 +224,17 @@ struct ipsec_sa
 //IPsecSAref_t	ips_ref_rel;
 
 	int			ocf_in_use;
-	int64_t		ocf_cryptoid;
+	u_int64_t		ocf_cryptoid;
+
+        /* certain parts of the ipsec_sa cannot be cleaned up under lock, so
+         * they are done from a workqueue (ipsec_gc_queue). */
+        struct work_struct gc_work;
+};
+
+extern void ipsec_skb_gc_flush (void);
+struct ipsec_skb_cb {
+	struct sk_buff     *skb;
+	struct work_struct  skb_work;
 };
 
 struct IPsecSArefSubTable

@@ -319,10 +319,16 @@ ipsec_print_ip(struct iphdr *ip)
 	if(sysctl_ipsec_debug_verbose) {
 		__u8 *c;
 		int len = ntohs(ip->tot_len) - ip->ihl*4;
-		
+
 		c = ((__u8*)ip) + ip->ihl*4;
-		ipsec_dmp_block("ip_print", c, len);
+		if(len>1024) {
+			len=1024;
+			ipsec_dmp_block("ip_print (short)", c, len);
+		} else {
+			ipsec_dmp_block("ip_print", c, len);
+		}
 	}
+		
 }
 #endif /* CONFIG_KLIPS_DEBUG */
 
@@ -498,7 +504,7 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	ixs->pyldsz = ntohs(ixs->iph->tot_len) - ixs->iphlen;
 	ixs->sa_len = KLIPS_SATOT(debug_tunnel, &ixs->ipsp->ips_said, 0, ixs->sa_txt, SATOT_BUF);
 	KLIPS_PRINT(debug_tunnel & DB_TN_OXFS,
-		    "klips_debug:ipsec_xmit_encap_once: "
+		    "klips_debug:ipsec_xmit_encap_init: "
 		    "calling output for <%s%s%s>, SA:%s\n", 
 		    IPS_XFORM_NAME(ixs->ipsp),
 		    ixs->sa_len ? ixs->sa_txt : " (error)");
@@ -589,6 +595,7 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 
 #ifdef CONFIG_KLIPS_IPCOMP
 	case IPPROTO_COMP:
+		//ixs->headroom += sizeof(struct ipcomphdr);
 		break;
 #endif /* CONFIG_KLIPS_IPCOMP */
 
@@ -598,12 +605,12 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	}
 	
 	KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
-		    "klips_debug:ipsec_xmit_encap_once: "
+		    "klips_debug:ipsec_xmit_encap_init: "
 		    "pushing %d bytes, putting %d, proto %d.\n", 
 		    ixs->headroom, ixs->tailroom, ixs->ipsp->ips_said.proto);
 	if(skb_headroom(ixs->skb) < ixs->headroom) {
 		printk(KERN_WARNING
-		       "klips_error:ipsec_xmit_encap_once: "
+		       "klips_error:ipsec_xmit_encap_init: "
 		       "tried to skb_push headroom=%d, %d available.  This should never happen, please report.\n",
 		       ixs->headroom, skb_headroom(ixs->skb));
 		ixs->stats->tx_errors++;
@@ -614,7 +621,7 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	ixs->ilen = ixs->skb->len - ixs->tailroom;
 	if(skb_tailroom(ixs->skb) < ixs->tailroom) {
 		printk(KERN_WARNING
-		       "klips_error:ipsec_xmit_encap_once: "
+		       "klips_error:ipsec_xmit_encap_init: "
 		       "tried to skb_put %d, %d available.  This should never happen, please report.\n",
 		       ixs->tailroom, skb_tailroom(ixs->skb));
 		ixs->stats->tx_errors++;
@@ -622,12 +629,12 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	}
 	skb_put(ixs->skb, ixs->tailroom);
 	KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
-		    "klips_debug:ipsec_xmit_encap_once: "
+		    "klips_debug:ipsec_xmit_encap_init: "
 		    "head,tailroom: %d,%d before xform.\n",
 		    skb_headroom(ixs->skb), skb_tailroom(ixs->skb));
 	ixs->len = ixs->skb->len;
 	if(ixs->len > 0xfff0) {
-		printk(KERN_WARNING "klips_error:ipsec_xmit_encap_once: "
+		printk(KERN_WARNING "klips_error:ipsec_xmit_encap_init: "
 		       "tot_len (%d) > 65520.  This should never happen, please report.\n",
 		       ixs->len);
 		ixs->stats->tx_errors++;
@@ -1005,7 +1012,7 @@ ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
 	{
 		if (old_tot_len > ntohs(ixs->iph->tot_len))
 			KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
-					"klips_debug:ipsec_xmit_encap_once: "
+					"klips_debug:ipsec_xmit_ipcomp: "
 					"packet shrunk from %d to %d bytes after compression, cpi=%04x (should be from spi=%08x, spi&0xffff=%04x.\n",
 					old_tot_len, ntohs(ixs->iph->tot_len),
 					ntohs(((struct ipcomphdr*)(((char*)ixs->iph) + ((ixs->iph->ihl) << 2)))->ipcomp_cpi),
@@ -1013,7 +1020,7 @@ ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
 					(__u16)(ntohl(ixs->ipsp->ips_said.spi) & 0x0000ffff));
 		else
 			KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
-					"klips_debug:ipsec_xmit_encap_once: "
+					"klips_debug:ipsec_xmit_ipcomp: "
 					"packet did not compress (flags = %d).\n",
 					flags);
 	}
@@ -1046,7 +1053,7 @@ ipsec_xmit_cont(struct ipsec_xmit_state *ixs)
 	ixs->iph->check = ip_fast_csum((unsigned char *)ixs->iph, ixs->iph->ihl);
 			
 	KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-		    "klips_debug:ipsec_xmit_encap_once: "
+		    "klips_debug:ipsec_xmit_cont: "
 		    "after <%s%s%s>, SA:%s:\n",
 		    IPS_XFORM_NAME(ixs->ipsp),
 		    ixs->sa_len ? ixs->sa_txt : " (error)");
@@ -1580,6 +1587,9 @@ ipsec_xmit_init(struct ipsec_xmit_state *ixs)
 #endif /* !CONFIG_KLIPS_IPIP */
 
 		case IPPROTO_COMP:
+                        ixs->headroom += sizeof(struct ipcomphdr);
+			if (ixs->ipsp->ocf_in_use)
+                                ixs->tailroom += sizeof(struct ipcomphdr);
 #ifdef CONFIG_KLIPS_IPCOMP
 			/*
 			  We can't predict how much the packet will

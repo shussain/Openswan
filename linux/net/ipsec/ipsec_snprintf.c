@@ -94,7 +94,7 @@ void ipsec_dmp_block(char *s, caddr_t bb, int len)
 	unsigned char *b = bb;
 
 	printk("klips_dmp: "
-	       "at %s, len=%d:\n", s, len);
+	       "at %s, len=%d, ptr=%p\n", s, len, b);
 	
         //if (len>512) len = 512;
   

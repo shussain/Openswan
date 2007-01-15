@@ -79,6 +79,7 @@
 #endif
 
 #include <opencrypto/cryptodev.h>
+#include <opencrypto/cryptoprof.h>
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4
@@ -132,7 +133,11 @@ struct cryptop {
 
 	u_int64_t	crp_sid;	/* Session ID */
 	int		crp_ilen;	/* Input data total length */
-	int		crp_olen;	/* Result total length */
+	int		crp_olen;	/* Result total length 
+                                         * Only modified after (de)compression.
+					 * Note: crp_olen is updated to the sum
+					 * of the result data + crd_inject.
+					 */
 
 	int		crp_etype;	/*
 					 * Error type (zero means no error).
@@ -143,6 +148,7 @@ struct cryptop {
 					 * (reset to a new one), so the caller
 					 * should always check and use the new
 					 * value on future requests.
+					 * ERANGE -- is compression fails.
 					 */
 	int		crp_flags;
 
@@ -170,6 +176,10 @@ struct cryptop {
 #endif
 	caddr_t		crp_mac;
 	int             crp_maclen;     /* size of buffer above */
+
+#if defined(CONFIG_OCF_PROFILE)
+        cryptop_ts_t    crp_times;
+#endif
 };
 
 #define CRYPTO_BUF_CONTIG	0x0

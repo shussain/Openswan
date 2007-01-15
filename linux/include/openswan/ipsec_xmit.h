@@ -79,6 +79,7 @@ enum ipsec_xmit_value
 struct ipsec_xmit_state
 {
 	struct sk_buff *skb;		/* working skb pointer */
+        struct sk_buff *pre_ipcomp_skb; /* skb before ipcomp was attempted */
 	struct net_device *dev;		/* working dev pointer */
 	struct ipsecpriv *prv;		/* Our device' private space */
 	struct sk_buff *oskb;		/* Original skb pointer */

@@ -82,6 +82,13 @@
 
 #include "ipsec_ocf.h"
 
+static int  ipsec_skb_gc_init (void);
+static void ipsec_skb_gc_cleanup (void);
+extern void ipsec_skb_gc_flush (void);
+static int ipsec_sa_gc_init (void);
+static void ipsec_sa_gc_cleanup (void);
+static void ipsec_sa_gc_enqueue(struct ipsec_sa *ips);
+static void ipsec_sa_gc_flush (void);
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
@@ -265,7 +272,16 @@ ipsec_sadb_init(void)
 		ipsec_sadb_hash[i] = NULL;
 	}
 	/* parts above are for the old style SADB hash table */
+
+	/* initialize the SKB garbage collection */
+	error = ipsec_skb_gc_init();
+        if (error)
+                goto error_skb;
 	
+        /* initialize the SA garbade collection */
+        error = ipsec_sa_gc_init ();
+        if (error)
+                goto error_gc;
 
 	/* initialise SA reference table */
 
@@ -284,12 +300,22 @@ ipsec_sadb_init(void)
 
 	/* allocate the first sub-table */
 	error = ipsec_SArefSubTable_alloc(0);
-	if(error) {
-		return error;
-	}
+	if(error)
+                goto error_table;
 
 	error = ipsec_saref_freelist_init();
-	return error;
+        if (error)
+                goto error_freelist;
+
+	return 0;
+
+error_freelist:
+error_table:
+	ipsec_skb_gc_cleanup();
+error_skb:
+        ipsec_sa_gc_cleanup();
+error_gc:
+        return error;
 }
 
 IPsecSAref_t
@@ -377,6 +403,9 @@ ipsec_sa_print(struct ipsec_sa *ips)
 	}
 	if(ips->ips_encalg) {
 		printk(" encalg=%u", ips->ips_encalg);
+	}
+	if(ips->ips_compalg) {
+		printk(" compalg=%u", ips->ips_compalg);
 	}
 	printk(" XFORM=%s%s%s", IPS_XFORM_NAME(ips));
 	if(ips->ips_replaywin) {
@@ -857,6 +886,11 @@ ipsec_sadb_cleanup(__u8 proto)
 
 	spin_unlock_bh(&tdb_lock);
 
+        /* flush out the SA garbage collection */
+        ipsec_sa_gc_flush();
+
+	/* flush out SKB gc code */
+	ipsec_skb_gc_flush();
 
 #if IPSEC_SA_REF_CODE
 	/* clean up SA reference table */
@@ -933,10 +967,16 @@ ipsec_sadb_free(void)
 					ipsec_sadb.refTable[table]->entry[entry] = NULL;
 				}
 			}
+                        /* flush out the SA garbade collection */
+                        ipsec_sa_gc_flush();
+
 			vfree(ipsec_sadb.refTable[table]);
 			ipsec_sadb.refTable[table] = NULL;
 		}
 	}
+
+        /* cleanup the SA garbade collection */
+        ipsec_sa_gc_cleanup();
 
 	return(error);
 }
@@ -1001,11 +1041,6 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 	}
 	ips->ips_iv = NULL;
 
-#ifdef CONFIG_KLIPS_OCF
-	if (ips->ocf_in_use)
-		ipsec_ocf_sa_free(ips);
-#endif
-
 	if(ips->ips_ident_s.data != NULL) {
 		memset((caddr_t)(ips->ips_ident_s.data),
                        0,
@@ -1022,313 +1057,425 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
         }
 	ips->ips_ident_d.data = NULL;
 
-	if (ips->ips_alg_enc||ips->ips_alg_auth) {
-		ipsec_alg_sa_wipe(ips);
-	}
-	
 	BUG_ON(atomic_read(&ips->ips_refcount) != 0);
 
-	memset((caddr_t)ips, 0, sizeof(*ips));
-	kfree(ips);
-	ips = NULL;
-
+        /* certain things cannot be cleaned up under lock, we punt those off
+         * to a work queue, see below */
+        ipsec_sa_gc_enqueue (ips);
+	
 	return 0;
 }
 
+// ------------------------------------------------------------------------
+// delayed garbage collection on skb's that might be allocated
+
+static struct workqueue_struct *ipsec_skb_queue = NULL;
+static void ipsec_skb_gc_func(void *param);
+
+static int
+ipsec_skb_gc_init (void)
+{
+        if (ipsec_skb_queue)
+                return 0;
+
+        ipsec_skb_queue = create_workqueue ("ipsec_skb");
+        if (!ipsec_skb_queue) {
+                printk(KERN_ERR "ipsec_skb_gc_init: "
+                        "Failed to create workqueue for ipsec SAs cleanup\n");
+                return -ENOMEM;
+        }
+
+        return 0;
+}
+
+static void
+ipsec_skb_gc_cleanup (void)
+{
+        if (ipsec_skb_queue) {
+                flush_workqueue (ipsec_skb_queue);
+                destroy_workqueue (ipsec_skb_queue);
+                ipsec_skb_queue = NULL;
+        }
+}
+
+void
+ipsec_skb_gc_flush (void)
+{
+        if (ipsec_skb_queue) {
+                flush_workqueue (ipsec_skb_queue);
+        }
+}
+
+void
+ipsec_skb_gc_enqueue(struct sk_buff *skb)
+{
+	struct ipsec_skb_cb *isc = (struct ipsec_skb_cb *)skb->cb;
+	isc->skb = skb;
+	
+        if (ipsec_skb_queue) {
+                INIT_WORK(&isc->skb_work, ipsec_skb_gc_func, isc);
+                queue_work(ipsec_skb_queue, &isc->skb_work);
+        } else {
+                printk(KERN_ERR "ipsec_sa_gc_init: "
+                        "no ipsec workqueue present for SKB cleanup, "
+                        "calling directly\n");
+                ipsec_skb_gc_func (isc);
+        }
+}
+
+static void 
+ipsec_skb_gc_func(void *param)
+{
+        struct ipsec_skb_cb *isc = param;
+	struct sk_buff *skb = isc->skb;
+
+	kfree_skb(skb);
+}
+
+// ------------------------------------------------------------------------
+// delayed garbage collection on ipsec SAs
+
+static struct workqueue_struct *ipsec_gc_queue = NULL;
+static void ipsec_sa_gc_func(void *param);
+
+static int
+ipsec_sa_gc_init (void)
+{
+        if (ipsec_gc_queue)
+                return 0;
+
+        ipsec_gc_queue = create_workqueue ("ipsec_gc");
+        if (!ipsec_gc_queue) {
+                printk(KERN_ERR "ipsec_sa_gc_init: "
+                        "Failed to create workqueue for ipsec SAs cleanup\n");
+                return -ENOMEM;
+        }
+
+        return 0;
+}
+
+static void
+ipsec_sa_gc_cleanup (void)
+{
+        if (ipsec_gc_queue) {
+                flush_workqueue (ipsec_gc_queue);
+                destroy_workqueue (ipsec_gc_queue);
+                ipsec_gc_queue = NULL;
+        }
+}
+
+static void
+ipsec_sa_gc_flush (void)
+{
+        if (ipsec_gc_queue) {
+                flush_workqueue (ipsec_gc_queue);
+        }
+}
+
+static void
+ipsec_sa_gc_enqueue(struct ipsec_sa *ips)
+{
+        if (ipsec_gc_queue) {
+                INIT_WORK(&ips->gc_work, ipsec_sa_gc_func, ips);
+                queue_work(ipsec_gc_queue, &ips->gc_work);
+        } else {
+                printk(KERN_ERR "ipsec_sa_gc_init: "
+                        "no ipsec workqueue present for SA cleanup, "
+                        "calling directly\n");
+                ipsec_sa_gc_func (ips);
+        }
+}
+
+static void 
+ipsec_sa_gc_func(void *param)
+{
+        struct ipsec_sa *ips = param;
+
+#ifdef CONFIG_KLIPS_OCF
+	if (ips->ocf_in_use)
+		ipsec_ocf_sa_free(ips);
+#endif
+
+	if (ips->ips_alg_enc||ips->ips_alg_auth) {
+		ipsec_alg_sa_wipe(ips);
+	}
+
+	memset((caddr_t)ips, 0, sizeof(*ips));
+	kfree(ips);
+}
+
+
+
+
+// ------------------------------------------------------------------------
+
+
 extern int sysctl_ipsec_debug_verbose;
 
-int ipsec_sa_init(struct ipsec_sa *ipsp)
+#ifdef CONFIG_KLIPS_AH 
+int ipsec_sa_ah_init(struct ipsec_sa *ipsp)
 {
-        int i;
-        int error = 0;
-        char sa[SATOT_BUF];
-	size_t sa_len;
-	char ipaddr_txt[ADDRTOA_BUF];
-	char ipaddr2_txt[ADDRTOA_BUF];
+	int i, error = -200;
 #if defined (CONFIG_KLIPS_AUTH_HMAC_MD5) || defined (CONFIG_KLIPS_AUTH_HMAC_SHA1)
 	unsigned char kb[AHMD596_BLKLEN];
 #endif
-	struct ipsec_alg_enc *ixt_e = NULL;
-	struct ipsec_alg_auth *ixt_a = NULL;
 
-	if(ipsp == NULL) {
-		KLIPS_PRINT(debug_pfkey,
-			    "ipsec_sa_init: "
-			    "ipsp is NULL, fatal\n");
-		SENDERR(EINVAL);
-	}
-
-	sa_len = KLIPS_SATOT(debug_pfkey, &ipsp->ips_said, 0, sa, sizeof(sa));
-
-        KLIPS_PRINT(debug_pfkey,
-		    "ipsec_sa_init: "
-		    "(pfkey defined) called for SA:%s\n",
-		    sa_len ? sa : " (error)");
-
-	KLIPS_PRINT(debug_pfkey,
-		    "ipsec_sa_init: "
-		    "calling init routine of %s%s%s\n",
-		    IPS_XFORM_NAME(ipsp));
-	
-	switch(ipsp->ips_said.proto) {
-#ifdef CONFIG_KLIPS_IPIP
-	case IPPROTO_IPIP: {
-		ipsp->ips_xformfuncs = ipip_xform_funcs;
-		addrtoa(((struct sockaddr_in*)(ipsp->ips_addr_s))->sin_addr,
-			0,
-			ipaddr_txt, sizeof(ipaddr_txt));
-		addrtoa(((struct sockaddr_in*)(ipsp->ips_addr_d))->sin_addr,
-			0,
-			ipaddr2_txt, sizeof(ipaddr_txt));
-		KLIPS_PRINT(debug_pfkey,
-			    "ipsec_sa_init: "
-			    "(pfkey defined) IPIP ipsec_sa set for %s->%s.\n",
-			    ipaddr_txt,
-			    ipaddr2_txt);
-	}
-	break;
-#endif /* !CONFIG_KLIPS_IPIP */
-
-#ifdef CONFIG_KLIPS_AH
-	case IPPROTO_AH:
-		ipsp->ips_xformfuncs = ah_xform_funcs;
-
+	ipsp->ips_xformfuncs = ah_xform_funcs;
 
 #ifdef CONFIG_KLIPS_OCF
-		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, 0))
-		    break;
-#endif
+	error = ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, 0);
+	if(error) {
+		KLIPS_PRINT(debug_pfkey, "OCF sa init failed, rc=%d\n", error);
+		SENDERR(-error);
+	}
+#else
 
-		switch(ipsp->ips_authalg) {
+	switch(ipsp->ips_authalg) {
 # ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
-		case AH_MD5: {
-			unsigned char *akp;
-			unsigned int aks;
-			MD5_CTX *ictx;
-			MD5_CTX *octx;
-			
-			if(ipsp->ips_key_bits_a != (AHMD596_KLEN * 8)) {
-				KLIPS_PRINT(debug_pfkey,
-					    "ipsec_sa_init: "
-					    "incorrect key size: %d bits -- must be %d bits\n"/*octets (bytes)\n"*/,
-					    ipsp->ips_key_bits_a, AHMD596_KLEN * 8);
-				SENDERR(EINVAL);
-			}
-			
-#  if KLIPS_DIVULGE_HMAC_KEY
-			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+	case AH_MD5: {
+		unsigned char *akp;
+		unsigned int aks;
+		MD5_CTX *ictx;
+		MD5_CTX *octx;
+		
+		if(ipsp->ips_key_bits_a != (AHMD596_KLEN * 8)) {
+			KLIPS_PRINT(debug_pfkey,
 				    "ipsec_sa_init: "
-				    "hmac md5-96 key is 0x%08x %08x %08x %08x\n",
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+0)),
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+1)),
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+2)),
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+3)));
-#  endif /* KLIPS_DIVULGE_HMAC_KEY */
-			
-			ipsp->ips_auth_bits = AHMD596_ALEN * 8;
-			
-			/* save the pointer to the key material */
-			akp = ipsp->ips_key_a;
-			aks = ipsp->ips_key_a_size;
-			
-			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
-			           "ipsec_sa_init: "
-			           "allocating %lu bytes for md5_ctx.\n",
-			           (unsigned long) sizeof(struct md5_ctx));
-			if((ipsp->ips_key_a = (caddr_t)
-			    kmalloc(sizeof(struct md5_ctx), GFP_ATOMIC)) == NULL) {
-				ipsp->ips_key_a = akp;
-				SENDERR(ENOMEM);
-			}
-			ipsp->ips_key_a_size = sizeof(struct md5_ctx);
-
-			for (i = 0; i < DIVUP(ipsp->ips_key_bits_a, 8); i++) {
-				kb[i] = akp[i] ^ HMAC_IPAD;
-			}
-			for (; i < AHMD596_BLKLEN; i++) {
-				kb[i] = HMAC_IPAD;
-			}
-
-			ictx = &(((struct md5_ctx*)(ipsp->ips_key_a))->ictx);
-			osMD5Init(ictx);
-			osMD5Update(ictx, kb, AHMD596_BLKLEN);
-
-			for (i = 0; i < AHMD596_BLKLEN; i++) {
-				kb[i] ^= (HMAC_IPAD ^ HMAC_OPAD);
-			}
-
-			octx = &(((struct md5_ctx*)(ipsp->ips_key_a))->octx);
-			osMD5Init(octx);
-			osMD5Update(octx, kb, AHMD596_BLKLEN);
-			
-#  if KLIPS_DIVULGE_HMAC_KEY
-			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
-				    "ipsec_sa_init: "
-				    "MD5 ictx=0x%08x %08x %08x %08x octx=0x%08x %08x %08x %08x\n",
-				    ((__u32*)ictx)[0],
-				    ((__u32*)ictx)[1],
-				    ((__u32*)ictx)[2],
-				    ((__u32*)ictx)[3],
-				    ((__u32*)octx)[0],
-				    ((__u32*)octx)[1],
-				    ((__u32*)octx)[2],
-				    ((__u32*)octx)[3] );
-#  endif /* KLIPS_DIVULGE_HMAC_KEY */
-			
-			/* zero key buffer -- paranoid */
-			memset(akp, 0, aks);
-			kfree(akp);
+				    "incorrect key size: %d bits -- must be %d bits\n"/*octets (bytes)\n"*/,
+				    ipsp->ips_key_bits_a, AHMD596_KLEN * 8);
+			SENDERR(EINVAL);
 		}
+		
+#  if KLIPS_DIVULGE_HMAC_KEY
+		KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+			    "ipsec_sa_init: "
+			    "hmac md5-96 key is 0x%08x %08x %08x %08x\n",
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+0)),
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+1)),
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+2)),
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+3)));
+#  endif /* KLIPS_DIVULGE_HMAC_KEY */
+		
+		ipsp->ips_auth_bits = AHMD596_ALEN * 8;
+		
+		/* save the pointer to the key material */
+		akp = ipsp->ips_key_a;
+		aks = ipsp->ips_key_a_size;
+		
+		KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+			    "ipsec_sa_init: "
+			    "allocating %lu bytes for md5_ctx.\n",
+			    (unsigned long) sizeof(struct md5_ctx));
+		if((ipsp->ips_key_a = (caddr_t)
+		    kmalloc(sizeof(struct md5_ctx), GFP_ATOMIC)) == NULL) {
+			ipsp->ips_key_a = akp;
+			SENDERR(ENOMEM);
+		}
+		ipsp->ips_key_a_size = sizeof(struct md5_ctx);
+		
+		for (i = 0; i < DIVUP(ipsp->ips_key_bits_a, 8); i++) {
+			kb[i] = akp[i] ^ HMAC_IPAD;
+		}
+		for (; i < AHMD596_BLKLEN; i++) {
+			kb[i] = HMAC_IPAD;
+		}
+		
+		ictx = &(((struct md5_ctx*)(ipsp->ips_key_a))->ictx);
+		osMD5Init(ictx);
+		osMD5Update(ictx, kb, AHMD596_BLKLEN);
+		
+		for (i = 0; i < AHMD596_BLKLEN; i++) {
+			kb[i] ^= (HMAC_IPAD ^ HMAC_OPAD);
+		}
+		
+		octx = &(((struct md5_ctx*)(ipsp->ips_key_a))->octx);
+		osMD5Init(octx);
+		osMD5Update(octx, kb, AHMD596_BLKLEN);
+		
+#  if KLIPS_DIVULGE_HMAC_KEY
+		KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+			    "ipsec_sa_init: "
+			    "MD5 ictx=0x%08x %08x %08x %08x octx=0x%08x %08x %08x %08x\n",
+			    ((__u32*)ictx)[0],
+			    ((__u32*)ictx)[1],
+			    ((__u32*)ictx)[2],
+			    ((__u32*)ictx)[3],
+			    ((__u32*)octx)[0],
+			    ((__u32*)octx)[1],
+			    ((__u32*)octx)[2],
+			    ((__u32*)octx)[3] );
+#  endif /* KLIPS_DIVULGE_HMAC_KEY */
+		
+		/* zero key buffer -- paranoid */
+		memset(akp, 0, aks);
+		kfree(akp);
+	}
 		break;
 # endif /* CONFIG_KLIPS_AUTH_HMAC_MD5 */
 # ifdef CONFIG_KLIPS_AUTH_HMAC_SHA1
-		case AH_SHA: {
-			unsigned char *akp;
-			unsigned int aks;
-			SHA1_CTX *ictx;
-			SHA1_CTX *octx;
-			
-			if(ipsp->ips_key_bits_a != (AHSHA196_KLEN * 8)) {
-				KLIPS_PRINT(debug_pfkey,
-					    "ipsec_sa_init: "
-					    "incorrect key size: %d bits -- must be %d bits\n"/*octets (bytes)\n"*/,
-					    ipsp->ips_key_bits_a, AHSHA196_KLEN * 8);
-				SENDERR(EINVAL);
-			}
-			
-#  if KLIPS_DIVULGE_HMAC_KEY
-			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
-				    "ipsec_sa_init: "
-				    "hmac sha1-96 key is 0x%08x %08x %08x %08x\n",
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+0)),
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+1)),
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+2)),
-				    ntohl(*(((__u32 *)ipsp->ips_key_a)+3)));
-#  endif /* KLIPS_DIVULGE_HMAC_KEY */
-			
-			ipsp->ips_auth_bits = AHSHA196_ALEN * 8;
-			
-			/* save the pointer to the key material */
-			akp = ipsp->ips_key_a;
-			aks = ipsp->ips_key_a_size;
-			
-			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
-			            "ipsec_sa_init: "
-			            "allocating %lu bytes for sha1_ctx.\n",
-			            (unsigned long) sizeof(struct sha1_ctx));
-			if((ipsp->ips_key_a = (caddr_t)
-			    kmalloc(sizeof(struct sha1_ctx), GFP_ATOMIC)) == NULL) {
-				ipsp->ips_key_a = akp;
-				SENDERR(ENOMEM);
-			}
-			ipsp->ips_key_a_size = sizeof(struct sha1_ctx);
-
-			for (i = 0; i < DIVUP(ipsp->ips_key_bits_a, 8); i++) {
-				kb[i] = akp[i] ^ HMAC_IPAD;
-			}
-			for (; i < AHMD596_BLKLEN; i++) {
-				kb[i] = HMAC_IPAD;
-			}
-
-			ictx = &(((struct sha1_ctx*)(ipsp->ips_key_a))->ictx);
-			SHA1Init(ictx);
-			SHA1Update(ictx, kb, AHSHA196_BLKLEN);
-
-			for (i = 0; i < AHSHA196_BLKLEN; i++) {
-				kb[i] ^= (HMAC_IPAD ^ HMAC_OPAD);
-			}
-
-			octx = &(((struct sha1_ctx*)(ipsp->ips_key_a))->octx);
-			SHA1Init(octx);
-			SHA1Update(octx, kb, AHSHA196_BLKLEN);
-			
-#  if KLIPS_DIVULGE_HMAC_KEY
-			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
-				    "ipsec_sa_init: "
-				    "SHA1 ictx=0x%08x %08x %08x %08x octx=0x%08x %08x %08x %08x\n", 
-				    ((__u32*)ictx)[0],
-				    ((__u32*)ictx)[1],
-				    ((__u32*)ictx)[2],
-				    ((__u32*)ictx)[3],
-				    ((__u32*)octx)[0],
-				    ((__u32*)octx)[1],
-				    ((__u32*)octx)[2],
-				    ((__u32*)octx)[3] );
-#  endif /* KLIPS_DIVULGE_HMAC_KEY */
-			/* zero key buffer -- paranoid */
-			memset(akp, 0, aks);
-			kfree(akp);
-		}
-		break;
-# endif /* CONFIG_KLIPS_AUTH_HMAC_SHA1 */
-		default:
+	case AH_SHA: {
+		unsigned char *akp;
+		unsigned int aks;
+		SHA1_CTX *ictx;
+		SHA1_CTX *octx;
+		
+		if(ipsp->ips_key_bits_a != (AHSHA196_KLEN * 8)) {
 			KLIPS_PRINT(debug_pfkey,
 				    "ipsec_sa_init: "
-				    "authalg=%d support not available in the kernel",
-				    ipsp->ips_authalg);
+				    "incorrect key size: %d bits -- must be %d bits\n"/*octets (bytes)\n"*/,
+				    ipsp->ips_key_bits_a, AHSHA196_KLEN * 8);
 			SENDERR(EINVAL);
 		}
-	break;
+		
+#  if KLIPS_DIVULGE_HMAC_KEY
+		KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+			    "ipsec_sa_init: "
+			    "hmac sha1-96 key is 0x%08x %08x %08x %08x\n",
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+0)),
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+1)),
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+2)),
+			    ntohl(*(((__u32 *)ipsp->ips_key_a)+3)));
+#  endif /* KLIPS_DIVULGE_HMAC_KEY */
+		
+		ipsp->ips_auth_bits = AHSHA196_ALEN * 8;
+		
+		/* save the pointer to the key material */
+		akp = ipsp->ips_key_a;
+		aks = ipsp->ips_key_a_size;
+		
+		KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+			    "ipsec_sa_init: "
+			    "allocating %lu bytes for sha1_ctx.\n",
+			    (unsigned long) sizeof(struct sha1_ctx));
+		if((ipsp->ips_key_a = (caddr_t)
+		    kmalloc(sizeof(struct sha1_ctx), GFP_ATOMIC)) == NULL) {
+			ipsp->ips_key_a = akp;
+			SENDERR(ENOMEM);
+		}
+		ipsp->ips_key_a_size = sizeof(struct sha1_ctx);
+		
+		for (i = 0; i < DIVUP(ipsp->ips_key_bits_a, 8); i++) {
+			kb[i] = akp[i] ^ HMAC_IPAD;
+		}
+		for (; i < AHMD596_BLKLEN; i++) {
+			kb[i] = HMAC_IPAD;
+		}
+		
+		ictx = &(((struct sha1_ctx*)(ipsp->ips_key_a))->ictx);
+		SHA1Init(ictx);
+		SHA1Update(ictx, kb, AHSHA196_BLKLEN);
+		
+		for (i = 0; i < AHSHA196_BLKLEN; i++) {
+			kb[i] ^= (HMAC_IPAD ^ HMAC_OPAD);
+		}
+		
+		octx = &(((struct sha1_ctx*)(ipsp->ips_key_a))->octx);
+		SHA1Init(octx);
+		SHA1Update(octx, kb, AHSHA196_BLKLEN);
+		
+#  if KLIPS_DIVULGE_HMAC_KEY
+		KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
+			    "ipsec_sa_init: "
+			    "SHA1 ictx=0x%08x %08x %08x %08x octx=0x%08x %08x %08x %08x\n", 
+			    ((__u32*)ictx)[0],
+			    ((__u32*)ictx)[1],
+			    ((__u32*)ictx)[2],
+			    ((__u32*)ictx)[3],
+			    ((__u32*)octx)[0],
+			    ((__u32*)octx)[1],
+			    ((__u32*)octx)[2],
+			    ((__u32*)octx)[3] );
+#  endif /* KLIPS_DIVULGE_HMAC_KEY */
+		/* zero key buffer -- paranoid */
+		memset(akp, 0, aks);
+		kfree(akp);
+	}
+		break;
+# endif /* CONFIG_KLIPS_AUTH_HMAC_SHA1 */
+	default:
+		KLIPS_ERROR(debug_pfkey,
+			    "ipsec_sa_init: "
+			    "authalg=%d support not available in the kernel",
+			    ipsp->ips_authalg);
+		SENDERR(EINVAL);
+	}
+#endif
+	error = 0;
+
+ errlab:
+	return error;
+}
 #endif /* CONFIG_KLIPS_AH */
 
 #ifdef CONFIG_KLIPS_ESP
-	case IPPROTO_ESP:
-		ipsp->ips_xformfuncs = esp_xform_funcs;
-	{
+int ipsec_sa_esp_init(struct ipsec_sa *ipsp)
+{
+#ifndef CONFIG_KLIPS_OCF
+	struct ipsec_alg_enc *ixt_e = NULL;
+	struct ipsec_alg_auth *ixt_a = NULL;
+	int i;
 #if defined (CONFIG_KLIPS_AUTH_HMAC_MD5) || defined (CONFIG_KLIPS_AUTH_HMAC_SHA1)
-		unsigned char *akp;
-		unsigned int aks;
+	unsigned char kb[AHMD596_BLKLEN];
+	unsigned char *akp;
+	unsigned int aks;
 #endif
-		ipsp->ips_iv_size = 0;
+#endif
+	int error = -200;
+
+
+	ipsp->ips_xformfuncs = esp_xform_funcs;
+	ipsp->ips_iv_size = 0;
 
 #ifdef CONFIG_KLIPS_OCF
-		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, ipsp->ips_encalg))
-		    break;
-#endif
-
-		ipsec_alg_sa_init(ipsp);
-		ixt_e=ipsp->ips_alg_enc;
-
-		if (ixt_e == NULL) {
-			if(printk_ratelimit()) {
-				printk(KERN_ERR
-				       "ipsec_sa_init: "
-				       "encalg=%d support not available in the kernel",
-				       ipsp->ips_encalg);
-			}
-			SENDERR(ENOENT);
+	error = ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, ipsp->ips_encalg);
+	if(error) {
+		KLIPS_PRINT(debug_pfkey, "OCF sa init failed, rc=%d\n", error);
+		SENDERR(-error);
+	}
+#else
+	ipsec_alg_sa_init(ipsp);
+	ixt_e=ipsp->ips_alg_enc;
+	
+	if (ixt_e == NULL) {
+		if(printk_ratelimit()) {
+			printk(KERN_ERR
+			       "ipsec_sa_init: "
+			       "encalg=%d support not available in the kernel",
+			       ipsp->ips_encalg);
 		}
-
-		ipsp->ips_iv_size = ixt_e->ixt_common.ixt_support.ias_ivlen/8;
-
-		/* Create IV */
-		if (ipsp->ips_iv_size) {
-			if((ipsp->ips_iv = (caddr_t)
-			    kmalloc(ipsp->ips_iv_size, GFP_ATOMIC)) == NULL) {
-				SENDERR(ENOMEM);
-			}
-			prng_bytes(&ipsec_prng,
-				   (char *)ipsp->ips_iv,
-				   ipsp->ips_iv_size);
-			ipsp->ips_iv_bits = ipsp->ips_iv_size * 8;
+		SENDERR(ENOENT);
+	}
+	
+	ipsp->ips_iv_size = ixt_e->ixt_common.ixt_support.ias_ivlen/8;
+	
+	/* Create IV */
+	if (ipsp->ips_iv_size) {
+		if((ipsp->ips_iv = (caddr_t)
+		    kmalloc(ipsp->ips_iv_size, GFP_ATOMIC)) == NULL) {
+			SENDERR(ENOMEM);
 		}
-		
-		if ((error=ipsec_alg_enc_key_create(ipsp)) < 0)
+		prng_bytes(&ipsec_prng,
+			   (char *)ipsp->ips_iv,
+			   ipsp->ips_iv_size);
+		ipsp->ips_iv_bits = ipsp->ips_iv_size * 8;
+	}
+	
+	if ((error=ipsec_alg_enc_key_create(ipsp)) < 0)
+		SENDERR(-error);
+	
+	if ((ixt_a=ipsp->ips_alg_auth)) {
+		if ((error=ipsec_alg_auth_key_create(ipsp)) < 0)
 			SENDERR(-error);
-
-		if ((ixt_a=ipsp->ips_alg_auth)) {
-			if ((error=ipsec_alg_auth_key_create(ipsp)) < 0)
-				SENDERR(-error);
-		} else	
+	} else	
 		
 		switch(ipsp->ips_authalg) {
 # ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 		case AH_MD5: {
 			MD5_CTX *ictx;
 			MD5_CTX *octx;
-
+			
 			if(ipsp->ips_key_bits_a != (AHMD596_KLEN * 8)) {
-				KLIPS_PRINT(debug_pfkey,
+				KLIPS_ERROR(debug_pfkey,
 					    "ipsec_sa_init: "
 					    "incorrect authorisation key size: %d bits -- must be %d bits\n"/*octets (bytes)\n"*/,
 					    ipsp->ips_key_bits_a,
@@ -1361,7 +1508,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				SENDERR(ENOMEM);
 			}
 			ipsp->ips_key_a_size = sizeof(struct md5_ctx);
-
+			
 			for (i = 0; i < DIVUP(ipsp->ips_key_bits_a, 8); i++) {
 				kb[i] = akp[i] ^ HMAC_IPAD;
 			}
@@ -1406,7 +1553,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 			SHA1_CTX *octx;
 
 			if(ipsp->ips_key_bits_a != (AHSHA196_KLEN * 8)) {
-				KLIPS_PRINT(debug_pfkey,
+				KLIPS_ERROR(debug_pfkey,
 					    "ipsec_sa_init: "
 					    "incorrect authorisation key size: %d bits -- must be %d bits\n"/*octets (bytes)\n"*/,
 					    ipsp->ips_key_bits_a,
@@ -1480,21 +1627,84 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 		case AH_NONE:
 			break;
 		default:
-			KLIPS_PRINT(debug_pfkey,
+			KLIPS_ERROR(debug_pfkey,
 				    "ipsec_sa_init: "
 				    "authalg=%d support not available in the kernel.\n",
 				    ipsp->ips_authalg);
 			SENDERR(EINVAL);
 		}
-	}
-			break;
+#endif
+	error = 0;
+
+ errlab:
+	KLIPS_PRINT(debug_pfkey, "ESP init called, rc=%d\n", error);
+	return error;
+}
 #endif /* !CONFIG_KLIPS_ESP */
+
+/* return 0 if it succeeds */
+int ipsec_sa_init(struct ipsec_sa *ipsp)
+{
+        int error = 0;
+        char sa[SATOT_BUF];
+	size_t sa_len;
+	char ipaddr_txt[ADDRTOA_BUF];
+	char ipaddr2_txt[ADDRTOA_BUF];
+
+	if(ipsp == NULL) {
+		KLIPS_PRINT(debug_pfkey,
+			    "ipsec_sa_init: "
+			    "ipsp is NULL, fatal\n");
+		SENDERR(EINVAL);
+	}
+
+	sa_len = KLIPS_SATOT(debug_pfkey, &ipsp->ips_said, 0, sa, sizeof(sa));
+
+        KLIPS_PRINT(debug_pfkey,
+		    "ipsec_sa_init: "
+		    "(pfkey defined) called for SA:%s\n",
+		    sa_len ? sa : " (error)");
+
+	KLIPS_PRINT(debug_pfkey,
+		    "ipsec_sa_init: "
+		    "calling init routine of %s%s%s\n",
+		    IPS_XFORM_NAME(ipsp));
+	
+	switch(ipsp->ips_said.proto) {
+#ifdef CONFIG_KLIPS_IPIP
+	case IPPROTO_IPIP: {
+		ipsp->ips_xformfuncs = ipip_xform_funcs;
+		addrtoa(((struct sockaddr_in*)(ipsp->ips_addr_s))->sin_addr,
+			0,
+			ipaddr_txt, sizeof(ipaddr_txt));
+		addrtoa(((struct sockaddr_in*)(ipsp->ips_addr_d))->sin_addr,
+			0,
+			ipaddr2_txt, sizeof(ipaddr_txt));
+		KLIPS_PRINT(debug_pfkey,
+			    "ipsec_sa_init: "
+			    "(pfkey defined) IPIP ipsec_sa set for %s->%s.\n",
+			    ipaddr_txt,
+			    ipaddr2_txt);
+	}
+	break;
+#endif /* !CONFIG_KLIPS_IPIP */
+
+#ifdef CONFIG_KLIPS_AH
+	case IPPROTO_AH:
+		return ipsec_sa_ah_init(ipsp);
+#endif
+
+#ifdef CONFIG_KLIPS_ESP
+	case IPPROTO_ESP:
+		return ipsec_sa_esp_init(ipsp);
+#endif /* ESP */
+
 #ifdef CONFIG_KLIPS_IPCOMP
 	case IPPROTO_COMP:
 
 #ifdef CONFIG_KLIPS_OCF
-		if (ipsec_ocf_comp_sa_init(ipsp, ipsp->ips_compalg))
-		    break;
+		error = ipsec_ocf_comp_sa_init(ipsp, ipsp->ips_compalg);
+		if(error) goto errlab;
 #endif
 
 		ipsp->ips_xformfuncs = ipcomp_xform_funcs;
@@ -1505,10 +1715,10 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 		break;
 #endif /* CONFIG_KLIPS_IPCOMP */
 	default:
-		printk(KERN_ERR "KLIPS sa initialization: "
-		       "proto=%d unknown.\n",
-		       ipsp->ips_said.proto);
-		SENDERR(EINVAL);
+		KLIPS_ERROR(debug_pfkey, "KLIPS sa initialization: "
+			    "proto=%d unknown.\n",
+			    ipsp->ips_said.proto);
+		SENDERR(EPROTO);
 	}
 	
  errlab:

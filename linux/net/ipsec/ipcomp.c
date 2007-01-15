@@ -152,7 +152,6 @@ struct sk_buff *skb_compress(struct sk_buff *skb, struct ipsec_sa *ips, unsigned
 
 	switch (iph->protocol) {
 	case IPPROTO_COMP:
-printk ("*** *** IPPROTO_COMP %s\n", __FUNCTION__);
 	case IPPROTO_AH:
 	case IPPROTO_ESP:
 		KLIPS_PRINT(sysctl_ipsec_debug_ipcomp,

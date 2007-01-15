@@ -218,7 +218,7 @@ ipsec_spi_get_info(char *buffer,
 				       sa_len ? sa : " (error)");
 
 			len += ipsec_snprintf(buffer+len, length-len, "%s%s%s",
-				       IPS_XFORM_NAME(sa_p));
+					      IPS_XFORM_NAME(sa_p));
 
 			len += ipsec_snprintf(buffer+len, length-len, ": dir=%s",
 				       (sa_p->ips_flags & EMT_INBOUND) ?
@@ -332,8 +332,8 @@ ipsec_spi_get_info(char *buffer,
 			
 			if(sa_p->ocf_in_use) {
 				len += ipsec_snprintf(buffer+len, length-len, " cryptoid=%u/%u",
-						      (sa_p->ocf_cryptoid>>32),
-						      ( sa_p->ocf_cryptoid&0xffffffff));
+						      (u_int32_t)(sa_p->ocf_cryptoid>>32)&0xffffff,
+						      (u_int32_t)( sa_p->ocf_cryptoid & 0xffffffff));
 			}
 			
 			len += ipsec_snprintf(buffer+len, length-len, " life(c,s,h)=");

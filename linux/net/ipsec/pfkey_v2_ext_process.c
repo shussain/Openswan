@@ -144,36 +144,40 @@ pfkey_sa_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)
 	case IPPROTO_AH:
 		ipsp->ips_authalg = pfkey_sa->sadb_sa_auth;
 		ipsp->ips_encalg = SADB_EALG_NONE;
-#ifdef CONFIG_KLIPS_OCF
-		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, 0))
-		    break;
-#endif
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:pfkey_sa_process: "
+			    "IPPROTO_AH ips_authalg=%d\n",
+			    ipsp->ips_authalg);
 		break;
+
 	case IPPROTO_ESP:
 		ipsp->ips_authalg = pfkey_sa->sadb_sa_auth;
 		ipsp->ips_encalg = pfkey_sa->sadb_sa_encrypt;
-#ifdef CONFIG_KLIPS_OCF
-		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, ipsp->ips_encalg))
-		    break;
-#endif
-		ipsec_alg_sa_init(ipsp);
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:pfkey_sa_process: "
+			    "IPPROTO_ESP ips_authalg=%d, ips_encalg=%d\n",
+			    ipsp->ips_authalg, ipsp->ips_encalg);
 		break;
+
 	case IPPROTO_IPIP:
 		ipsp->ips_authalg = AH_NONE;
 		ipsp->ips_encalg = ESP_NONE;
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:pfkey_sa_process: "
+			    "IPPROTO_IPIP no extensions\n");
 		break;
+
 #ifdef CONFIG_KLIPS_IPCOMP
 	case IPPROTO_COMP:
 		ipsp->ips_authalg = AH_NONE;
 		ipsp->ips_encalg = ESP_NONE;
-printk ("*** *** IPPROTO_COMP %s\n", __FUNCTION__);
 		ipsp->ips_compalg = pfkey_sa->sadb_sa_encrypt;
-#ifdef CONFIG_KLIPS_OCF
-		if (ipsec_ocf_comp_sa_init(ipsp, ipsp->ips_compalg))
-		    break;
-#endif
-		break;
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:pfkey_sa_process: "
+			    "IPPROTO_COMP ips_compalg=%d.\n",
+			    ipsp->ips_compalg);
 #endif /* CONFIG_KLIPS_IPCOMP */
+
 	case IPPROTO_INT:
 		ipsp->ips_authalg = AH_NONE;
 		ipsp->ips_encalg = ESP_NONE;

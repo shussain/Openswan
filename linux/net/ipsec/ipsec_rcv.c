@@ -1200,10 +1200,10 @@ ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	memset(&(IPCB(skb)->opt), 0, sizeof(struct ip_options));
 
 	if (debug_rcv) {
-	ipsaddr.s_addr = ipp->saddr;
-	addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
-	ipdaddr.s_addr = ipp->daddr;
-	addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
+		ipsaddr.s_addr = ipp->saddr;
+		addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
+		ipdaddr.s_addr = ipp->daddr;
+		addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
 	}
 
 	/*
@@ -1421,6 +1421,8 @@ ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
   	}
 #endif
   
+	KLIPS_PRINT(debug_rcv, "before ipip skb->len: %u tot_len: %u\n", skb->len, ntohs(irs->ipp->tot_len));
+
 	/*
 	 * XXX this needs to be locked from when it was first looked
 	 * up in the decapsulation loop.  Perhaps it is better to put
@@ -1470,70 +1472,70 @@ ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 			}
 		}
 
-	if(ipp->protocol == IPPROTO_IPIP)  /* added to support AT&T heartbeats to SIG/GIG */
-	{  
-		/*
-		 * XXX this needs to be locked from when it was first looked
-		 * up in the decapsulation loop.  Perhaps it is better to put
-		 * the IPIP decap inside the loop.
-		 */
-		ipsp->ips_life.ipl_bytes.ipl_count += skb->len;
-		ipsp->ips_life.ipl_bytes.ipl_last   = skb->len;
-
-		if(!ipsp->ips_life.ipl_usetime.ipl_count) {
-			ipsp->ips_life.ipl_usetime.ipl_count = jiffies / HZ;
-		}
-		ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
-		ipsp->ips_life.ipl_packets.ipl_count += 1;
-
-		if(skb->len < irs->iphlen) {
-			printk(KERN_WARNING "klips_debug:ipsec_rcv: "
-			       "tried to skb_pull iphlen=%d, %d available.  This should never happen, please report.\n",
-			       irs->iphlen,
-			       (int)(skb->len));
-
-			return IPSEC_RCV_REALLYBAD;
-		}
-
-		/*
-		 * we need to pull up by size of IP header,
-		 * options, but also by any UDP/ESP encap there might
-		 * have been, and this deals with all cases.
-		 */
-		skb_pull(skb, (skb->h.raw - skb->nh.raw));
-
-		/* new L3 header is where L4 payload was */
-		skb->nh.raw = skb->h.raw;
-
-		/* now setup new L4 payload location */
-		ipp = (struct iphdr *)skb->nh.raw;
-		skb->h.raw = skb->nh.raw + (ipp->ihl << 2);
-
-
-		/* remove any saved options that we might have,
-		 * since we have a new IP header.
-		 */
-		memset(&(IPCB(skb)->opt), 0, sizeof(struct ip_options));
-
+		if(ipp->protocol == IPPROTO_IPIP)  /* added to support AT&T heartbeats to SIG/GIG */
+		{  
+			/*
+			 * XXX this needs to be locked from when it was first looked
+			 * up in the decapsulation loop.  Perhaps it is better to put
+			 * the IPIP decap inside the loop.
+			 */
+			ipsp->ips_life.ipl_bytes.ipl_count += skb->len;
+			ipsp->ips_life.ipl_bytes.ipl_last   = skb->len;
+			
+			if(!ipsp->ips_life.ipl_usetime.ipl_count) {
+				ipsp->ips_life.ipl_usetime.ipl_count = jiffies / HZ;
+			}
+			ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
+			ipsp->ips_life.ipl_packets.ipl_count += 1;
+			
+			if(skb->len < irs->iphlen) {
+				printk(KERN_WARNING "klips_debug:ipsec_rcv: "
+				       "tried to skb_pull iphlen=%d, %d available.  This should never happen, please report.\n",
+				       irs->iphlen,
+				       (int)(skb->len));
+				
+				return IPSEC_RCV_REALLYBAD;
+			}
+			
+			/*
+			 * we need to pull up by size of IP header,
+			 * options, but also by any UDP/ESP encap there might
+			 * have been, and this deals with all cases.
+			 */
+			skb_pull(skb, (skb->h.raw - skb->nh.raw));
+			
+			/* new L3 header is where L4 payload was */
+			skb->nh.raw = skb->h.raw;
+			
+			/* now setup new L4 payload location */
+			ipp = (struct iphdr *)skb->nh.raw;
+			skb->h.raw = skb->nh.raw + (ipp->ihl << 2);
+			
+			
+			/* remove any saved options that we might have,
+			 * since we have a new IP header.
+			 */
+			memset(&(IPCB(skb)->opt), 0, sizeof(struct ip_options));
+			
 #if 0
-		KLIPS_PRINT(debug_rcv, "csum: %d\n", ip_fast_csum((u8 *)ipp, ipp->ihl));
+			KLIPS_PRINT(debug_rcv, "csum: %d\n", ip_fast_csum((u8 *)ipp, ipp->ihl));
 #endif
-
-		/* re-do any strings for debugging */
-		ipsaddr.s_addr = ipp->saddr;
-		if (debug_rcv)
-		addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
-		ipdaddr.s_addr = ipp->daddr;
-		if (debug_rcv)
-		addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
-
-		skb->protocol = htons(ETH_P_IP);
-		skb->ip_summed = 0;
-		KLIPS_PRINT(debug_rcv & DB_RX_PKTRX,
-			    "klips_debug:ipsec_rcv: "
-			    "IPIP tunnel stripped.\n");
-		KLIPS_IP_PRINT(debug_rcv & DB_RX_PKTRX, ipp);
-  }
+			
+			/* re-do any strings for debugging */
+			ipsaddr.s_addr = ipp->saddr;
+			if (debug_rcv)
+				addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
+			ipdaddr.s_addr = ipp->daddr;
+			if (debug_rcv)
+				addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
+			
+			skb->protocol = htons(ETH_P_IP);
+			skb->ip_summed = 0;
+			KLIPS_PRINT(debug_rcv & DB_RX_PKTRX,
+				    "klips_debug:ipsec_rcv: "
+				    "IPIP tunnel stripped.\n");
+			KLIPS_IP_PRINT(debug_rcv & DB_RX_PKTRX, ipp);
+		}
 
 		if(sysctl_ipsec_inbound_policy_check
 		   /*
@@ -1586,6 +1588,9 @@ ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 		dst_release(skb->dst);
 		skb->dst = NULL;
 	}
+	KLIPS_PRINT(debug_rcv, "skb->len: %u tot_len: %u\n", skb->len, ntohs(irs->ipp->tot_len));
+	//skb->len = ntohs(irs->ipp->tot_len);
+
 	skb->pkt_type = PACKET_HOST;
 	if(irs->hard_header_len &&
 	   (skb->mac.raw != (skb->nh.raw - irs->hard_header_len)) &&
@@ -1904,6 +1909,9 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	 */
 	ipsec_rsm(irs);
 
+	/* empty any saved SKBs */
+	ipsec_skb_gc_flush();
+
 	return(0);
 
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
@@ -1914,6 +1922,9 @@ rcvleave:
         ipsec_rcv_state_delete (irs);
 #endif
 error_alloc:
+	/* empty any saved SKBs */
+	ipsec_skb_gc_flush();
+
 	KLIPS_DEC_USE;
 	return 0;
 }

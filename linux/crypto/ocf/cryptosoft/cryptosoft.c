@@ -863,7 +863,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
                                 ret = crypto_comp_compress(sw->sw_tfm, 
                                                 data, crd->crd_len, 
                                                 temp, &dlen);
-                                if (!ret && dlen > crd->crd_len) {
+                                if (!ret && dlen >= crd->crd_len) {
                                         dprintk("cryptosoft: ERANGE compress "
                                                         "%d into %d\n",
                                                         crd->crd_len, dlen);
@@ -875,7 +875,12 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
                                 ret = crypto_comp_decompress(sw->sw_tfm, 
                                                 data, crd->crd_len, 
                                                 temp, &dlen);
-                                if (!ret && (dlen + crd->crd_inject) > crp->crp_olen) {
+                        }
+
+                        // on success copy result back
+                        if (ret == 0) {
+                                // will the result fit in the buffer given?
+                                if ((dlen + crd->crd_inject) > crp->crp_olen) {
                                         dprintk("cryptosoft: ETOOSMALL decompress "
                                                         "%d into %d, space for %d,"
                                                         "at offset %d\n",
@@ -883,22 +888,22 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
                                                         crp->crp_olen,
                                                         crd->crd_inject);
                                         ret = ETOOSMALL;
-                                }
-                        }
 
-                        // on success copy result back
-			crp->crp_etype = ret;
-                        if (ret == 0) {
-                                if (type == CRYPTO_BUF_CONTIG)
+                                } else if (type == CRYPTO_BUF_CONTIG) {
                                         memcpy(crp->crp_buf + crd->crd_inject, temp, dlen);
-                                else if (type == CRYPTO_BUF_SKBUF)
+
+                                } else if (type == CRYPTO_BUF_SKBUF) {
                                         skb_store_bits(skb, crd->crd_inject, temp, dlen);
-                                else if (type == CRYPTO_BUF_IOV)
+
+                                } else if (type == CRYPTO_BUF_IOV) {
                                         cuio_copyback(uiop, crd->crd_inject, dlen, (caddr_t)temp);
+                                }
+
                         }
 
-                        // update the amount of space in the result
-                        crp->crp_olen = dlen;
+                        // update the status and amount of space in the result
+                        crp->crp_olen = crd->crd_inject + dlen;
+			crp->crp_etype = ret;
 
                         // reenable preemption
                         put_cpu();

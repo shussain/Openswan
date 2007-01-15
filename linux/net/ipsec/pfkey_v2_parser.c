@@ -188,10 +188,18 @@ DEBUG_NO_STATIC int
 pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 {
         int rc;
-	KLIPS_PRINT(debug_pfkey, "Calling SA_INIT\n");
-printk ("*** pfkey_ipsec_sa_init calling ipsec_sa_init()\n");
+	char sa[SATOT_BUF];
+	size_t sa_len;
+
+	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_ipsec_sa_init: "
+                        "calling ipsec_sa_init()\n");
+
 	rc = ipsec_sa_init(ipsp);
-printk ("*** pfkey_ipsec_sa_init rc=%d\n", rc);
+
+        sa_len = KLIPS_SATOT(debug_pfkey, &ipsp->ips_said, 0, sa, sizeof(sa));
+	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_ipsec_sa_init: "
+                        "ipsec_sa_init(%s), rc=%d\n", 
+                        sa_len ? sa : "(error)", rc);
         return rc;
 }
 

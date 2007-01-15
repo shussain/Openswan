@@ -39,15 +39,19 @@ __FBSDID("$FreeBSD: src/sys/opencrypto/crypto.c,v 1.16 2005/01/07 02:29:16 imp E
 #include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/version.h>
+#include <asm/atomic.h>
 #include <opencrypto/crypto.h>
 #include <opencrypto/cryptodev.h>
+#include <opencrypto/cryptoprof.h>
 
 /*
- * keep track of whether or not we have been initialised, a big
- * issue if we are linked into the kernel and a driver gets started before
- * us
+ * keep track of whether or not we have been initialised, a big issue 
+ * if we are linked into the kernel and a driver gets called before us.
+ * 
+ * The value starts off at -1 and is incremented in crypto_init().  Any
+ * non-negative value indicates initialization was done already.
  */
-static int crypto_initted = 0;
+static atomic_t crypto_needs_init = ATOMIC_INIT(-1);
 
 /*
  * Crypto drivers register themselves by allocating a slot in the
@@ -125,6 +129,13 @@ module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug,
 	   "Enable debug");
 
+static int crypto_proc_debug = 1;
+module_param(crypto_proc_debug, int, 0644);
+MODULE_PARM_DESC(crypto_proc_debug,
+		 "Enable debug of thread");
+
+#define cp_printk(fmt,msg...) if(crypto_proc_debug) printk(fmt,##msg)
+
 /*
  * Maximum number of outstanding crypto requests before we start
  * failing requests.  We need this to prevent DOS when too many
@@ -163,9 +174,18 @@ module_param(crypto_devallowsoft, int, 0644);
 MODULE_PARM_DESC(crypto_devallowsoft,
 	   "Enable/disable use of software asym crypto support");
 
+static int	crypto_qsblocked = 0;	/* symmetric requests on blocked q */
+static int	crypto_qs = 0;	        /* number of symmetric requests */
+static int	crypto_qkblocked = 0;	/* number of asymmetric requests */
+module_param(crypto_qsblocked, int, 0444);
+module_param(crypto_qs, int, 0444);
+module_param(crypto_qkblocked, int, 0444);
+
 static pid_t	cryptoproc = (pid_t) -1;
 static struct	completion cryptoproc_exited;
 static DECLARE_WAIT_QUEUE_HEAD(cryptoproc_wait);
+static int      cryptoproc_active = 0;
+
 static pid_t	cryptoretproc = (pid_t) -1;
 static struct	completion cryptoretproc_exited;
 static DECLARE_WAIT_QUEUE_HEAD(cryptoretproc_wait);
@@ -179,6 +199,10 @@ static  int crypto_init(void);
 
 static	struct cryptostats cryptostats;
 
+#if defined(CONFIG_OCF_PROFILE)
+static cryptop_ts_t crypto_proc_thread_times;
+static cryptop_ts_t crypto_return_thread_times;
+#endif
 
 /*
  * Create a new session.
@@ -192,7 +216,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selectio
 	unsigned long d_flags;
 	struct cryptocap *cap = NULL;
 
-	if (!crypto_initted) {
+        if (atomic_read (&crypto_needs_init) < 0) {
 		int i = crypto_init();
 		if (i) {
 			printk("crypto: failed to init crypto (%d)!\n", i);
@@ -332,6 +356,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selectio
 		err = (*cap->cc_newsession)(cap->cc_arg, &lid, cri);
 	}
 	
+	dprintk("%s - hid=%u new lid=%u\n", __FUNCTION__, besthid, lid);
 	if (err == 0) {
 		/* XXX assert (hid &~ 0xffffff) == 0 */
 		/* XXX assert (cap->cc_flags &~ 0xff) == 0 */
@@ -427,7 +452,7 @@ crypto_get_driverid(u_int32_t flags, const char *drivername)
 
 	dprintk("%s()\n", __FUNCTION__);
 
-	if (!crypto_initted) {
+        if (atomic_read (&crypto_needs_init) < 0) {
 		int rc = crypto_init();
 		if (rc) {
 			printk("crypto: failed to init crypto (%d)!\n", rc);
@@ -918,8 +943,12 @@ crypto_unblock(u_int32_t driverid, int what)
 			needwakeup |= cap->cc_kqblocked;
 			cap->cc_kqblocked = 0;
 		}
-		if (needwakeup)
+		if (needwakeup) {
+                        cryptop_ts_record (&crypto_proc_thread_times, OCF_TS_PTH_WAKE);
+			cp_printk("crypto proc wake up\n");
+			cryptoproc_active=1;
 			wake_up_interruptible(&cryptoproc_wait);
+                }
 		err = 0;
 	} else
 		err = EINVAL;
@@ -942,6 +971,7 @@ crypto_dispatch(struct cryptop *crp)
 	dprintk("%s()\n", __FUNCTION__);
 
 	cryptostats.cs_ops++;
+        cryptop_ts_record (&crp->crp_times, OCF_TS_CRP_DISPATCH);
 
 	if (atomic_read(&crypto_q_cnt) >= crypto_q_max) {
 		cryptostats.cs_drops++;
@@ -979,6 +1009,7 @@ crypto_dispatch(struct cryptop *crp)
 				 */
 				crypto_drivers[hid].cc_qblocked = 1;
 				list_add_tail(&crp->crp_list, &crp_q);
+				crypto_qs++;
 				cryptostats.cs_blocks++;
 				result = 0;
 			}
@@ -988,20 +1019,22 @@ crypto_dispatch(struct cryptop *crp)
 			 * it unblocks and the kernel thread gets kicked.
 			 */
 			list_add_tail(&crp->crp_list, &crp_q);
+			crypto_qs++;
 			result = 0;
 		}
 	} else {
-		int wasempty;
 		/*
 		 * Caller marked the request as ``ok to delay'';
 		 * queue it for the dispatch thread.  This is desirable
 		 * when the operation is low priority and/or suitable
 		 * for batching.
 		 */
-		wasempty = list_empty(&crp_q);
 		list_add_tail(&crp->crp_list, &crp_q);
-		if (wasempty)
-			wake_up_interruptible(&cryptoproc_wait);
+		crypto_qs++;
+		cryptop_ts_record (&crypto_proc_thread_times, OCF_TS_PTH_WAKE);
+		cp_printk("crypto proc wake up 2\n");
+		cryptoproc_active=1;
+		wake_up_interruptible(&cryptoproc_wait);
 		result = 0;
 	}
 	if (result != 0)
@@ -1114,6 +1147,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 static int
 crypto_invoke(struct cryptop *crp, int hint)
 {
+        int rc;
 	u_int32_t hid;
 	int (*process)(void*, struct cryptop *, int);
 
@@ -1138,8 +1172,8 @@ crypto_invoke(struct cryptop *crp, int hint)
 			crypto_freesession(crp->crp_sid);
 		process = crypto_drivers[hid].cc_process;
 	} else {
-		printk("%s() found hid(%d) >= crypto_drivers_num(%d)\n",
-			__FUNCTION__, hid, crypto_drivers_num);
+		printk("%s() {%p} found hid(%d) >= crypto_drivers_num(%d)\n",
+		       __FUNCTION__, crp, hid, crypto_drivers_num);
 		process = NULL;
 	}
 
@@ -1165,7 +1199,14 @@ crypto_invoke(struct cryptop *crp, int hint)
 		/*
 		 * Invoke the driver to process the request.
 		 */
-		return (*process)(crypto_drivers[hid].cc_arg, crp, hint);
+                cryptop_ts_record (&crp->crp_times, OCF_TS_CRP_PROCESS);
+
+		rc = (*process)(crypto_drivers[hid].cc_arg, crp, hint);
+
+                /* NOTE: we cannot touch crp at this point because it could have
+                 * already finished and been deleted in another context */
+
+                return rc;
 	}
 }
 
@@ -1185,6 +1226,9 @@ crypto_freereq(struct cryptop *crp)
 		kmem_cache_free(cryptodesc_zone, crd);
 	}
 
+        cryptop_ts_record (&crp->crp_times, OCF_TS_CRP_DESTROY);
+        cryptop_ts_process (&crp->crp_times);
+
 	kmem_cache_free(cryptop_zone, crp);
 }
 
@@ -1200,6 +1244,7 @@ crypto_getreq(int num)
 	crp = kmem_cache_alloc(cryptop_zone, SLAB_ATOMIC);
 	if (crp != NULL) {
 		memset(crp, 0, sizeof(*crp));
+                cryptop_ts_reset (&crp->crp_times);
 		INIT_LIST_HEAD(&crp->crp_list);
 		init_waitqueue_head(&crp->crp_waitq);
 		while (num--) {
@@ -1222,6 +1267,8 @@ crypto_getreq(int num)
 void
 crypto_done(struct cryptop *crp)
 {
+        cryptop_ts_record (&crp->crp_times, OCF_TS_CRP_DONE);
+
 	dprintk("%s()\n", __FUNCTION__);
 	if ((crp->crp_flags & CRYPTO_F_DONE) == 0) {
 		crp->crp_flags |= CRYPTO_F_DONE;
@@ -1257,8 +1304,10 @@ crypto_done(struct cryptop *crp)
 		wasempty = list_empty(&crp_ret_q);
 		list_add_tail(&crp->crp_list, &crp_ret_q);
 
-		if (wasempty)
+		if (wasempty) {
+                        cryptop_ts_record (&crypto_return_thread_times, OCF_TS_RTH_WAKE);
 			wake_up_interruptible(&cryptoretproc_wait);	/*shared wait channel */
+                }
 		CRYPTO_RETQ_UNLOCK();
 	}
 }
@@ -1298,8 +1347,10 @@ crypto_kdone(struct cryptkop *krp)
 		wasempty = list_empty(&crp_ret_kq);
 		list_add_tail(&krp->krp_list, &crp_ret_kq);
 
-		if (wasempty)
+		if (wasempty) {
+                        cryptop_ts_record (&crypto_return_thread_times, OCF_TS_RTH_WAKE);
 			wake_up_interruptible(&cryptoretproc_wait);/* shared wait channel */
+                }
 		CRYPTO_RETQ_UNLOCK();
 	}
 }
@@ -1338,11 +1389,12 @@ out:
 static int
 crypto_proc(void *arg)
 {
-	struct cryptop *crp, *submit;
+    struct cryptop *crp, *crpn, *submit, *lastsubmit= NULL;
 	struct cryptkop *krp, *krpp;
 	struct cryptocap *cap;
 	int result, hint;
 	unsigned long q_flags;
+	int woke = 0;
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 	daemonize();
@@ -1364,15 +1416,25 @@ crypto_proc(void *arg)
 		 */
 		submit = NULL;
 		hint = 0;
-		list_for_each_entry(crp, &crp_q, crp_list) {
+
+		list_for_each_entry_safe(crp, crpn, &crp_q, crp_list) {
 			u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 			cap = crypto_checkdriver(hid);
+			
+			cp_printk("found hid=%u with cap=%p, w/cc_process=%p\n",
+				  hid, cap, cap?cap->cc_process:NULL);
+			
 			if (cap == NULL || cap->cc_process == NULL) {
 				/* Op needs to be migrated, process it. */
-				if (submit == NULL)
-					submit = crp;
-				break;
+			    if (submit == NULL) {
+				    cp_printk("submit was NULL, so submit=crpp=%p\n", crp);
+				submit = crp;
+			    }
+			    break;
 			}
+
+			cp_printk("cap was != NULL, crp=%p and cc_qblocked=%u\n", 
+				   crp, cap->cc_qblocked);
 			if (!cap->cc_qblocked) {
 				if (submit != NULL) {
 					/*
@@ -1383,19 +1445,31 @@ crypto_proc(void *arg)
 					 * better to just use a per-driver
 					 * queue instead.
 					 */
-					if (CRYPTO_SESID2HID(submit->crp_sid) == hid)
-						hint = CRYPTO_HINT_MORE;
-					break;
+
+				    cp_printk("submit=%p, found another op, looking for more hint\n", submit);
+
+				    if (CRYPTO_SESID2HID(submit->crp_sid) == hid)
+					    hint = CRYPTO_HINT_MORE;
+				    break;
 				} else {
 					submit = crp;
+					cp_printk("submit=crp=%p, with batch=%u\n", submit, ((submit->crp_flags & CRYPTO_F_BATCH) == 0));
 					if ((submit->crp_flags & CRYPTO_F_BATCH) == 0)
 						break;
 					/* keep scanning for more are q'd */
 				}
+			} else {
+			    /* queue was blocked, leave item here */
+			    cp_printk("cc_qblocked=%u crp=%p left on list\n", 
+				       cap->cc_qblocked, crp);
 			}
 		}
+
 		if (submit != NULL) {
+			lastsubmit = submit;
 			list_del(&submit->crp_list);
+			crypto_qs--;
+                        cryptop_ts_record (&crypto_proc_thread_times, OCF_TS_PTH_INVOKE);
 			CRYPTO_Q_UNLOCK();
 			result = crypto_invoke(submit, hint);
 			CRYPTO_Q_LOCK();
@@ -1412,6 +1486,7 @@ crypto_proc(void *arg)
 				/* XXX validate sid again? */
 				crypto_drivers[CRYPTO_SESID2HID(submit->crp_sid)].cc_qblocked = 1;
 				list_add(&submit->crp_list, &crp_q);
+				crypto_qs++;
 				cryptostats.cs_blocks++;
 			}
 		}
@@ -1452,6 +1527,8 @@ crypto_proc(void *arg)
 			}
 		}
 
+		woke=0;
+
 		if (submit == NULL && krp == NULL) {
 			/*
 			 * Nothing more to be processed.  Sleep until we're
@@ -1466,11 +1543,20 @@ crypto_proc(void *arg)
 			 * and some become blocked while others do not.
 			 */
 			dprintk("%s - sleeping\n", __FUNCTION__);
+                        cryptop_ts_record (&crypto_proc_thread_times, OCF_TS_PTH_SLEEP);
+                        cryptop_ts_process (&crypto_proc_thread_times);
+                        cryptop_ts_reset (&crypto_proc_thread_times);
+
 			CRYPTO_Q_UNLOCK();
+			wmb();
+
+			cp_printk("crypto proc sleep\n");
+
 			wait_event_interruptible(cryptoproc_wait,
-					cryptoproc == (pid_t) -1 ||
-					!list_empty(&crp_q) ||
-					!list_empty(&crp_kq));
+						 cryptoproc == (pid_t) -1 ||
+						 cryptoproc_active==1);
+			cryptoproc_active=0;
+
 			if (signal_pending (current)) {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 				spin_lock_irq(&current->sigmask_lock);
@@ -1480,11 +1566,29 @@ crypto_proc(void *arg)
 				spin_unlock_irq(&current->sigmask_lock);
 #endif
 			}
+
+			woke=1;
+
+			if(crypto_proc_debug) {
+			    static int print_count=0;
+
+			    if(print_count++ > 128) {
+				if(printk_ratelimit()) {
+				    printk("%s - awake cryptoproc=%d crp_q=%u crp_kq=%u cryptoproc_active=%u\n", __FUNCTION__,
+					   cryptoproc,
+					   !list_empty(&crp_q),
+					   !list_empty(&crp_kq), cryptoproc_active);
+				}
+			    }
+			}
+
 			CRYPTO_Q_LOCK();
-			dprintk("%s - awake\n", __FUNCTION__);
 			if (cryptoproc == (pid_t) -1)
 				break;
 			cryptostats.cs_intrs++;
+
+                        // we are now running
+                        cryptop_ts_record (&crypto_proc_thread_times, OCF_TS_PTH_RUN);
 		}
 	}
 	CRYPTO_Q_UNLOCK();
@@ -1530,6 +1634,7 @@ crypto_ret_proc(void *arg)
 			list_del(&krpt->krp_list);
 
 		if (crpt != NULL || krpt != NULL) {
+                        cryptop_ts_record (&crypto_return_thread_times, OCF_TS_RTH_CALLBACK);
 			CRYPTO_RETQ_UNLOCK();
 			/*
 			 * Run callbacks unlocked.
@@ -1545,6 +1650,9 @@ crypto_ret_proc(void *arg)
 			 * woken because there are more returns to process.
 			 */
 			dprintk("%s - sleeping\n", __FUNCTION__);
+                        cryptop_ts_record (&crypto_return_thread_times, OCF_TS_RTH_SLEEP);
+                        cryptop_ts_process (&crypto_return_thread_times);
+                        cryptop_ts_reset (&crypto_return_thread_times);
 			CRYPTO_RETQ_UNLOCK();
 			wait_event_interruptible(cryptoretproc_wait,
 					cryptoretproc == (pid_t) -1 ||
@@ -1566,6 +1674,9 @@ crypto_ret_proc(void *arg)
 				break;
 			}
 			cryptostats.cs_rets++;
+
+                        // we are now running
+                        cryptop_ts_record (&crypto_return_thread_times, OCF_TS_RTH_RUN);
 		}
 	}
 	CRYPTO_RETQ_UNLOCK();
@@ -1580,9 +1691,15 @@ crypto_init(void)
 
 	dprintk("%s(0x%x)\n", __FUNCTION__, (int) crypto_init);
 
-	if (crypto_initted)
-		return 0;
-	crypto_initted = 1;
+        if (! atomic_inc_and_test (&crypto_needs_init)) {
+                // we were already initalized, restore counter and get out
+                atomic_dec (&crypto_needs_init);
+                return 0;
+        }
+
+        cryptop_ts_init ();
+        cryptop_ts_reset (&crypto_proc_thread_times);
+        cryptop_ts_reset (&crypto_return_thread_times);
 
 	atomic_set(&crypto_q_cnt, 0);
 
@@ -1679,6 +1796,8 @@ crypto_exit(void)
 		kmem_cache_destroy(cryptodesc_zone);
 	if (cryptop_zone != NULL)
 		kmem_cache_destroy(cryptop_zone);
+
+        cryptop_ts_exit ();
 }
 
 

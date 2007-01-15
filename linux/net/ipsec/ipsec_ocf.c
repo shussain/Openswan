@@ -42,6 +42,7 @@
 #include "openswan/ipsec_esp.h"
 #include "openswan/ipsec_ah.h"
 #include "openswan/ipcomp.h"
+#include "openswan/ipsec_proto.h"
 
 #include <openswan/pfkeyv2.h>
 #include <openswan/pfkey.h>
@@ -58,13 +59,15 @@ MODULE_PARM_DESC(ocf_cryptodev_selection,
                 "select OCF driver (anydevice -1, anyhardware -2, "
                 "anysoftware -3, 0 and up select specific drivers in OCF");
 
-#if 1   // these are intended to be temporary and for testing [bart]
-static int ocf_force_ipcomp_cryptodev = CRYPTO_ANYSOFTWARE;
+#define USE_OCF_FORCE_KNOBS
+// these are intended to be temporary and for testing [bart]
+#ifdef USE_OCF_FORCE_KNOBS
+static int ocf_force_ipcomp_cryptodev = CRYPTO_ANYDEVICE;
 module_param(ocf_force_ipcomp_cryptodev, int, 0644);
-MODULE_PARM_DESC(ocf_force_ipcomp_cryptodev, "OCF device to use for ipcomp");
-static int ocf_force_ipcomp_alg = IPCOMP_DEFLATE;
+MODULE_PARM_DESC(ocf_force_ipcomp_cryptodev, "OCF device to use for ipcomp (-1 disable)");
+static int ocf_force_ipcomp_alg = 0;
 module_param(ocf_force_ipcomp_alg, int, 0644);
-MODULE_PARM_DESC(ocf_force_ipcomp_alg, "OCF alg to use for ipcomp");
+MODULE_PARM_DESC(ocf_force_ipcomp_alg, "OCF alg to use for ipcomp (0 disable)");
 #endif
 
 /*
@@ -114,11 +117,11 @@ ipsec_ocf_compalg(int compalg)
 {
 	switch (compalg) {
         case IPCOMP_DEFLATE:    return CRYPTO_DEFLATE_COMP;
+        case IPCOMP_LZS:        return CRYPTO_LZS_COMP;
 
         // ocf does not have these yet...
 
         //case IPCOMP_OUI:        
-        //case IPCOMP_LZS:
         //case IPCOMP_V42BIS:
 	}
 	return 0;
@@ -239,8 +242,8 @@ ipsec_ocf_ipcomp_copy_expand (struct ipsec_rcv_state *irs)
 
 
 /*
- * if we can do the request ops, setup the sessions and return true
- * otherwise return false with ipsp unchanged
+ * if we can do the request ops, setup the sessions and return 0
+ * otherwise return error with ipsp unchanged
  */
 
 int
@@ -258,7 +261,7 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 				"klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x) a-key-bits=0\n",
 				authalg, encalg);
 		/* pretend we are happy with this */
-		return 1;
+		return 0;
 	}
 
 	if (encalg && ipsp->ips_key_bits_e == 0) {
@@ -266,7 +269,7 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 				"klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x) e-key-bits=0\n",
 				authalg, encalg);
 		/* pretend we are happy with this */
-		return 1;
+		return 0;
 	}
 
 	memset(&crie, 0, sizeof(crie));
@@ -275,10 +278,13 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	cria.cri_alg = ipsec_ocf_authalg(authalg);
 	cria.cri_klen = ipsp->ips_key_bits_a;
 	cria.cri_key  = ipsp->ips_key_a;
+	/* ipsec_dmp_block("ocf auth key", cria.cri_key, cria.cri_klen/8); */
 
 	crie.cri_alg = ipsec_ocf_encalg(encalg);
 	crie.cri_klen = ipsp->ips_key_bits_e;
 	crie.cri_key  = ipsp->ips_key_e;
+	/* ipsec_dmp_block("ocf cipher key", crie.cri_key, crie.cri_klen/8); */
+
 	switch (crie.cri_alg) {
 	case CRYPTO_AES_CBC:
 		ipsp->ips_iv_size = 16;
@@ -309,15 +315,15 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 		error = crypto_newsession(&ipsp->ocf_cryptoid, &cria,
                                 ocf_cryptodev_selection);
 	} else {
-		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_sa_init: "
+		KLIPS_ERROR(debug_ocf, "klips_debug:ipsec_ocf_sa_init: "
 				"no authalg or encalg\n");
-		return 0;
+		return -ENOENT;
 	}
 
 	if (error) {
-		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_sa_init: "
+		KLIPS_ERROR(debug_ocf, "klips_debug:ipsec_ocf_sa_init: "
 				"crypto_newsession failed 0x%x\n", error);
-		return 0;
+		return error;
 	}
 
         // get the name of the device we are using from OCF
@@ -337,10 +343,10 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	ipsp->ips_alg_enc = NULL;
 
 	ipsp->ocf_in_use = 1;
-	return 1;
+	return 0;
 }
 
-// this function returns a boolean indicating success
+/* this function returns a zero upon success */
 int 
 ipsec_ocf_comp_sa_init(struct ipsec_sa *ipsp, int compalg)
 {
@@ -349,7 +355,8 @@ ipsec_ocf_comp_sa_init(struct ipsec_sa *ipsp, int compalg)
 	int error;
         int cryptodevid;
 
-#if 1
+
+#ifdef USE_OCF_FORCE_KNOBS
         // remove when we have working hardware support for crypto offload
         if (ocf_force_ipcomp_alg) {
                 printk ("klips:ocf: forcing ipcomp offload of alg=%d to alg id=%d\n", 
@@ -367,14 +374,14 @@ ipsec_ocf_comp_sa_init(struct ipsec_sa *ipsp, int compalg)
 	cric.cri_alg = ipsec_ocf_compalg(compalg);
 
         if (! cric.cri_alg) {
-		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_comp_sa_init: "
+		KLIPS_ERROR(debug_ocf, "klips_debug:ipsec_ocf_comp_sa_init: "
 				"invalid compalg=%d given\n", compalg);
-		return 0;
+		return -ENOENT;
         }
 
         cryptodevid = ocf_cryptodev_selection;
 
-#if 1
+#ifdef USE_OCF_FORCE_KNOBS
         // remove when we have working hardware support for crypto offload
         if (ocf_force_ipcomp_cryptodev != CRYPTO_ANYDEVICE) {
                 printk ("klips:ocf: forcing ipcomp offload of alg=%d to crypto id=%d\n", 
@@ -391,9 +398,9 @@ ipsec_ocf_comp_sa_init(struct ipsec_sa *ipsp, int compalg)
         error = crypto_newsession(&ipsp->ocf_cryptoid, &cric,
                         cryptodevid);
 	if (error) {
-		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_comp_sa_init: "
+		KLIPS_ERROR(debug_ocf, "klips_debug:ipsec_ocf_comp_sa_init: "
 				"crypto_newsession failed 0x%x\n", error);
-		return 0;
+		return -ENOENT;
 	}
 
         // get the name of the device we are using from OCF
@@ -408,7 +415,7 @@ ipsec_ocf_comp_sa_init(struct ipsec_sa *ipsp, int compalg)
                         ipsp->ocf_cryptoid, devicename);
 
 	ipsp->ocf_in_use = 1;
-	return 1;
+	return 0;
 }
 
 
@@ -427,7 +434,9 @@ static int
 ipsec_ocf_rcv_cb(struct cryptop *crp)
 {
 	struct ipsec_rcv_state *irs = (struct ipsec_rcv_state *)crp->crp_opaque;
+        struct iphdr *newiph;
         unsigned orig_len, decomp_len;
+	struct cryptodesc *crdc=NULL;
 
 	KLIPS_PRINT(debug_rcv, "klips_debug:ipsec_ocf_rcv_cb\n");
 
@@ -499,25 +508,53 @@ ipsec_ocf_rcv_cb(struct cryptop *crp)
                 break;
 
         case IPPROTO_COMP:
+		crdc = crp->crp_desc;
+
                 kfree_skb (irs->pre_ipcomp_skb);
                 irs->pre_ipcomp_skb = NULL;
 
+		KLIPS_PRINT(debug_rcv, "comp before adjustments:");
+		KLIPS_IP_PRINT(debug_rcv & DB_TN_XMIT, irs->ipp);
+
+                orig_len = irs->skb->len - sizeof (struct ipcomphdr);
+                decomp_len = crp->crp_olen - crdc->crd_inject;
+
+                newiph = (struct iphdr*)((char*)irs->ipp + sizeof (struct ipcomphdr));
+
+		KLIPS_PRINT(debug_rcv, "comp results: olen: %u, inject: %u (len=%d) iph->totlen=%u\n",
+			    crp->crp_olen, crdc->crd_inject, decomp_len, ntohs(newiph->tot_len));
+
+                // move the ip header to consume room previously taken by
+                // the ipcomp header
+                skb_pull (irs->skb, sizeof (struct ipcomphdr));
+                memmove (newiph, irs->ipp, irs->iphlen);
+                irs->ipp = newiph;
+
+                irs->skb->nh.raw += sizeof (struct ipcomphdr);
+                irs->skb->h.raw += sizeof (struct ipcomphdr);
+
                 // adjust the ipp pointer to point to the header we decoded
                 //irs->ipp = (void*)((char*)irs->ipp - irs->iphlen;
-
-                orig_len = irs->skb->len;
-                decomp_len = crp->crp_olen;
 
                 irs->ipp->protocol = irs->next_header;
                 irs->ipp->tot_len = htons (irs->iphlen + decomp_len);
                 irs->ipp->check = 0;
                 irs->ipp->check = ip_fast_csum((char *) irs->ipp, irs->ipp->ihl);
 
-                /* Update skb length/tail by "putting" the growth */
+		KLIPS_PRINT(debug_rcv, "comp after len adjustments:");
+		KLIPS_IP_PRINT(debug_rcv & DB_TN_XMIT, irs->ipp);
+ 
+		/* Update skb length/tail by "putting" the growth */
                 safe_skb_put (irs->skb, decomp_len - orig_len);
 
                 // set the new header in the skb
                 irs->skb->nh.iph = irs->ipp;
+
+                // relese the backup copy
+                if (irs->pre_ipcomp_skb) {
+                        kfree_skb (irs->pre_ipcomp_skb);
+                        irs->pre_ipcomp_skb = NULL;
+                }
 
                 /* IPcomp finished, continue processing */
                 irs->state = IPSEC_RSM_DECAP_CONT;
@@ -663,8 +700,14 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 
         if (crdc) {
                 struct ipcomphdr *cmph;
+                int compalg = ipsp->ips_compalg;
                 /* Decompression descriptor */
-                crdc->crd_alg = ipsec_ocf_compalg(ipsp->ips_compalg);
+#ifdef USE_OCF_FORCE_KNOBS
+                // remove when we have working hardware support for crypto offload
+                if (ocf_force_ipcomp_alg)
+                        compalg = ocf_force_ipcomp_alg;
+#endif
+                crdc->crd_alg = ipsec_ocf_compalg(compalg);
                 if (!crdc->crd_alg) {
                         KLIPS_PRINT(debug_tunnel&DB_TN_XMIT, "klips_debug:ipsec_ocf_rcv: "
                                         "bad decomp alg 0x%x\n",
@@ -682,8 +725,8 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
                 // decompress all ip data past the ipcomp header
                 crdc->crd_len    = ntohs(irs->ipp->tot_len) - irs->iphlen 
                                  - sizeof (struct ipcomphdr);
-                // decompress to replace the ipcomp header
-                crdc->crd_inject = crdc->crd_skip - sizeof (struct ipcomphdr);
+                // decompress inplace (some hardware can only do inplace)
+                crdc->crd_inject = crdc->crd_skip;
         }
 
 	crp->crp_ilen = irs->skb->len; /* Total input length */
@@ -714,8 +757,10 @@ static int
 ipsec_ocf_xmit_cb(struct cryptop *crp)
 {
 	struct ipsec_xmit_state *ixs = (struct ipsec_xmit_state *)crp->crp_opaque;
+        struct iphdr *newiph;
         struct ipcomphdr *cmph;
         unsigned orig_len, comp_len;
+	struct cryptodesc *crdc=NULL;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, "klips_debug:ipsec_ocf_xmit_cb\n");
 
@@ -733,14 +778,47 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 
 	ixs->state = IPSEC_XSM_DONE; /* assume bad xmit */
 	if (crp->crp_etype) {
+                ptrdiff_t ptr_delta;
+
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, "klips_debug:ipsec_ocf_xmit_cb: "
 				"error in processing 0x%x\n", crp->crp_etype);
 
                 switch(ixs->ipsp->ips_said.proto) {
                 case IPPROTO_COMP:
-                        // It's ok for compression to fail... we just don't compress.
-                        // No modifications were made, so we just return success.
+                        // It's ok for compression to fail... we made a clone
+                        // of the packet, so we just revert it now...
+                        if (! ixs->pre_ipcomp_skb) {
+                                KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, 
+                                        "klips_debug:ipsec_ocf_xmit_cb: "
+                                        "IPcomp on %d bytes failed, "
+                                        "but we have no clone!\n", 
+                                        ntohs(ixs->iph->tot_len) - ixs->iphlen);
 
+                                // this is a fail.
+                                break;
+                        }
+
+                        KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, 
+                                "klips_debug:ipsec_ocf_xmit_cb: "
+                                "IPcomp on %d bytes failed, "
+                                "using backup clone.\n", 
+                                ntohs(ixs->iph->tot_len) - ixs->iphlen);
+
+                        ptr_delta = ixs->pre_ipcomp_skb->data - ixs->skb->data;
+                        ixs->iph           = (void*)((char*)ixs->iph + ptr_delta);
+
+			/*
+			 * can not free it here, because we are under
+			 * IRQ, potentially, so queue it for later
+			 */
+			ipsec_skb_gc_enqueue(ixs->skb);
+
+                        ixs->skb = ixs->pre_ipcomp_skb;
+                        ixs->skb->nh.raw  += ptr_delta;
+                        ixs->skb->h.raw   += ptr_delta;
+                        ixs->pre_ipcomp_skb = NULL;
+
+                        // this means we don't compress
                         ixs->state = IPSEC_XSM_CONT;
                         break;
 
@@ -766,15 +844,35 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 
         case IPPROTO_COMP:
                 /* IPcomp fill in the header */
-                cmph = (struct ipcomphdr*)((char*)ixs->iph + ixs->iphlen);
+		crdc = crp->crp_desc;
+
+		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
+			    "klips_debug:ipsec_ocf_xmit_cb: "
+			    "after <%s%s%s>, SA:%s:\n",
+			    IPS_XFORM_NAME(ixs->ipsp),
+			    ixs->sa_len ? ixs->sa_txt : " (error)");
+		KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);
 
                 orig_len = ntohs(ixs->iph->tot_len) - ixs->iphlen;
-                comp_len = crp->crp_olen;
+                comp_len = crp->crp_olen - crdc->crd_inject;
 
+                newiph = (struct iphdr*)((char*)ixs->iph - sizeof (struct ipcomphdr));
+                cmph = (struct ipcomphdr*)((char*)newiph + ixs->iphlen);
+
+                // move the ip header to make room for the new ipcomp header
+                skb_push (ixs->skb, sizeof (struct ipcomphdr));
+                memmove (newiph, ixs->iph, ixs->iphlen);
+                ixs->iph = newiph;
+
+                ixs->skb->nh.raw -= sizeof (struct ipcomphdr);
+                ixs->skb->h.raw -= sizeof (struct ipcomphdr);
+
+                // now we can fill in the ipcomp header
                 cmph->ipcomp_nh = ixs->next_header;
                 cmph->ipcomp_flags = 0;
                 cmph->ipcomp_cpi = htons((__u16)(ntohl(ixs->ipsp->ips_said.spi) & 0x0000ffff));
 
+                // update the ip header to reflect the compression
                 ixs->iph->protocol = IPPROTO_COMP;
                 ixs->iph->tot_len = htons(ixs->iphlen 
                                 + sizeof(struct ipcomphdr) 
@@ -783,12 +881,16 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
                 ixs->iph->check = ip_fast_csum((char *) ixs->iph, ixs->iph->ihl);
 
                 /* Update skb length/tail by "unputting" the shrinkage */
-                safe_skb_put (ixs->skb, comp_len 
-                                + sizeof(struct ipcomphdr) 
-                                - orig_len);
+                safe_skb_put (ixs->skb, comp_len - orig_len);
 
                 ixs->ipsp->ips_comp_adapt_skip = 0;
                 ixs->ipsp->ips_comp_adapt_tries = 0;
+
+                // relese the backup copy
+                if (ixs->pre_ipcomp_skb) {
+                        kfree_skb (ixs->pre_ipcomp_skb);
+                        ixs->pre_ipcomp_skb = NULL;
+                }
                 
                 break;
         }
@@ -840,6 +942,24 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
                                         "skipping IPcomp on packet with "
                                         "%d payload bytes\n", payload_size);
                         return IPSEC_XMIT_OK;
+                }
+                // there is a chance that we may not compress, and
+                // since the compression overwrites the data, we will clone
+                // the packet and restore it if we fail to compress
+                KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, 
+                                "klips_debug:ipsec_ocf_xmit: "
+                                "IPcomp on %d bytes can fail, "
+                                "duplicating the skb\n", payload_size);
+                ixs->pre_ipcomp_skb = skb_copy_expand (ixs->skb,
+                                skb_headroom(ixs->skb),
+                                skb_tailroom(ixs->skb), GFP_ATOMIC);
+                if (! ixs->pre_ipcomp_skb) {
+                        // We can either drop the packet, but instead we try
+                        // to do the compression as it might succeed.  Should it
+                        // fail, the packet will be dropped in the callback.
+                        KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, 
+                                "klips_debug:ipsec_ocf_xmit: "
+                                "skb_clone failed -- ignoring\n");
                 }
                 break;
         case IPPROTO_ESP:
@@ -908,6 +1028,8 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
                 crp->crp_maclen  = ixs->authlen;
 		crda->crd_key    = ipsp->ips_key_a;
 		crda->crd_klen   = ipsp->ips_key_bits_a;
+
+		/* ipsec_dmp_block("ocf auth key (as submitted)", crda->crd_key, crda->crd_klen/8); */
 	}
 
 	if (crde) {
@@ -927,8 +1049,14 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 	}
 
         if (crdc) {
+                int compalg = ipsp->ips_compalg;
                 /* Compression descriptor */
-                crdc->crd_alg = ipsec_ocf_compalg(ipsp->ips_compalg);
+#ifdef USE_OCF_FORCE_KNOBS
+                // remove when we have working hardware support for crypto offload
+                if (ocf_force_ipcomp_alg)
+                        compalg = ocf_force_ipcomp_alg;
+#endif
+                crdc->crd_alg = ipsec_ocf_compalg(compalg);
 		if (!crdc->crd_alg) {
 			KLIPS_PRINT(debug_tunnel&DB_TN_XMIT, "klips_debug:ipsec_ocf_xmit: "
 					"bad comp alg 0x%x\n",
@@ -943,8 +1071,8 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
                         + ixs->iphlen - ixs->dat;
                 // compress all ip data
 		crdc->crd_len    = ntohs(ixs->iph->tot_len) - ixs->iphlen;
-                // compress in place, but leave room for ipcomp header
-		crdc->crd_inject = crdc->crd_skip + sizeof (struct ipcomphdr);
+                // compress inplace (some hardware can only do inplace)
+		crdc->crd_inject = crdc->crd_skip;
         }
 
 	crp->crp_ilen = ixs->skb->len; /* Total input length */

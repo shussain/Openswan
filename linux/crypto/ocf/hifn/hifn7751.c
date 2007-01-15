@@ -77,16 +77,18 @@ __FBSDID("$FreeBSD: src/sys/dev/hifn/hifn7751.c,v 1.32 2005/01/19 17:03:35 sam E
 
 #include "hifn7751reg.h"
 #include "hifn7751var.h"
+#include "hifn7751io.h"
 
 #define HIFN_DEBUG 
-//#define HIFN_DEBUG_VERBOSE
+#define HIFN_DEBUG_VERBOSE
 
 #ifdef HIFN_DEBUG_VERBOSE
-#define verbose_printk(fmt,x...) printk(fmt,##x)
+#define verbose_printk(fmt,x...) if(hifn_debug_verbose) printk(fmt,##x)
 #else
 #define verbose_printk(x...) do { /* nothing */ } while (0)
 #endif
 
+//#define HIFN_HEXDUMP
 #ifdef HIFN_HEXDUMP
 #define hexdump_printf printk
 #include "hexdump.c"
@@ -193,7 +195,7 @@ static struct {
         struct dentry *file;
         u32 value;
 
-} debug_vars[DEBUG_VAR_MAX] = {
+} debug_vars[DEBUG_VAR_MAX+1] = {
 #define DEBUG_VAR_DEF(name) [DEBUG_VAR_##name] = { #name, NULL, 0 }
 
         DEBUG_VAR_DEF(cnt_devices),             // devices present
@@ -228,6 +230,9 @@ static struct {
 
         DEBUG_VAR_DEF(cnt_kprocess_total),      // kop total
         DEBUG_VAR_DEF(cnt_kprocess_fail),       // kop fail
+
+        // terminator
+        [DEBUG_VAR_MAX] = { NULL, NULL, 0 }
 };
 
 #define debug_var_op(name,op) do { debug_vars[DEBUG_VAR_##name].value op; } while (0)
@@ -249,9 +254,23 @@ pci_get_revid(struct pci_dev *dev)
 static	struct hifn_stats hifnstats;
 
 #define	hifn_debug debug
-static	int debug = 1;
+static	int debug = 0;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Enable debug");
+
+static	int pk_debug = 0;
+module_param(pk_debug, int, 0644);
+MODULE_PARM_DESC(pk_debug, "Enable PK debug");
+
+#ifdef HIFN_DEBUG_VERBOSE
+static	int hifn_debug_dma = 0;
+module_param(hifn_debug_dma, int, 0644);
+MODULE_PARM_DESC(hifn_debug_dma, "Enable DMA ring debug");
+
+static	int hifn_debug_verbose = 0;
+module_param(hifn_debug_verbose, int, 0644);
+MODULE_PARM_DESC(hifn_debug_verbose, "Enable verbose debug");
+#endif
 
 static	int hifn_maxbatch = 1;
 module_param(hifn_maxbatch, int, 0644);
@@ -260,6 +279,18 @@ MODULE_PARM_DESC(hifn_maxbatch, "max ops to batch w/o interrupt");
 static	char hifn_pllconfig[128];
 module_param_string(hifn_pllconfig, hifn_pllconfig, 128, 0644);
 MODULE_PARM_DESC(hifn_pllconfig, "PLL config, ie., pci66, ext33, ...");
+
+/* Count how many operations were concurrently submitted into the
+ * system; counter[x] is incremeted each time we had x operations in
+ * the system at the same time when one finishes. */
+#define HIFN_OP_COUNTERS 32
+static int hifn_op_counters[HIFN_OP_COUNTERS] = {0,};
+module_param_array(hifn_op_counters, int, NULL, 0644);
+MODULE_PARM_DESC(hifn_op_counters, "Count each time there were x ops outstanding when one completes");
+
+static int hifn_max_concurrent = 0;
+module_param(hifn_max_concurrent, int, 0644);
+MODULE_PARM_DESC(hifn_max_concurrent, "Maximum number of concurretn operations");
 
 /*
  * Prototypes and count for the pci_device structure
@@ -324,24 +355,6 @@ static int hifn_vulcan_kprocess(void *arg, struct cryptkop *krp, int hint);
 static int hifn_num_chips = 0;
 static struct hifn_softc *hifn_chip_idx[HIFN_MAX_CHIPS];
 
-static __inline u_int32_t
-READ_REG_0(struct hifn_softc *sc, bus_size_t reg)
-{
-	u_int32_t v = readl(sc->sc_bar0 + reg);
-	sc->sc_bar0_lastreg = (bus_size_t) -1;
-	return (v);
-}
-#define	WRITE_REG_0(sc, reg, val)	hifn_write_reg_0(sc, reg, val)
-
-static __inline u_int32_t
-READ_REG_1(struct hifn_softc *sc, bus_size_t reg)
-{
-	u_int32_t v = readl(sc->sc_bar1 + reg);
-	sc->sc_bar1_lastreg = (bus_size_t) -1;
-	return (v);
-}
-#define	WRITE_REG_1(sc, reg, val)	hifn_write_reg_1(sc, reg, val)
-
 /*
  * map in a given buffer (great on some arches :-)
  */
@@ -364,7 +377,7 @@ pci_map_uio(struct hifn_softc *sc, struct hifn_operand *buf, struct uio *uio)
 		buf->nsegs++;
 	}
 	/* identify this buffer by the first segment */
-	buf->map = (void *) buf->segs[0].ds_addr;
+	buf->map = buf->segs[0].ds_addr;
 	return(0);
 }
 
@@ -399,7 +412,7 @@ pci_map_skb(struct hifn_softc *sc,struct hifn_operand *buf,struct sk_buff *skb)
 	}
 
 	/* identify this buffer by the first segment */
-	buf->map = (void *) buf->segs[0].ds_addr;
+	buf->map = buf->segs[0].ds_addr;
 	return(0);
 }
 
@@ -420,7 +433,7 @@ pci_map_buf(struct hifn_softc *sc,struct hifn_operand *buf, void *b, int len)
 	buf->nsegs = 1;
 
 	/* identify this buffer by the first segment */
-	buf->map = (void *) buf->segs[0].ds_addr;
+	buf->map = buf->segs[0].ds_addr;
 	return(0);
 }
 
@@ -862,7 +875,7 @@ hifn_probe(struct pci_dev *dev, const struct pci_device_id *ent)
 		    hifn_newsession, hifn_freesession, hifn_process, sc);
 		crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
 		    hifn_newsession, hifn_freesession, hifn_process, sc);
-		crypto_register(sc->sc_cid, CRYPTO_DEFLATE_COMP, 0, 0,
+		crypto_register(sc->sc_cid, CRYPTO_LZS_COMP, 0, 0,
 		    hifn_newsession, hifn_freesession, hifn_process, sc);
 		break;
 	}
@@ -1637,16 +1650,21 @@ hifn_write_command(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *bu
 	hifn_mac_command_t *mac_cmd;
 	hifn_crypt_command_t *cry_cmd;
 	hifn_comp_command_t *cmp_cmd;
-	int using_mac, using_crypt, using_comp, len, ivlen;
+	unsigned int using_mac, using_crypt, using_comp;
+	int len, ivlen;
 	u_int32_t dlen, slen;
 
         debug_var_op (cnt_write_cmd,++);
 	DPRINTF("%s()\n", __FUNCTION__);
 
 	buf_pos = buf;
-	using_mac = cmd->base_masks & HIFN_BASE_CMD_MAC;
-	using_crypt = cmd->base_masks & HIFN_BASE_CMD_CRYPT;
-        using_comp =  cmd->base_masks & HIFN_BASE_CMD_COMP;
+	using_mac   = (cmd->base_masks & HIFN_BASE_CMD_MAC) != 0;
+	using_crypt = (cmd->base_masks & HIFN_BASE_CMD_CRYPT)!=0;
+        using_comp  = (cmd->base_masks & HIFN_BASE_CMD_COMP)!=0;
+
+	cmd->using_mac   = using_mac;
+	cmd->using_crypt = using_crypt;
+	cmd->using_comp  = using_comp;
 
 	base_cmd = (hifn_base_command_t *)buf_pos;
 	base_cmd->masks = htole16(cmd->base_masks);
@@ -1909,7 +1927,7 @@ hifn_dmamap_load_src(struct hifn_softc *sc, struct hifn_command *cmd)
                         seglen = bytes_left;
                 bytes_left -= seglen;
 
-                verbose_printk("---- src[%d] %08x %u\n", idx, src->segs[i].ds_addr, seglen);
+                verbose_printk("---- src[%d] %016llx %u\n", idx, (unsigned long long int)src->segs[i].ds_addr, seglen);
 		dma->srcr[idx].p = htole32(src->segs[i].ds_addr);
 		dma->srcr[idx].l = htole32(seglen | HIFN_D_MASKDONEIRQ | last);
 		wmb();
@@ -2108,7 +2126,7 @@ hifn_crypto(
 		}
 	}
 
-	if (cmd->dst_map == NULL) {
+	if (cmd->dst_map == 0ULL) {
 		if (crp->crp_flags & CRYPTO_F_SKBUF) {
 			if (pci_map_skb(sc, &cmd->dst, cmd->dst_skb)) {
 				hifnstats.hst_nomem_map++;
@@ -2207,7 +2225,9 @@ hifn_crypto(
 	HIFN_CMD_SYNC(sc, cmdi, BUS_DMASYNC_PREWRITE);
 
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "cmd setup");
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "cmd setup");
+	}
 #endif
 
 	/* .p for command/result already set */
@@ -2290,8 +2310,10 @@ hifn_crypto(
         // all descriptors are ready to go, need to poke the CSR
 
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "everything is setup, about to enable");
-        hifn_dump_buffers(sc, cmdi);
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "everything is setup, about to enable");
+		hifn_dump_buffers(sc, cmdi);
+	}
 #endif
 
         // enable read of the srcr[]
@@ -2302,7 +2324,9 @@ hifn_crypto(
 	}
 
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "after src enable");
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "after src enable");
+	}
 #endif
 
         // enable read of the dstr[]
@@ -2313,7 +2337,9 @@ hifn_crypto(
 	}
 
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "after dest enable");
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "after dest enable");
+	}
 #endif
 
         // enable read of the resr[]
@@ -2324,7 +2350,9 @@ hifn_crypto(
 	}
 
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "after result enable");
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "after result enable");
+	}
 #endif
 
         // enable read of the cmdr[]
@@ -2348,7 +2376,9 @@ hifn_crypto(
 	hifnstats.hst_ibytes += cmd->src_mapsize;
 
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "after cmd enable");
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "after cmd enable");
+	}
 #endif
 
         // --------------------------------------------------------------
@@ -2361,15 +2391,18 @@ hifn_crypto(
 	}
 #endif
 
+        sc->sc_active_ops ++;
 	sc->sc_active = 5;
 	HIFN_UNLOCK(sc);
 	KASSERT(err == 0, ("hifn_crypto: success with error %u", err));
 
 #ifdef HIFN_DEBUG_VERBOSE
-        udelay (10000); // 10ms
-        HIFN_LOCK(sc);
-        hifn_dump_regs(sc, "after a 10ms delay");
-        HIFN_UNLOCK(sc);
+	if(hifn_debug_dma) {
+                udelay (10000); // 10ms
+                HIFN_LOCK(sc);
+                hifn_dump_regs(sc, "after a 10ms delay");
+                HIFN_UNLOCK(sc);
+	}
 #endif
 	return (err);		/* success */
 
@@ -2469,14 +2502,16 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
                         && (puisr & sc->sc_puier) == 0)
 		return IRQ_NONE;
 
+	HIFN_LOCK(sc);
+
 #ifdef HIFN_DEBUG_VERBOSE
-        hifn_dump_regs(sc, "interrupt");
-        hifn_dump_dma_rings(sc);
+	if(hifn_debug_dma) {
+		hifn_dump_regs(sc, "interrupt");
+		hifn_dump_dma_rings(sc);
+	}
 #endif
 
         debug_var_op (cnt_intr,++);
-
-	HIFN_LOCK(sc);
 
 	dma = sc->sc_dma;
 
@@ -2561,7 +2596,9 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 			HIFN_RES_SYNC(sc, i, BUS_DMASYNC_POSTREAD);
 
 #ifdef HIFN_DEBUG_VERBOSE
-                        hifn_dump_buffers(sc, i);
+			if(hifn_debug_dma) {
+				hifn_dump_buffers(sc, i);
+			}
 #endif
 
                         cmd = dma->hifn_commands[i];
@@ -2734,7 +2771,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			}
 			cry = 1;
 			break;
-                case CRYPTO_DEFLATE_COMP:
+                case CRYPTO_LZS_COMP:
                         if (comp) {
 				DPRINTF("%s,%d: %s - EINVAL\n",__FILE__,__LINE__,__FUNCTION__);
                                 debug_var_op (cnt_sess_fail,++);
@@ -2814,7 +2851,7 @@ hifn_alg_is_supported_crypto(int ocf_alg)
 static inline int
 hifn_alg_is_supported_comp(int ocf_alg)
 {
-        return ocf_alg == CRYPTO_DEFLATE_COMP;
+        return ocf_alg == CRYPTO_LZS_COMP;
 }
 
 static int
@@ -2824,7 +2861,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 	struct hifn_command *cmd = NULL;
 	int session, err, ivlen, is_encrypt;
 	struct cryptodesc *crd[3]={NULL,}, *maccrd=NULL, *enccrd=NULL, *compcrd=NULL;
-        int i, crd_cnt=0, maci=2, enci=2, compi=2;
+        int i, crd_cnt=0, maci=2, enci=2, compi=2, bad_crd=0;
 
         debug_var_op (cnt_process_total,++);
 
@@ -2899,23 +2936,47 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
         }
 
         // classify descriptors by what they do
+        bad_crd = 0;
         for (i=0; i<crd_cnt; i++) {
                 int alg = crd[i]->crd_alg;
+
                 if (hifn_alg_is_supported_comp(alg)) {
                         compcrd = crd[i];
                         compi = i;
+
                 } else if (hifn_alg_is_supported_crypto (alg)) {
                         enccrd = crd[i];
                         enci = i;
+
                 } else if (hifn_alg_is_supported_hash (alg)) {
                         maccrd = crd[i];
                         maci = i;
+
                 } else {
                         DPRINTF("%s,%d: %s - EINVAL, crp=%d unknown alg=%d\n",
                                         __FILE__,__LINE__,__FUNCTION__, i, alg);
-                        err = EINVAL;
-                        goto errout;
+                        bad_crd = 1;
+                        break;
                 }
+
+        }
+
+        // dump more info for errors caught above
+        if (bad_crd) {
+                DPRINTF("%s,%d: %s - crp_sid=0x%016llx, crd_cnt=%d\n", 
+                                __FILE__,__LINE__,__FUNCTION__, 
+                                crp->crp_sid, crd_cnt);
+                for (i=0; i<crd_cnt; i++) {
+                        int alg = crd[i]->crd_alg;
+                        DPRINTF ("%s,%d: %s - [%d] alg=%d %s%s%s\n", 
+                                        __FILE__,__LINE__,__FUNCTION__, i, alg, 
+                                        hifn_alg_is_supported_comp(alg)?"comp ":"",
+                                        hifn_alg_is_supported_crypto(alg)?"enc ":"",
+                                        hifn_alg_is_supported_hash(alg)?"hash ":"");
+                }
+
+                err = EINVAL;
+                goto errout;
         }
 
         // depending on direction, make sure we have have them in the right order
@@ -2933,6 +2994,8 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
                         err = EINVAL;
                         goto errout;
                 }
+                cmd->base_masks = HIFN_BASE_CMD_ENCODE;
+		cmd->is_encode = 1;
         } else {
                 // hash before decrypt before decompress
                 if ((!compcrd && !enccrd && !maccrd)
@@ -2948,6 +3011,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
                         goto errout;
                 }
                 cmd->base_masks = HIFN_BASE_CMD_DECODE;
+		cmd->is_encode = 0;
         }
 
         if (compcrd) {
@@ -2955,7 +3019,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		cmd->base_masks |= HIFN_BASE_CMD_COMP;
                 cmd->comp_masks |= HIFN_COMP_CMD_CLEAR_HIST;
 		switch (compcrd->crd_alg) {
-		case CRYPTO_DEFLATE_COMP:
+		case CRYPTO_LZS_COMP:
 			break;
 
 #if 0
@@ -3314,6 +3378,17 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 
 	DPRINTF("%s()\n", __FUNCTION__);
 
+        // update statistics
+        if (hifn_max_concurrent < sc->sc_active_ops)
+                hifn_max_concurrent = sc->sc_active_ops;
+
+        sc->sc_active_ops --;
+        i = sc->sc_active_ops;
+        if ((unsigned)i > HIFN_OP_COUNTERS)
+                i = HIFN_OP_COUNTERS;
+        hifn_op_counters[i] ++;
+
+
         // parse the result buffer
         rc = hifn_parse_result (cmd->base_masks, cmd->mac_len, resbuf, reslen,
                         &base_res, &comp_res, &mac_res, &enc_res);
@@ -3383,8 +3458,8 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 
                 dma_output_sum += le32toh(dma->dstr[i].l) & HIFN_D_LENGTH;
 
-                verbose_printk ("  dma_output_sum += dstr[%d].l (%d)\n",
-                                i, le32toh(dma->dstr[i].l) & HIFN_D_LENGTH);
+                verbose_printk ("  dma_output_sum += dstr[%d].l (%u) %04x\n",
+				    i, le32toh(dma->dstr[i].l) & HIFN_D_LENGTH, dma->dstr[i].l);
 
 		i++, u--;
         }
@@ -3426,6 +3501,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
         } else {
                 // we know that was the total number dma'ed back, use it
                 output_length = dma_output_sum;
+                printk ("  dma_output_sum = %d\n", dma_output_sum);
         }
 
 	i = dma->dstk; u = dma->dstu;
@@ -3449,6 +3525,40 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
         verbose_printk ("  int: dst: i:=%d u:=%d\n", i, u);
 	dma->dstk = i; dma->dstu = u;
 
+	if(comp_res) {
+		if(!cmd->using_comp) {
+			printk("why is compression result set when no compression asked for?\n");
+			crp->crp_etype = EINVAL;
+			goto bail;
+		}
+		
+		if(cmd->using_comp && cmd->is_encode) {
+			/* see if compression failed */
+			
+			verbose_printk ("    .. dst_count= %04x output_length=%04x\n",
+				base_res->total_dest_count, output_length);
+			/* destination overrun is set if data expanded */
+			if((base_res && base_res->masks & HIFN_BASE_RES_DEST_OVERRUN) ||
+			   output_length >= cmd->init_dest_count) {
+				DPRINTF("    compression failed %04x <= %04x. mask=%04x\n",
+					base_res->total_source_count,
+					output_length,
+					base_res->masks);
+				crp->crp_etype = ERANGE;
+				goto bail;
+			}
+		}
+
+		if(cmd->using_comp && cmd->is_encode==0) {
+			if((comp_res->masks & HIFN_COMP_RES_DCMP_SUCCESS)==0) {
+				DPRINTF("    uncompression failed\n");
+				crp->crp_etype = ERANGE;
+				goto bail;
+			}
+		}
+			
+	}
+		
 	hifnstats.hst_obytes += cmd->dst_mapsize;
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_CRYPT | HIFN_BASE_CMD_DECODE)) ==
@@ -3502,6 +3612,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 
         crp->crp_olen = output_length;
 
+bail:
 	if (cmd->src_map != cmd->dst_map)
 		pci_unmap_buf(sc, &cmd->dst);
 	pci_unmap_buf(sc, &cmd->src);
@@ -3836,7 +3947,7 @@ hifn_vulcan_kprocess(void *arg, struct cryptkop *krp, int hint)
         debug_var_op (cnt_kprocess_total,++);
 
 	DPRINTF("%s()\n", __FUNCTION__);
-	if(hifn_debug) device_printf(sc->sc_dev, "starting processing on krp=%p\n", krp);
+	if(pk_debug) device_printf(sc->sc_dev, "starting processing on krp=%p\n", krp);
 
 	if (sc == NULL) {
 		krp->krp_status = EINVAL;
@@ -3890,7 +4001,7 @@ static void hifn_copyPkValueTo(struct hifn_softc *sc,
 	u_int32_t *words = (u_int32_t *)param->crp_p;
 	int regNum = (pkRegNum * chunkSize) + HIFN_1_PUB_MEM;
 
-	if(hifn_debug) device_printf(sc->sc_dev, "copying %d words (%d bits) to %02x from %p\n",
+	if(pk_debug) device_printf(sc->sc_dev, "copying %d words (%d bits) to %02x from %p\n",
 				     wordcnt,
 				     param->crp_nbits, 
 				     (regNum - HIFN_1_PUB_MEM),
@@ -3925,7 +4036,7 @@ static void hifn_copyPkValueFrom(struct hifn_softc *sc,
 	u_int32_t *words = (u_int32_t *)param->crp_p;
 	int regNum = (pkRegNum * chunkSize) + HIFN_1_PUB_MEM;
 
-	if(hifn_debug) device_printf(sc->sc_dev, "copying %d words (%d bits) from %02x to %p\n",
+	if(pk_debug) device_printf(sc->sc_dev, "copying %d words (%d bits) from %02x to %p\n",
 				     wordcnt,
 				     param->crp_nbits, 
 				     (regNum - HIFN_1_PUB_MEM),
@@ -3964,14 +4075,14 @@ void hifn_write_pkop(struct hifn_softc *sc,
 		(bOffset << HIFN_PUBOPe_BSHIFT)|
 		(mOffset << HIFN_PUBOPe_MSHIFT);
 
-	if (hifn_debug) {
+	if (pk_debug) {
 		device_printf(sc->sc_dev, "pk_op(%08x, %08x)\n", oplen, op);
 		hifn_pk_print_status(sc, "pk_op before", READ_REG_1(sc, HIFN_1_PUB_STATUS));
 	}
 	WRITE_REG_1(sc, HIFN_1_PUB_FIFO_OPLEN, oplen);
 	WRITE_REG_1(sc, HIFN_1_PUB_FIFO_OP, op);
 
-	if (hifn_debug) hifn_pk_print_status(sc, "pk_op after",
+	if (pk_debug) hifn_pk_print_status(sc, "pk_op after",
 					    READ_REG_1(sc, HIFN_1_PUB_STATUS));
 }
 
@@ -3999,8 +4110,6 @@ static int hifn_calc_bitlen(unsigned char *secval,
 		explen-=8;
 	}
 
-	printk("seclen=%d *secval=%02x\n", seclen, *secval);
-	
 	/* fix up final byte size */
 	if((*secval & 0x80) == 0) {
 		explen--;
@@ -4034,7 +4143,6 @@ static int hifn_calc_bitlen(unsigned char *secval,
 		}
 	}
 
-	printk("explen=%d\n", explen);
 	return explen;
 }
     
@@ -4104,7 +4212,7 @@ hifn_vulcan_kstart(struct hifn_softc *sc)
 		
 
 #ifdef HEXDUMP
-		if(hifn_debug) {
+		if(pk_debug) {
 			hexdump(sc->sc_bar1, HIFN_1_PUB_MEM, HIFN_1_PUB_MEMSIZE);
 		}
 #endif
@@ -4138,7 +4246,7 @@ hifn_vulcan_kstart(struct hifn_softc *sc)
 		hifn_clearPkReg(sc, chunkSize, sc->sc_pk_qcur->pkq_oparam_reg);
 
 #ifdef HEXDUMP
-		if(hifn_debug) {
+		if(pk_debug) {
 			hexdump(sc->sc_bar1, HIFN_1_PUB_MEM, HIFN_1_PUB_MEMSIZE);
 		}
 #endif
@@ -4255,7 +4363,7 @@ void hifn_kintr(struct hifn_softc *sc)
 			     q->pkq_oparam_reg);
 	
 #ifdef HEXDUMP
-	if(hifn_debug) {
+	if(pk_debug) {
 		hexdump(sc->sc_bar1, HIFN_1_PUB_MEM, HIFN_1_PUB_MEMSIZE);
 	}
 #endif

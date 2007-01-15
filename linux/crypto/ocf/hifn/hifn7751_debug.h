@@ -1,9 +1,10 @@
 #ifndef __HIFN7751_DEBUG_H__
 #define __HIFN7751_DEBUG_H__
 
-/* forward declarations */
-static __inline u_int32_t READ_REG_0(struct hifn_softc *sc, bus_size_t reg);
-static __inline u_int32_t READ_REG_1(struct hifn_softc *sc, bus_size_t reg);
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include "hifn7751io.h"
+#include "hifn7751var.h"
 
 static inline void __attribute__((unused))
 hifn_dump_regs (struct hifn_softc *sc, const char *pre)
