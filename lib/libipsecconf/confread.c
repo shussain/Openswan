@@ -204,6 +204,7 @@ static int load_setup (struct starter_config *cfg
 		break;
 
 	    case kt_appendstring:
+	    case kt_appendlist:
 		assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
 		if(!cfg->setup.strings[kw->keyword.keydef->field])
 		{
@@ -246,6 +247,9 @@ static int load_setup (struct starter_config *cfg
 	    case kt_subnet:
 	    case kt_idtype:
 		err++;
+		break;
+
+	    case kt_comment:
 		break;
 	    }
 	}
@@ -372,8 +376,11 @@ static int validate_end(struct starter_conn *conn_st
     {
 	char *value = end->strings[KSCF_NEXTHOP];
 	
+	end->nexttype = KH_IPADDR;
+
 	er = ttoaddr(value, 0, AF_INET, &(end->nexthop));
 	if (er) ERR_FOUND("bad addr %snexthop=%s [%s]", leftright, value, er);
+
     } else {
 	if(conn_st->policy & POLICY_OPPO) {
 	    end->nexttype = KH_DEFAULTROUTE;
@@ -446,10 +453,6 @@ static int validate_end(struct starter_conn *conn_st
 
     if(end->strings_set[KSCF_CA]) {
 	end->ca = xstrdup(end->strings[KSCF_CA]);
-    }
-
-    if(end->strings_set[KSCF_UPDOWN]) {
-	end->updown = xstrdup(end->strings[KSCF_UPDOWN]);
     }
 
     if(end->strings_set[KSCF_UPDOWN]) {
@@ -590,6 +593,7 @@ bool translate_conn (struct starter_conn *conn
 	    break;
 	    
 	case kt_appendstring:
+	case kt_appendlist:
 	    /* implicitely, this field can have multiple values */
 	    assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
 	    if(!(*the_strings)[field])
@@ -692,6 +696,9 @@ bool translate_conn (struct starter_conn *conn
 #endif
 	    (*the_options)[field] = kw->number;
 	    (*set_options)[field] = TRUE;
+	    break;
+	    
+	case kt_comment:
 	    break;
 	}
     }
@@ -914,6 +921,10 @@ static int load_conn (struct starter_config *cfg
 	conn->ike = xstrdup(conn->strings[KSF_IKE]);
     }
 
+    if(conn->strings_set[KSF_CONNALIAS]) {
+	conn->connalias = xstrdup(conn->strings[KSF_CONNALIAS]);
+    }
+
     if(conn->options_set[KBF_PHASE2]) {
 	conn->policy &= ~(POLICY_AUTHENTICATE|POLICY_ENCRYPT);
 	conn->policy |= conn->options[KBF_PHASE2];
@@ -1132,6 +1143,9 @@ static void confread_free_conn(struct starter_conn *conn)
 	{
 	    FREE_STR(conn->strings[i]);
 	}
+
+	FREE_STR(conn->connalias);
+	FREE_STR(conn->name);
 
 #ifdef ALG_PATCH
 	FREE_STR(conn->esp);

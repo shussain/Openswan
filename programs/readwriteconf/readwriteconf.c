@@ -159,6 +159,11 @@ main(int argc, char *argv[])
 	strcat(configfile, "ipsec.conf");
     }
 
+    if(verbose > 3) {
+	extern int yydebug;
+	yydebug=1;
+    }
+
     if(verbose) {
 	printf("opening file: %s\n", configfile);
     }

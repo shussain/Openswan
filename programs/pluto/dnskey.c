@@ -80,7 +80,7 @@ bool adns_reapchild(pid_t pid, int status UNUSED)
     if(adns_in_flight > 0) {
 	release_all_continuations();
     }
-    passert(adns_in_flight == 0);
+    pexpect(adns_in_flight == 0);
 
     return TRUE;
   }
@@ -1468,6 +1468,7 @@ release_all_continuations()
 {
     struct adns_continuation *cr = NULL;
     struct adns_continuation *crnext;
+    int num_released = 0;
 
     for(cr = continuations; cr != NULL; cr = crnext) {
 	crnext = cr->previous;
@@ -1477,8 +1478,13 @@ release_all_continuations()
 	cr->used = TRUE;
 #endif
 	release_adns_continuation(cr);
-	adns_in_flight--;
+	num_released++;
     }
+
+    DBG_log("release_all_cnt: released %d, %d in flight => %d\n",
+	    num_released, adns_in_flight,  adns_in_flight-num_released);
+
+    adns_in_flight-=num_released;
 }
 
 err_t
