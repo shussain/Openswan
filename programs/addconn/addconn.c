@@ -455,6 +455,7 @@ main(int argc, char *argv[])
 		} else {
 		    printf("(notfound)");
 		}
+	    }
 
 	    if(conn == NULL) {
 		/* only if we don't find it */
