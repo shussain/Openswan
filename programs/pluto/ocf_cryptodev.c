@@ -403,7 +403,7 @@ void load_cryptodev(void)
 #endif
 
 	if(!use_pk_accel) {
-		if(!logged) openswan_log("Performing all cryptographic operations in software (administively defined).");
+		if(!logged) openswan_log("helper %u: performing all cryptographic operations in software (administively defined).", pc_worker_num);
 		logged=TRUE;
 		return;
 	}
@@ -411,14 +411,14 @@ void load_cryptodev(void)
 
 	if((fd = get_asym_dev_crypto()) < 0) {
 	none:
-		if(!logged) openswan_log("Performing all cryptographic operations in software (no hardware found).");
+		if(!logged) openswan_log("helper %u: performing all cryptographic operations in software (no hardware found).", pc_worker_num);
 		logged=TRUE;
 		return;
 	}
 
 	/* find out what asymmetric crypto algorithms we support */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		DBG(DBG_CRYPT, DBG_log("failed to find cryptographic accelerator with PK operations"));
+		DBG(DBG_CRYPT, DBG_log("helper %u: failed to find cryptographic accelerator with PK operations", pc_worker_num));
 		asym_close();
 		goto none;
 	}
@@ -432,10 +432,10 @@ void load_cryptodev(void)
 #ifndef VULCAN_PK
 		cryptodev.calc_dh_shared = calc_dh_shared_ocf;
 #endif
-		if(!logged) openswan_log("Performing modular exponentiation acceleration in hardware {fd=%d}", fd);
+		if(!logged) openswan_log("helper %u: performing modular exponentiation acceleration in hardware {fd=%d}", pc_worker_num, fd);
 		logged=TRUE;
 	} else {
-		if(!logged) openswan_log("Performing all cryptographic operations in software (no capable hardware found, features=%08x).", cryptodev_asymfeat);
+		if(!logged) openswan_log("helper %u: performing all cryptographic operations in software (no capable hardware found, features=%08x).", pc_worker_num, cryptodev_asymfeat);
 		logged=TRUE;
 	}
 }

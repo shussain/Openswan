@@ -134,6 +134,9 @@ struct pluto_crypto_req_cont {
 
 #define PCR_REQ_SIZE sizeof(struct pluto_crypto_req)+10
 
+/* in the child, indicates the helper number (for logs) */
+extern int pc_worker_num;
+
 extern void init_crypto_helpers(int nhelpers);
 extern err_t send_crypto_helper_request(struct pluto_crypto_req *r
 					, struct pluto_crypto_req_cont *cn
