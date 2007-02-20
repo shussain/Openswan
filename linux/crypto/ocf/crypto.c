@@ -129,7 +129,7 @@ module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug,
 	   "Enable debug");
 
-static int crypto_proc_debug = 1;
+static int crypto_proc_debug = 0;
 module_param(crypto_proc_debug, int, 0644);
 MODULE_PARM_DESC(crypto_proc_debug,
 		 "Enable debug of thread");
