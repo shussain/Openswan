@@ -84,8 +84,10 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
     dhq->keysize = st->st_oakley.enckeylen/BITS_PER_BYTE; 
 
     passert(r.pcr_d.dhq.oakley_group != 0);
+#if 0
     DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
 	    r.pcr_d.dhq.oakley_group, r.pcr_len);
+#endif
 
     if(pss) {
 	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pss, *pss);
