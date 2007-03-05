@@ -28,6 +28,7 @@
 #include "crypto.h"
 
 char *progname;
+int pc_worker_num=99;
 
 void exit_log(const char *message, ...)
 {
