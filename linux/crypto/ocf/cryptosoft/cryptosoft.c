@@ -488,7 +488,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 	struct scatterlist sg[SCATTERLIST_MAX];
 	int sg_num, sg_len, skip;
 	struct sk_buff *skb = NULL;
-	struct uio *uiop = NULL;
+	struct ocf_uio *uiop = NULL;
         int cpu;
         u8 *tmp_buffer, *temp, *data;
         unsigned dlen;
@@ -532,7 +532,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		}
 
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		uiop = (struct uio *) crp->crp_buf;
+		uiop = (struct ocf_uio *) crp->crp_buf;
 		if (uiop->uio_iovcnt > SCATTERLIST_MAX) {
 			printk("%s,%d: %d uio_iovcnt > SCATTERLIST_MAX", __FILE__, __LINE__,
 					uiop->uio_iovcnt);

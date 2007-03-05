@@ -69,7 +69,7 @@
 struct safe_operand {
 	union {
 		struct sk_buff *skb;
-		struct uio *io;
+		struct ocf_uio *io;
 	} u;
 	void			*map;
 	int				mapsize;	/* total number of bytes in segs */

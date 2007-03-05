@@ -276,7 +276,7 @@ struct hifn_softc {
 struct hifn_operand {
 	union {
 		struct sk_buff *skb;
-		struct uio *io;
+		struct ocf_uio *io;
 		unsigned char *buf;
 	} u;
 	dma_addr_t	map;

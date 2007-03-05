@@ -25,6 +25,10 @@
 /* 
  * This file is a kernel only file that declares prototypes for
  * all intra-module function calls and global data structures.
+ * 
+ * Only put functions here that could take/return opaque structure
+ * for which the caller simply doesn't need to know the details
+ * (i.e. doesn't need the entire .h file)
  *
  * Include this file last.
  *
@@ -49,11 +53,13 @@ extern int ipsec_sadb_cleanup(__u8);
 
 extern struct ipsec_sa *ipsec_sa_alloc(int*error); 
 
-
-extern struct ipsec_sa *ipsec_sa_getbyid(ip_said *);
 extern /* void */ int ipsec_sa_add(struct ipsec_sa *);
 
 extern int ipsec_sa_init(struct ipsec_sa *ipsp);
+
+/* delayed free of extra skb (because of compression) */
+extern void ipsec_skb_gc_enqueue(struct sk_buff *skb);
+
 
 /* debug declarations */
 

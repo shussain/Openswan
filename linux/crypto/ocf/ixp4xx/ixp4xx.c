@@ -360,7 +360,7 @@ ixp_q_process(struct ixp_q *q)
 					iv, ixp->ixp_ctx.cipherCtx.cipherInitialVectorLen);
 		} else if (q->ixp_q_crp->crp_flags & CRYPTO_F_IOV) {
 			iv = q->ixp_q_iv_data;
-			cuio_copydata((struct uio *) q->ixp_q_crp->crp_buf,
+			cuio_copydata((struct ocf_uio *) q->ixp_q_crp->crp_buf,
 					q->ixp_q_ccrd->crd_inject,
 					ixp->ixp_ctx.cipherCtx.cipherInitialVectorLen,
 					(caddr_t) iv);
@@ -399,7 +399,7 @@ ixp_q_process(struct ixp_q *q)
 				IX_MBUF_PKT_LEN(&q->ixp_q_mbuf) =  skb->len;
 		IX_MBUF_MDATA(&q->ixp_q_mbuf) = skb->data;
 	} else if (q->ixp_q_crp->crp_flags & CRYPTO_F_IOV) {
-		struct uio *uiop = (struct uio *) q->ixp_q_crp->crp_buf;
+		struct ocf_uio *uiop = (struct ocf_uio *) q->ixp_q_crp->crp_buf;
 		if (uiop->uio_iovcnt != 1) {
 			/*
 			 * DAVIDM fix this limitation one day by using
@@ -554,7 +554,7 @@ ixp_perform_cb(
 	if (status == IX_CRYPTO_ACC_STATUS_SUCCESS) {
 		if ((q->ixp_q_crp->crp_flags & CRYPTO_F_IOV) && q->ixp_q_crp->crp_mac) {
 			if (q->ixp_q_acrd) {
-				struct uio *uiop = (struct uio *) q->ixp_q_crp->crp_buf;
+				struct ocf_uio *uiop = (struct ocf_uio *) q->ixp_q_crp->crp_buf;
 		        if (uiop->uio_iovcnt != 1)
 					printk("ixp4xx: bad iovcnt!\n");
 				memcpy(q->ixp_q_crp->crp_mac, uiop->uio_iov[0].iov_base,

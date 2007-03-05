@@ -96,6 +96,38 @@ char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.234 2005/11/11 04
 
 static __u32 zeroes[64];
 
+/* statistics */
+static unsigned tunnel_packets=0;
+static unsigned sendip_called=0;
+static uint tunnel_exitbad=0;
+static uint ixs_cache_allocated_count = 0;
+static uint ipsec_ixs_max = 1000;
+static unsigned ixs_requested=0;
+static unsigned ixs_declined=0;
+static unsigned ixs_declined_in_a_row=0;
+static unsigned ixs_declined_max_in_a_row=0;
+static unsigned ixs_declined_while_proc_blocked=0;
+static unsigned ixs_alloc_failed=0;
+static unsigned ixs_in_a_row = 0;
+static uint debug_xmit_once=0;
+
+module_param(tunnel_packets,         uint, 0444);
+module_param(tunnel_exitbad, uint, 0444);
+module_param(sendip_called,          uint, 0444);
+module_param(ixs_cache_allocated_count, uint, 0444);
+module_param(ixs_requested,               uint, 0444);
+module_param(ixs_declined,                uint, 0444);
+module_param(ixs_alloc_failed,            uint, 0444);
+module_param(ixs_declined_in_a_row,       uint, 0444);
+module_param(ixs_declined_max_in_a_row,   uint, 0444);
+module_param(ixs_declined_while_proc_blocked, uint, 0444);
+
+module_param(ipsec_ixs_max,          uint, 0644);
+MODULE_PARM_DESC(ipsec_ixs_max, "Maximum outstanding transmit packets");
+
+module_param(debug_xmit_once, uint, 0644);
+
+
 DEBUG_NO_STATIC int
 ipsec_tunnel_open(struct net_device *dev)
 {
@@ -124,16 +156,14 @@ ipsec_tunnel_close(struct net_device *dev)
 	return 0;
 }
 
-#ifdef NETDEV_23
 static inline int ipsec_tunnel_xmit2(struct sk_buff *skb)
 {
-#ifdef NETDEV_25	/* 2.6 kernels */
+	sendip_called++;
+	if(atomic_read(&skb->users) > 1) {
+		printk("tunnel_xmit2: users=%u\n", atomic_read(&skb->users));
+	}
 	return dst_output(skb);
-#else
-	return ip_send(skb);
-#endif
 }
-#endif /* NETDEV_23 */
 
 enum ipsec_xmit_value
 ipsec_tunnel_strip_hard_header(struct ipsec_xmit_state *ixs)
@@ -566,14 +596,10 @@ ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
 enum ipsec_xmit_value
 ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 {
-#ifdef NETDEV_25
 	struct flowi fl;
-#endif
   
-#ifdef NET_21	/* 2.2 and 2.4 kernels */
 	/* new route/dst cache code from James Morris */
 	ixs->skb->dev = ixs->physdev;
-#ifdef NETDEV_25
 	memset (&fl, 0x0, sizeof (struct flowi));
  	fl.oif = ixs->physdev->iflink;
  	fl.nl_u.ip4_u.daddr = ixs->skb->nh.iph->daddr;
@@ -581,15 +607,6 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
  	fl.nl_u.ip4_u.tos = RT_TOS(ixs->skb->nh.iph->tos);
  	fl.proto = ixs->skb->nh.iph->protocol;
  	if ((ixs->error = ip_route_output_key(&ixs->route, &fl))) {
-#else
-	/*skb_orphan(ixs->skb);*/
-	if((ixs->error = ip_route_output(&ixs->route,
-				    ixs->skb->nh.iph->daddr,
-				    ixs->pass ? 0 : ixs->skb->nh.iph->saddr,
-				    RT_TOS(ixs->skb->nh.iph->tos),
-                                    /* mcr->rgb: should this be 0 instead? */
-				    ixs->physdev->iflink))) {
-#endif
 		ixs->stats->tx_errors++;
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_debug:ipsec_xmit_send: "
@@ -635,7 +652,6 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 		    "...done, calling ip_send() on device:%s\n",
 		    ixs->skb->dev ? ixs->skb->dev->name : "NULL");
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->skb->nh.iph);
-#ifdef NETDEV_23	/* 2.4 kernels */
 	{
 		int err;
 
@@ -653,18 +669,6 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 			return IPSEC_XMIT_IPSENDFAILURE;
 		}
 	}
-#else /* NETDEV_23 */	/* 2.2 kernels */
-	ip_send(ixs->skb);
-#endif /* NETDEV_23 */
-#else /* NET_21 */	/* 2.0 kernels */
-	ixs->skb->arp = 1;
-	/* ISDN/ASYNC PPP from Matjaz Godec. */
-	/*	skb->protocol = htons(ETH_P_IP); */
-	KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-		    "klips_debug:ipsec_xmit_send: "
-		    "...done, calling dev_queue_xmit() or ip_fragment().\n");
-	IP_SEND(ixs->skb, ixs->physdev);
-#endif /* NET_21 */
 	ixs->stats->tx_packets++;
 
 	ixs->skb = NULL;
@@ -689,9 +693,11 @@ ipsec_tunnel_cleanup(struct ipsec_xmit_state*ixs)
 	}
 	if(ixs->skb) {
 		dev_kfree_skb(ixs->skb, FREE_WRITE);
+		ixs->skb=NULL;
 	}
 	if(ixs->oskb) {
 		dev_kfree_skb(ixs->oskb, FREE_WRITE);
+		ixs->oskb=NULL;
 	}
 	if (ixs->ips.ips_ident_s.data) {
 		kfree(ixs->ips.ips_ident_s.data);
@@ -763,6 +769,20 @@ bypass:
 
 cleanup:
 	ipsec_tunnel_cleanup(ixs);
+
+#ifdef CONFIG_KLIPS_DEBUG
+	/* turn off debug once */
+	if(debug_xmit_once==2) {
+		debug_rcv=0;
+		debug_ocf=0;
+		debug_eroute=0;
+		debug_spi=0;
+		debug_netlink=0;
+		debug_radij=0;
+		debug_esp=0;
+		debug_tunnel=0;
+	}
+#endif
 }
 
 /*
@@ -775,9 +795,26 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct ipsec_xmit_state *ixs = NULL;
 	enum ipsec_xmit_value stat;
 
+#ifdef CONFIG_KLIPS_DEBUG
+	if(debug_xmit_once==1) {
+		debug_rcv=0xffffffff;
+		debug_ocf=0xffffffff;
+		debug_eroute=0xffffffff;
+		debug_spi=0xffffffff;
+		debug_netlink=0xffffffff;
+		debug_radij=0xffffffff;
+		debug_esp=0xffffffff;
+		debug_tunnel=0xffffffff;
+		debug_xmit_once=2;
+	}
+#endif
+
+	tunnel_packets++;
+
         stat = IPSEC_XMIT_ERRMEMALLOC;
         ixs = ipsec_xmit_state_new ();
         if (! ixs) {
+		dev_kfree_skb(skb, FREE_WRITE);
                 goto alloc_error;
         }
 
@@ -814,10 +851,11 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	ipsec_xsm(ixs);
 	return 0;
 
- cleanup:
+cleanup:
 	ipsec_tunnel_cleanup(ixs);
 
 alloc_error:
+	tunnel_exitbad++;
 	return 0;
 }
 
@@ -1877,11 +1915,6 @@ ipsec_tunnel_cleanup_devices(void)
 
 static spinlock_t ixs_cache_lock = SPIN_LOCK_UNLOCKED;
 static kmem_cache_t *ixs_cache_allocator = NULL;
-static unsigned  ixs_cache_allocated_count = 0;
-
-static int ipsec_ixs_max = 1000;
-module_param(ipsec_ixs_max,int,0644);
-MODULE_PARM_DESC(ipsec_ixs_max, "Maximum outstanding transmit packets");
 
 int
 ipsec_xmit_state_cache_init (void)
@@ -1917,17 +1950,44 @@ static struct ipsec_xmit_state *
 ipsec_xmit_state_new (void)
 {
 	struct ipsec_xmit_state *ixs = NULL;
+	static int ixs_last_declined = 0;
 
         spin_lock_bh (&ixs_cache_lock);
 
+	ixs_requested++;
         if (likely (ixs_cache_allocated_count >= ipsec_ixs_max)) {
-		KLIPS_PRINT(debug_tunnel,
+		KLIPS_RATEDEBUG(debug_tunnel,
 			    "klips_debug:ipsec_xmit_state_new: "
 			    "exceeded outstanding TX packet cnt %d\n", ipsec_ixs_max);
+
+		/* if we declined in a row! */
+		if(ixs_last_declined == (ixs_requested-1)) {
+			ixs_declined_in_a_row++;
+			ixs_in_a_row++;
+			if(ixs_in_a_row > ixs_declined_max_in_a_row)
+				ixs_declined_max_in_a_row=ixs_in_a_row;
+		} else {
+			ixs_in_a_row=0;
+		}
+			
+		ixs_declined++;
+		ixs_last_declined=ixs_requested;
+
+		{
+			extern int cryptoproc_generation;
+			static int last_generation=-1;
+
+			if(last_generation == cryptoproc_generation) {
+				ixs_declined_while_proc_blocked++;
+			} 
+			last_generation = cryptoproc_generation;
+		}
+
+
 	} else {
                 ixs = kmem_cache_alloc (ixs_cache_allocator, GFP_ATOMIC);
-                if (likely (ixs != NULL))
-                        ixs_cache_allocated_count++;
+                if (likely (ixs != NULL)) ixs_cache_allocated_count++;
+		else ixs_alloc_failed++;
         }
 
         spin_unlock_bh (&ixs_cache_lock);

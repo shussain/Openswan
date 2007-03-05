@@ -674,7 +674,7 @@ talitos_process(void *arg, struct cryptop *crp, int hint)
 			skb->len, DMA_TO_DEVICE);
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
 		/* using IOV buffers */
-		struct uio *uiop = (struct uio *)crp->crp_buf;
+		struct ocf_uio *uiop = (struct ocf_uio *)crp->crp_buf;
 		if (uiop->uio_iovcnt > 1) {
 			printk(DRV_NAME ": iov frags unimplemented\n");
 			err = EINVAL;
@@ -759,7 +759,7 @@ talitos_process(void *arg, struct cryptop *crp, int hint)
 						iv, ivsize);
 				}
 				else if (crp->crp_flags & CRYPTO_F_IOV)  {
-					cuio_copyback((struct uio *)
+					cuio_copyback((struct ocf_uio *)
 						(crp->crp_buf),  
 						enccrd->crd_inject, 
 						ivsize, iv);
@@ -779,7 +779,7 @@ talitos_process(void *arg, struct cryptop *crp, int hint)
 						iv, ivsize);
 				}
 				else if (crp->crp_flags & CRYPTO_F_IOV)  {
-					cuio_copyback((struct uio *)
+					cuio_copyback((struct ocf_uio *)
 						(crp->crp_buf),
 						enccrd->crd_inject,
 						ivsize, iv);

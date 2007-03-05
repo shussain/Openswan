@@ -25,7 +25,8 @@
 
 enum ipsec_xmit_value
 {
-	IPSEC_XMIT_STOLEN=2,
+	IPSEC_XMIT_PENDING=3,
+	IPSEC_XMIT_STOLEN=2,      /* not used at present, PENDING replaced it */
 	IPSEC_XMIT_PASS=1,
 	IPSEC_XMIT_OK=0,
 	IPSEC_XMIT_ERRMEMALLOC=-1,
@@ -56,7 +57,7 @@ enum ipsec_xmit_value
 	IPSEC_XMIT_IPSENDFAILURE=-26,
 	IPSEC_XMIT_ESPUDP=-27,
 	IPSEC_XMIT_ESPUDP_BADTYPE=-28,
-	IPSEC_XMIT_PENDING=-29,
+	IPSEC_XMIT_OCFFAIL=-29,
 };
 
 
@@ -176,8 +177,6 @@ extern int ipsec_xmit_trap_sendcount;
 
 #ifdef CONFIG_KLIPS_DEBUG
 extern int debug_tunnel;
-
-#define debug_xmit debug_tunnel
 
 #define ipsec_xmit_dmp(_x,_y, _z) if (debug_xmit && sysctl_ipsec_debug_verbose) ipsec_dmp_block(_x,_y,_z)
 #else

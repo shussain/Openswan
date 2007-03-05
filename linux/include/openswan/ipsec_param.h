@@ -176,27 +176,7 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 
 #endif /* CONFIG_KLIPS_REGRESS */
 
-
-/*
- * debugging routines.
- */
-#define KLIPS_ERROR(flag, format, args...) if(printk_ratelimit() || flag) printk(KERN_ERR "KLIPS " format, ## args)
-#ifdef CONFIG_KLIPS_DEBUG
-	#define KLIPS_PRINT(flag, format, args...) \
-		((flag) ? printk(KERN_INFO format , ## args) : 0)
-	#define KLIPS_PRINTMORE(flag, format, args...) \
-		((flag) ? printk(format , ## args) : 0)
-	#define KLIPS_IP_PRINT(flag, ip) \
-		((flag) ? ipsec_print_ip(ip) : 0)
-	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) \
-		((flag) ? satot(sa, format, dst, dstlen) : 0)
-#else /* CONFIG_KLIPS_DEBUG */
-	#define KLIPS_PRINT(flag, format, args...) do ; while(0)
-	#define KLIPS_PRINTMORE(flag, format, args...) do ; while(0)
-	#define KLIPS_IP_PRINT(flag, ip) do ; while(0)
-	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) (0)
-#endif /* CONFIG_KLIPS_DEBUG */
-
+#include <openswan/ipsec_debug.h>
 
 /* 
  * Stupid kernel API differences in APIs. Not only do some

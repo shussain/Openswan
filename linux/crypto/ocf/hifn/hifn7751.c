@@ -167,7 +167,11 @@ enum {
         DEBUG_VAR_cnt_sess_fail,                // failed sessions
 
         DEBUG_VAR_cnt_process_total,            // all process calls
-        DEBUG_VAR_cnt_process_fail,             // failed processing
+        DEBUG_VAR_cnt_process_fail1,             // failed processing
+        DEBUG_VAR_cnt_process_fail2,             //  -- ERESTART returned
+        DEBUG_VAR_cnt_process_fail3,             // failed processing
+        DEBUG_VAR_cnt_process_fail4,             // failed processing
+        DEBUG_VAR_cnt_process_fail5,             // failed processing
 
         DEBUG_VAR_cnt_desc_total,               // all descriptors
         DEBUG_VAR_cnt_desc_skbuf,               // skbuf descriptors
@@ -178,6 +182,8 @@ enum {
         DEBUG_VAR_cnt_desc_comp,                // compression descriptors
         DEBUG_VAR_cnt_desc_started,             // total desc started
         DEBUG_VAR_cnt_desc_fail,                // total desc fail
+
+	DEBUG_VAR_cnt_desc_finish,              // desc number that finished
 
         DEBUG_VAR_cnt_write_ram,                // write to ram
         DEBUG_VAR_cnt_read_ram,                 // read from ram
@@ -212,7 +218,11 @@ static struct {
         DEBUG_VAR_DEF(cnt_sess_fail),           // failed sessions
 
         DEBUG_VAR_DEF(cnt_process_total),       // all process calls
-        DEBUG_VAR_DEF(cnt_process_fail),        // failed process calls
+        DEBUG_VAR_DEF(cnt_process_fail1),        // failed process calls
+        DEBUG_VAR_DEF(cnt_process_fail2),        // failed process calls
+        DEBUG_VAR_DEF(cnt_process_fail3),        // failed process calls
+        DEBUG_VAR_DEF(cnt_process_fail4),        // failed process calls
+        DEBUG_VAR_DEF(cnt_process_fail5),        // failed process calls
 
         DEBUG_VAR_DEF(cnt_desc_total),          // all descriptors
         DEBUG_VAR_DEF(cnt_desc_skbuf),          // skbuf descriptors
@@ -223,6 +233,8 @@ static struct {
         DEBUG_VAR_DEF(cnt_desc_comp),           // compression descriptors
         DEBUG_VAR_DEF(cnt_desc_started),        // total desc started
         DEBUG_VAR_DEF(cnt_desc_fail),           // total desc fail
+
+	DEBUG_VAR_DEF(cnt_desc_finish),         // desc number that finished
 
         DEBUG_VAR_DEF(cnt_write_ram),           // write to ram
         DEBUG_VAR_DEF(cnt_read_ram),            // read from ram
@@ -252,6 +264,36 @@ pci_get_revid(struct pci_dev *dev)
 }
 
 static	struct hifn_stats hifnstats;
+
+int param_set_ulonglong(const char *val, struct kernel_param *kp)
+{
+	return 0;
+}
+int param_get_ulonglong(char *buffer, struct kernel_param *kp)
+{							
+	return sprintf(buffer, "%llu", *((unsigned long long *)kp->arg));
+}
+#define param_check_ulonglong(name, p) __param_check(name, p, unsigned long long)
+module_param_named(hst_ibytes, hifnstats.hst_ibytes, ulonglong, 0444);
+module_param_named(hst_obytes, hifnstats.hst_obytes, uint, 0444);
+
+module_param_named(hst_ipackets, hifnstats.hst_ipackets, uint, 0444);
+module_param_named(hst_opackets, hifnstats.hst_opackets, uint, 0444);
+module_param_named(hst_invalid, hifnstats.hst_invalid, uint, 0444);
+module_param_named(hst_nomem, hifnstats.hst_nomem, uint, 0444);
+module_param_named(hst_abort, hifnstats.hst_abort, uint, 0444);
+module_param_named(hst_noirq, hifnstats.hst_noirq, uint, 0444);
+module_param_named(hst_totbatch, hifnstats.hst_totbatch, uint, 0444);
+module_param_named(hst_maxbatch, hifnstats.hst_maxbatch, uint, 0444);
+module_param_named(hst_unaligned, hifnstats.hst_unaligned, uint, 0444);
+module_param_named(hst_nomem_map, hifnstats.hst_nomem_map, uint, 0444);
+module_param_named(hst_nomem_load, hifnstats.hst_nomem_load, uint, 0444);
+module_param_named(hst_nomem_mbuf, hifnstats.hst_nomem_mbuf,uint, 0444);
+module_param_named(hst_nomem_mcl, hifnstats.hst_nomem_mcl, uint, 0444);
+module_param_named(hst_nomem_cr, hifnstats.hst_nomem_cr, uint, 0444);
+module_param_named(hst_nomem_sd, hifnstats.hst_nomem_sd, uint, 0444);
+
+
 
 #define	hifn_debug debug
 static	int debug = 0;
@@ -360,7 +402,7 @@ static struct hifn_softc *hifn_chip_idx[HIFN_MAX_CHIPS];
  */
 
 static int
-pci_map_uio(struct hifn_softc *sc, struct hifn_operand *buf, struct uio *uio)
+pci_map_uio(struct hifn_softc *sc, struct hifn_operand *buf, struct ocf_uio *uio)
 {
 	struct iovec *iov = uio->uio_iov;
 
@@ -2563,8 +2605,7 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 		device_printf(sc->sc_dev, "abort, resetting.\n");
 		hifnstats.hst_abort++;
 		hifn_abort(sc);
-		HIFN_UNLOCK(sc);
-		return IRQ_HANDLED;
+		goto done;
 	}
 
 	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->cmdu == 0)) {
@@ -2575,6 +2616,10 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 		 */
 		sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	}
+
+	if((dmacsr & HIFN_DMACSR_R_DONE)==0) {
+		goto done;
 	}
 
 	/* clear the rings */
@@ -2661,10 +2706,12 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
         verbose_printk ("  int: cmd: i:=%d u:=%d\n", i, u);
 	dma->cmdk = i; dma->cmdu = u;
 
+done:
 	HIFN_UNLOCK(sc);
 
         verbose_printk ("  sc_needwakeup=%08x\n", sc->sc_needwakeup);
 
+#if 0
 	if (sc->sc_needwakeup) {		/* XXX check high watermark */
 		int wakeup = sc->sc_needwakeup & (CRYPTO_SYMQ|CRYPTO_ASYMQ);
 #ifdef HIFN_DEBUG
@@ -2678,6 +2725,9 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 		sc->sc_needwakeup &= ~wakeup;
 		crypto_unblock(sc->sc_cid, wakeup);
 	}
+#else
+	crypto_unblock(sc->sc_cid, (CRYPTO_SYMQ|CRYPTO_ASYMQ));
+#endif
 
 	return IRQ_HANDLED;
 }
@@ -2870,7 +2920,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 	if (crp == NULL || crp->crp_callback == NULL) {
 		hifnstats.hst_invalid++;
 		DPRINTF("%s,%d: %s - EINVAL\n",__FILE__,__LINE__,__FUNCTION__);
-                debug_var_op (cnt_process_fail,++);
+                debug_var_op (cnt_process_fail1,++);
 		return (EINVAL);
 	}
 	session = HIFN_SESSION(crp->crp_sid);
@@ -2894,8 +2944,8 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		cmd->dst_skb = (struct sk_buff *)crp->crp_buf;
                 debug_var_op (cnt_desc_skbuf,++);
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		cmd->src_io = (struct uio *)crp->crp_buf;
-		cmd->dst_io = (struct uio *)crp->crp_buf;
+		cmd->src_io = (struct ocf_uio *)crp->crp_buf;
+		cmd->dst_io = (struct ocf_uio *)crp->crp_buf;
                 debug_var_op (cnt_desc_iov,++);
 	} else {
 		cmd->src_buf = crp->crp_buf;
@@ -3194,7 +3244,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		kfree(cmd);
                 verbose_printk ("  ERESTART, sc_needwakeup:=%08x\n", CRYPTO_SYMQ);
 		sc->sc_needwakeup |= CRYPTO_SYMQ;
-                debug_var_op (cnt_process_fail,++);
+                debug_var_op (cnt_process_fail2,++);
 		return (err);
 	}
 
@@ -3207,7 +3257,7 @@ errout:
 		hifnstats.hst_nomem++;
 	crp->crp_etype = err;
         if (crp->crp_etype)
-                debug_var_op (cnt_process_fail,++);
+                debug_var_op (cnt_process_fail3,++);
 	crypto_done(crp);
 	return (err);
 }
@@ -3278,7 +3328,7 @@ hifn_abort(struct hifn_softc *sc)
 			kfree(cmd);
 			if (crp->crp_etype != EAGAIN) {
                                 if (crp->crp_etype)
-                                        debug_var_op (cnt_process_fail,++);
+                                        debug_var_op (cnt_process_fail4,++);
 				crypto_done(crp);
                         }
 		}
@@ -3441,7 +3491,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 					cmd->src_mapsize - cmd->sloplen,
 					(caddr_t)&dma->slop[cmd->slopidx], cmd->sloplen);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
-			cuio_copyback((struct uio *)crp->crp_buf,
+			cuio_copyback((struct ocf_uio *)crp->crp_buf,
 			    cmd->src_mapsize - cmd->sloplen,
 			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
 		else
@@ -3576,7 +3626,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 					(caddr_t) cmd->softc->sc_sessions[cmd->session_num].hs_iv,
 					ivlen);
 			} else if (crp->crp_flags & CRYPTO_F_IOV) {
-				cuio_copydata((struct uio *)crp->crp_buf,
+				cuio_copydata((struct ocf_uio *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
 				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
 			} else {
@@ -3618,7 +3668,9 @@ bail:
 	pci_unmap_buf(sc, &cmd->src);
 	kfree(cmd);
         if (crp->crp_etype)
-                debug_var_op (cnt_process_fail,++);
+                debug_var_op (cnt_process_fail5,++);
+
+	debug_var_op (cnt_desc_finish,++);
 	crypto_done(crp);
 }
 

@@ -108,7 +108,7 @@ struct csession {
 	struct csession_info info;
 
 	struct iovec	iovec;
-	struct uio	uio;
+	struct ocf_uio	uio;
 	int		error;
 };
 

@@ -96,7 +96,8 @@ config OCF_BENCH
 	help
 	  A very simple encryption test for the in-kernel interface
 	  of OCF.  Also includes code to benchmark the IXP Access library
-	  for comparison.
+	  for comparison. This code is mutually exclusive with actually
+	  using OCF for IPsec or SSL.
 
 config OCF_PROFILE
 	bool "OCF operation profiling"

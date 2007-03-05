@@ -70,6 +70,19 @@ module_param(ocf_force_ipcomp_alg, int, 0644);
 MODULE_PARM_DESC(ocf_force_ipcomp_alg, "OCF alg to use for ipcomp (0 disable)");
 #endif
 
+/*static*/ int ocf_rcv_calls=0;
+/*static*/ int ocf_rcv_calls_failed=0;
+/*static*/ int ocf_rcv_cb=0;
+/*static*/ int ocf_xmit_cb=0;
+uint ocf_xmit_calls=0;
+uint ocf_xmit_calls_failed=0;
+module_param(ocf_rcv_calls, int, 0444);
+module_param(ocf_rcv_calls_failed, int, 0444);
+module_param(ocf_rcv_cb,    int, 0444);
+module_param(ocf_xmit_cb,   int, 0444);
+module_param(ocf_xmit_calls, int, 0444);
+module_param(ocf_xmit_calls_failed, int, 0444);
+
 /*
  * Tuning parameters,  the settings below appear best for
  * the IXP
@@ -440,6 +453,8 @@ ipsec_ocf_rcv_cb(struct cryptop *crp)
 
 	KLIPS_PRINT(debug_rcv, "klips_debug:ipsec_ocf_rcv_cb\n");
 
+	ocf_rcv_cb++;
+
 	if (irs == NULL) {
 		KLIPS_PRINT(debug_rcv, "klips_debug:ipsec_ocf_rcv_cb: "
 				"NULL irs in callback\n");
@@ -577,6 +592,7 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 	struct cryptodesc *crde=NULL, *crda=NULL, *crdc=NULL;
 	struct ipsec_sa *ipsp;
         int req_count, rc;
+	int err;
 
 	KLIPS_PRINT(debug_rcv, "klips_debug:ipsec_ocf_rcv\n");
 
@@ -744,7 +760,15 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 	crp->crp_callback = ipsec_ocf_rcv_cb;
 	crp->crp_sid = ipsp->ocf_cryptoid;
 	crp->crp_opaque = (caddr_t) irs;
-	crypto_dispatch(crp);
+	ocf_rcv_calls++;
+
+	err = crypto_dispatch(crp);
+	if(err != 0) {
+		ocf_rcv_calls_failed++;
+		KLIPS_ERROR(debug_ocf, "crypto_dispatch rcv failure #%u: %u \n", ocf_rcv_calls_failed, err);
+		crypto_freereq(crp);
+		return IPSEC_RCV_OCFFAIL;
+	}
 	return(IPSEC_RCV_PENDING);
 
 error_free_crp:
@@ -915,6 +939,7 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 	struct cryptodesc *crde=NULL, *crda=NULL, *crdc=NULL;
 	struct ipsec_sa *ipsp;
         int req_count, payload_size;
+	int err;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_XMIT, "klips_debug:ipsec_ocf_xmit\n");
 
@@ -1090,7 +1115,15 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 	crp->crp_callback = ipsec_ocf_xmit_cb;
 	crp->crp_sid = ipsp->ocf_cryptoid;
 	crp->crp_opaque = (caddr_t) ixs;
-	crypto_dispatch(crp);
+	ocf_xmit_calls++;
+
+	err = crypto_dispatch(crp);
+	if(err != 0) {
+		ocf_xmit_calls_failed++;
+		KLIPS_ERROR(debug_ocf, "crypto_dispatch xmit failure #%u: %u (ENOMEM=%u)\n", ocf_xmit_calls_failed, err, ENOMEM);
+		crypto_freereq(crp);
+		return IPSEC_XMIT_OCFFAIL;
+	}
 	return(IPSEC_XMIT_PENDING);
 
 error_free_crp:

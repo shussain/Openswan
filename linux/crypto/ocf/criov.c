@@ -45,7 +45,7 @@ __FBSDID("$FreeBSD: src/sys/opencrypto/criov.c,v 1.3 2005/01/07 02:29:16 imp Exp
 #include <opencrypto/cryptodev.h>
 
 void
-cuio_copydata(struct uio* uio, int off, int len, caddr_t cp)
+cuio_copydata(struct ocf_uio* uio, int off, int len, caddr_t cp)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
@@ -78,7 +78,7 @@ cuio_copydata(struct uio* uio, int off, int len, caddr_t cp)
 }
 
 void
-cuio_copyback(struct uio* uio, int off, int len, caddr_t cp)
+cuio_copyback(struct ocf_uio* uio, int off, int len, caddr_t cp)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
@@ -114,7 +114,7 @@ cuio_copyback(struct uio* uio, int off, int len, caddr_t cp)
  * Return a pointer to iov/offset of location in iovec list.
  */
 struct iovec *
-cuio_getptr(struct uio *uio, int loc, int *off)
+cuio_getptr(struct ocf_uio *uio, int loc, int *off)
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;

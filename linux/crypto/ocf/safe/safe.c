@@ -211,7 +211,7 @@ pci_map_linear(
  */
 
 static int
-pci_map_uio(struct safe_softc *sc, struct safe_operand *buf, struct uio *uio)
+pci_map_uio(struct safe_softc *sc, struct safe_operand *buf, struct ocf_uio *uio)
 {
 	struct iovec *iov = uio->uio_iov;
 	int n;
@@ -676,8 +676,8 @@ safe_process(void *arg, struct cryptop *crp, int hint)
 		re->re_src_skb = (struct sk_buff *)crp->crp_buf;
 		re->re_dst_skb = (struct sk_buff *)crp->crp_buf;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		re->re_src_io = (struct uio *)crp->crp_buf;
-		re->re_dst_io = (struct uio *)crp->crp_buf;
+		re->re_src_io = (struct ocf_uio *)crp->crp_buf;
+		re->re_dst_io = (struct ocf_uio *)crp->crp_buf;
 	} else {
 		safestats.st_badflags++;
 		err = EINVAL;
@@ -1159,7 +1159,7 @@ safe_callback(struct safe_softc *sc, struct safe_ringentry *re)
 						cpu_to_le32(sc->sc_sessions[re->re_sesn].ses_iv[i]);
 			} else if (crp->crp_flags & CRYPTO_F_IOV) {
 				int i;
-				cuio_copydata((struct uio *)crp->crp_buf,
+				cuio_copydata((struct ocf_uio *)crp->crp_buf,
 					crd->crd_skip + crd->crd_len - ivsize,
 					ivsize,
 					(caddr_t)sc->sc_sessions[re->re_sesn].ses_iv);

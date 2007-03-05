@@ -79,6 +79,7 @@
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"
+#include "openswan/ipsec_debug.h"
 
 #include "ipsec_ocf.h"
 
@@ -101,6 +102,10 @@ spinlock_t tdb_lock;
 
 struct ipsec_sadb ipsec_sadb;
 
+module_param_named(refFreeListHead, ipsec_sadb.refFreeListHead, int, 0444);
+module_param_named(refFreeListTail, ipsec_sadb.refFreeListTail, int, 0444);
+module_param_named(refFreeListCont, ipsec_sadb.refFreeListCont, uint, 0444);
+
 /* the sub table must be narrower (or equal) in bits than the variable type
    in the main table to count the number of unused entries in it. */
 typedef struct {
@@ -122,6 +127,43 @@ typedef struct {
 // private functions for reference counting
 static int ipsec_sa_wipe(struct ipsec_sa *ips);
 
+#ifdef CONFIG_KLIPS_SA_NEVERFREE
+static int verify_complaints=0;
+static uint sa_verifications=0;
+module_param(sa_verifications, uint,0444);
+void ipsec_spi_verify_info(void)
+{
+	int i;
+	struct ipsec_sa *sa_p;
+
+	sa_verifications++;
+	
+	for (i = 0; i < SADB_HASHMOD; i++) {
+		int j=0;
+		u8 *p;
+		sa_p = ipsec_sadb_hash[i];
+		p = (u8 *)&sa_p;
+
+		while(sa_p != NULL) {
+			j++;
+			if(p[0]=='M' || p[1]=='M' || p[2]=='M' || p[3]=='M') {
+				if(verify_complaints++ < 100) {
+					KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+						    "klips_debug:ipsec_spi_verify_info: "
+						    "sadb_hash[%d,%d]=%p is bad!!!\n",
+						    i, j, sa_p);
+				}
+				break;
+			}
+			/* prepare for next interation */
+			sa_p = sa_p->ips_hnext;
+			p = (u8 *)&sa_p;
+		}
+	}
+}
+#endif /* CONFIG_IPSEC_SA_NEVERFREE */
+	
+
 int
 ipsec_SAref_recycle(void)
 {
@@ -133,13 +175,13 @@ ipsec_SAref_recycle(void)
 	ipsec_sadb.refFreeListTail = IPSEC_SAREF_NULL;
 
 	if(ipsec_sadb.refFreeListCont == IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES * IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_debug:ipsec_SAref_recycle: "
 			    "end of table reached, continuing at start..\n");
 		ipsec_sadb.refFreeListCont = IPSEC_SAREF_FIRST;
 	}
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_SAref_recycle: "
 		    "recycling, continuing from SAref=%d (0p%p), table=%d, entry=%d.\n",
 		    ipsec_sadb.refFreeListCont,
@@ -173,14 +215,14 @@ ipsec_SAref_recycle(void)
 	}
 
 	if(ipsec_sadb.refFreeListTail == IPSEC_SAREF_NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_debug:ipsec_SAref_recycle: "
 			    "out of room in the SArefTable.\n");
 
 		return(-ENOSPC);
 	}
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_SAref_recycle: "
 		    "SArefFreeList partly refilled to %d of %d.\n",
 		    ipsec_sadb.refFreeListTail,
@@ -194,7 +236,7 @@ ipsec_SArefSubTable_alloc(unsigned table)
 	unsigned entry;
 	struct IPsecSArefSubTable* SArefsub;
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_SArefSubTable_alloc: "
 		    "allocating %lu bytes for table %u of %u.\n",
 		    (unsigned long) (IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES * sizeof(struct ipsec_sa *)),
@@ -204,7 +246,7 @@ ipsec_SArefSubTable_alloc(unsigned table)
 	/* allocate another sub-table */
 	SArefsub = vmalloc(IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES * sizeof(struct ipsec_sa *));
 	if(SArefsub == NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_debug:ipsec_SArefSubTable_alloc: "
 			    "error allocating memory for table %u of %u!\n",
 			    table,
@@ -216,7 +258,7 @@ ipsec_SArefSubTable_alloc(unsigned table)
 	ipsec_sadb.refTable[table] = SArefsub;
 
 	/* initialise each element to NULL */
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_SArefSubTable_alloc: "
 		    "initialising %u elements (2 ^ %u) of table %u.\n",
 		    IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES,
@@ -247,7 +289,7 @@ ipsec_saref_freelist_init(void)
 {
 	int i;
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_saref_freelist_init: "
 		    "initialising %u elements of FreeList.\n",
 		    IPSEC_SA_REF_FREELIST_NUM_ENTRIES);
@@ -286,7 +328,7 @@ ipsec_sadb_init(void)
 	/* initialise SA reference table */
 
 	/* initialise the main table */
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sadb_init: "
 		    "initialising main table of size %u (2 ^ %u).\n",
 		    IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES,
@@ -323,7 +365,7 @@ ipsec_SAref_alloc(int*error) /* pass in error var by pointer */
 {
 	IPsecSAref_t SAref;
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "ipsec_SAref_alloc: "
 		    "SAref requested... head=%d, cont=%d, tail=%d, listsize=%d.\n",
 		    ipsec_sadb.refFreeListHead,
@@ -332,7 +374,7 @@ ipsec_SAref_alloc(int*error) /* pass in error var by pointer */
 		    IPSEC_SA_REF_FREELIST_NUM_ENTRIES);
 
 	if(ipsec_sadb.refFreeListHead == IPSEC_SAREF_NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_SAref_alloc: "
 			    "FreeList empty, recycling...\n");
 		*error = ipsec_SAref_recycle();
@@ -343,7 +385,7 @@ ipsec_SAref_alloc(int*error) /* pass in error var by pointer */
 
 	SAref = ipsec_sadb.refFreeList[ipsec_sadb.refFreeListHead];
 	if(SAref == IPSEC_SAREF_NULL) {
-		KLIPS_ERROR(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_SAref_alloc: "
 			    "unexpected error, refFreeListHead = %d points to invalid entry.\n",
 			    ipsec_sadb.refFreeListHead);
@@ -351,7 +393,7 @@ ipsec_SAref_alloc(int*error) /* pass in error var by pointer */
 		return IPSEC_SAREF_NULL;
 	}
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "ipsec_SAref_alloc: "
 		    "allocating SAref=%d, table=%u, entry=%u of %u.\n",
 		    SAref,
@@ -362,7 +404,7 @@ ipsec_SAref_alloc(int*error) /* pass in error var by pointer */
 	ipsec_sadb.refFreeList[ipsec_sadb.refFreeListHead] = IPSEC_SAREF_NULL;
 	ipsec_sadb.refFreeListHead++;
 	if(ipsec_sadb.refFreeListHead > ipsec_sadb.refFreeListTail) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_SAref_alloc: "
 			    "last FreeList entry allocated, resetting list head to empty.\n");
 		ipsec_sadb.refFreeListHead = IPSEC_SAREF_NULL;
@@ -449,7 +491,7 @@ ipsec_sa_alloc(int*error) /* pass in error var by pointer */
 	struct ipsec_sa* ips;
 
 	if((ips = kmalloc(sizeof(*ips), GFP_ATOMIC) ) == NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_sa_alloc: "
 			    "memory allocation error\n");
 		*error = -ENOMEM;
@@ -480,7 +522,7 @@ ipsec_sa_untern(struct ipsec_sa *ips)
 		IPsecSAref2SA(ref) = NULL;
 		ipsec_sa_put(ips);
 	} else {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_sa_untern: "
 			    "ref=%u -> %p but untern'ing %p\n", ref,
 			    IPsecSAref2SA(ref), ips);
@@ -496,12 +538,12 @@ ipsec_sa_intern(struct ipsec_sa *ips)
 
 	if(ref == IPSEC_SAREF_NULL) {
 		ref = ipsec_SAref_alloc(&error); /* pass in error return by pointer */
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_sa_intern: "
 			    "allocated ref=%u for sa %p\n", ref, ips);
 
 		if(ref == IPSEC_SAREF_NULL) {
-			KLIPS_PRINT(debug_xform,
+			KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 				    "ipsec_sa_intern: "
 				    "SAref allocation error\n");
 			return error;
@@ -528,7 +570,7 @@ ipsec_sa_intern(struct ipsec_sa *ips)
 		}
 	}
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "ipsec_sa_alloc: "
 		    "SAref[%d]=%p\n",
 		    ips->ips_ref, ips);
@@ -540,7 +582,7 @@ ipsec_sa_intern(struct ipsec_sa *ips)
 
 
 struct ipsec_sa *
-ipsec_sa_getbyid(ip_said *said)
+__ipsec_sa_getbyid(ip_said *said, const char *func, int line, int debug)
 {
 	int hashval;
 	struct ipsec_sa *ips;
@@ -548,7 +590,7 @@ ipsec_sa_getbyid(ip_said *said)
 	size_t sa_len;
 
 	if(said == NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_sa_getbyid: "
 			    "null pointer passed in!\n");
 		return NULL;
@@ -558,14 +600,14 @@ ipsec_sa_getbyid(ip_said *said)
 
 	hashval = IPS_HASH(said);
 	
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform&(debug|IPSEC_DBG_SABYID_DETAIL),
 		    "ipsec_sa_getbyid: "
 		    "linked entry in ipsec_sa table for hash=%d of SA:%s requested.\n",
 		    hashval,
 		    sa_len ? sa : " (error)");
 
 	if((ips = ipsec_sadb_hash[hashval]) == NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & (debug|IPSEC_DBG_SABYID_DETAIL),
 			    "ipsec_sa_getbyid: "
 			    "no entries in ipsec_sa table for hash=%d of SA:%s.\n",
 			    hashval,
@@ -577,12 +619,12 @@ ipsec_sa_getbyid(ip_said *said)
 		if ((ips->ips_said.spi == said->spi) &&
 		    (ips->ips_said.dst.u.v4.sin_addr.s_addr == said->dst.u.v4.sin_addr.s_addr) &&
 		    (ips->ips_said.proto == said->proto)) {
-			ipsec_sa_get(ips);
+			__ipsec_sa_get(ips, func, line, debug);
 			return ips;
 		}
 	}
 	
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform&(debug|IPSEC_DBG_SABYID_DETAIL),
 		    "ipsec_sa_getbyid: "
 		    "no entry in linked list for hash=%d of SA:%s.\n",
 		    hashval,
@@ -609,22 +651,22 @@ ipsec_sa_getbyref(IPsecSAref_t ref)
 
 
 void
-__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
+__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line, int debug)
 {
         char sa[SATOT_BUF];
 	size_t sa_len;
 
 	if(ips == NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "ipsec_sa_put: "
 			    "null pointer passed in!\n");
 		return;
 	}
 
-	if(debug_xform) {
+	if(debug_xform & debug) {
 		sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_PUT,
 			    "ipsec_sa_put: "
 			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented by %s:%d.\n",
 			    ips,
@@ -635,10 +677,10 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 	}
 
 	if(atomic_dec_and_test(&ips->ips_refcount)) {
-		KLIPS_PRINT(debug_xform,
-			    "ipsec_sa_put: freeing %p\n",
-			    ips);
-		/* it was zero */
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_PUTFREE,
+			    "ipsec_sa_put: freeing %p by %s:%d\n",
+			    ips, func, line);
+		/* it was zero, clear it and free it */
 		ipsec_sa_wipe(ips);
 	}
 
@@ -646,7 +688,7 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 }
 
 struct ipsec_sa *
-__ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
+__ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line, int debug)
 {
         char sa[SATOT_BUF];
 	size_t sa_len;
@@ -654,7 +696,7 @@ __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
         if (ips == NULL)
                 return NULL;
 
-	if(debug_xform) {
+	if(debug_xform & debug) {
           sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
 	  KLIPS_PRINT(debug_xform,
@@ -668,6 +710,10 @@ __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
 	}
 
 	atomic_inc(&ips->ips_refcount);
+
+	if(atomic_read(&ips->ips_refcount) > 100) {
+		debug_xform=0;
+	}
 
         // check to make sure we were not deleted 
         if (ips->ips_marked_deleted) {
@@ -692,7 +738,7 @@ ipsec_sa_add(struct ipsec_sa *ips)
 	ips = ipsec_sa_get(ips);
 
 	if(ips == NULL) {
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_error:ipsec_sa_add: "
 			    "null pointer passed in!\n");
 		return -ENODATA;
@@ -727,7 +773,7 @@ void ipsec_sa_rm(struct ipsec_sa *ips)
 
 	hashval = IPS_HASH(&ips->ips_said);
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sa_del: "
 		    "unhashing SA:%s (ref=%u), hashval=%d.\n",
 		    sa_len ? sa : " (error)",
@@ -742,7 +788,7 @@ void ipsec_sa_rm(struct ipsec_sa *ips)
 		ipsec_sadb_hash[hashval] = ipsec_sadb_hash[hashval]->ips_hnext;
 		ips->ips_hnext = NULL;
 		ipsec_sa_put(ips);
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_debug:ipsec_sa_del: "
 			    "successfully unhashed first ipsec_sa in chain.\n");
 		return;
@@ -756,7 +802,7 @@ void ipsec_sa_rm(struct ipsec_sa *ips)
 				ipstp->ips_hnext = ips->ips_hnext;
 				ips->ips_hnext = NULL;
 				ipsec_sa_put(ips);
-				KLIPS_PRINT(debug_xform,
+				KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 					    "klips_debug:ipsec_sa_del: "
 					    "successfully unhashed link in ipsec_sa chain.\n");
 				return;
@@ -783,7 +829,7 @@ ipsec_sa_del(struct ipsec_sa *ips)
 	size_t sa_len;
 
 	if(ips == NULL) {
-		KLIPS_ERROR(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_error:ipsec_sa_del: "
 			    "null pointer passed in!\n");
 		return -ENODATA;
@@ -799,7 +845,7 @@ ipsec_sa_del(struct ipsec_sa *ips)
         sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 	hashval = IPS_HASH(&ips->ips_said);
 	
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sa_del: "
 		    "deleting SA:%s (ref=%u), hashval=%d.\n",
 		    sa_len ? sa : " (error)",
@@ -810,7 +856,7 @@ ipsec_sa_del(struct ipsec_sa *ips)
 	  /* if this is NULL, then we can be sure that the SA was never
 	   * added to the SADB, so we just free it.
 	   */
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_debug:ipsec_sa_del: "
 			    "no entries in ipsec_sa table for hash=%d (ref=%u) of SA:%s.\n",
 			    hashval,
@@ -824,7 +870,7 @@ ipsec_sa_del(struct ipsec_sa *ips)
 		ips->ips_hnext = NULL;
 
 		ipsec_sa_put(ips);
-		KLIPS_PRINT(debug_xform,
+		KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 			    "klips_debug:ipsec_sa_del: "
 			    "successfully deleted first ipsec_sa in chain.\n");
 		return 0;
@@ -836,7 +882,7 @@ ipsec_sa_del(struct ipsec_sa *ips)
 				ipstp->ips_hnext = ips->ips_hnext;
 				ips->ips_hnext = NULL;
 				ipsec_sa_put(ips);
-				KLIPS_PRINT(debug_xform,
+				KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 					    "klips_debug:ipsec_sa_del: "
 					    "successfully deleted link in ipsec_sa chain.\n");
 				return 0;
@@ -844,8 +890,8 @@ ipsec_sa_del(struct ipsec_sa *ips)
 		}
 	}
 	
-	KLIPS_PRINT(debug_xform,
-		    "klips_debug:ipsec_sa_del: "
+       	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
+	    "klips_debug:ipsec_sa_del: "
 		    "no entries in linked list for hash=%d of SA:%s.\n",
 		    hashval,
 		    sa_len ? sa : " (error)");
@@ -863,7 +909,7 @@ ipsec_sadb_cleanup(__u8 proto)
         //char sa[SATOT_BUF];
 	//size_t sa_len;
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sadb_cleanup: "
 		    "cleaning up proto=%d.\n",
 		    proto);
@@ -896,19 +942,19 @@ ipsec_sadb_cleanup(__u8 proto)
 	/* clean up SA reference table */
 
 	/* go through the ref table and clean out all the SAs */
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sadb_cleanup: "
 		    "removing SAref entries and tables.");
 	{
 		unsigned table, entry;
 		for(table = 0; table < IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES; table++) {
-			KLIPS_PRINT(debug_xform,
+			KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 				    "klips_debug:ipsec_sadb_cleanup: "
 				    "cleaning SAref table=%u.\n",
 				    table);
 			if(ipsec_sadb.refTable[table] == NULL) {
 				printk("\n");
-				KLIPS_PRINT(debug_xform,
+				KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 					    "klips_debug:ipsec_sadb_cleanup: "
 					    "cleaned %u used refTables.\n",
 					    table);
@@ -933,7 +979,7 @@ ipsec_sadb_free(void)
 {
 	int error = 0;
 
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sadb_free: "
 		    "freeing SArefTable memory.\n");
 
@@ -941,18 +987,18 @@ ipsec_sadb_free(void)
 
 	/* go through the ref table and clean out all the SAs if any are
 	   left and free table memory */
-	KLIPS_PRINT(debug_xform,
+	KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 		    "klips_debug:ipsec_sadb_free: "
 		    "removing SAref entries and tables.\n");
 	{
 		unsigned table, entry;
 		for(table = 0; table < IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES; table++) {
-			KLIPS_PRINT(debug_xform,
+			KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 				    "klips_debug:ipsec_sadb_free: "
 				    "removing SAref table=%u.\n",
 				    table);
 			if(ipsec_sadb.refTable[table] == NULL) {
-				KLIPS_PRINT(debug_xform,
+				KLIPS_PRINT(debug_xform & IPSEC_DBG_XFORM_SA_TABLE,
 					    "klips_debug:ipsec_sadb_free: "
 					    "removed %u used refTables.\n",
 					    table);
@@ -1068,9 +1114,18 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 
 // ------------------------------------------------------------------------
 // delayed garbage collection on skb's that might be allocated
-
+// XXX this code should move to another file!
 static struct workqueue_struct *ipsec_skb_queue = NULL;
 static void ipsec_skb_gc_func(void *param);
+static int skb_gc_cur_outstanding=0;
+static int skb_gc_max_outstanding=0;
+
+/* display, for semi-debug purposes how many deferred gc work-queue items,
+ * and peak number (which can be reset)
+ */
+module_param(skb_gc_cur_outstanding,int,0444);
+module_param(skb_gc_max_outstanding,int,0644);
+
 
 static int
 ipsec_skb_gc_init (void)
@@ -1111,6 +1166,10 @@ ipsec_skb_gc_enqueue(struct sk_buff *skb)
 {
 	struct ipsec_skb_cb *isc = (struct ipsec_skb_cb *)skb->cb;
 	isc->skb = skb;
+
+	skb_gc_cur_outstanding++;
+	if(skb_gc_cur_outstanding > skb_gc_max_outstanding)
+		skb_gc_max_outstanding = skb_gc_cur_outstanding;
 	
         if (ipsec_skb_queue) {
                 INIT_WORK(&isc->skb_work, ipsec_skb_gc_func, isc);
@@ -1129,6 +1188,7 @@ ipsec_skb_gc_func(void *param)
         struct ipsec_skb_cb *isc = param;
 	struct sk_buff *skb = isc->skb;
 
+	skb_gc_cur_outstanding--;
 	kfree_skb(skb);
 }
 
@@ -1137,6 +1197,14 @@ ipsec_skb_gc_func(void *param)
 
 static struct workqueue_struct *ipsec_gc_queue = NULL;
 static void ipsec_sa_gc_func(void *param);
+static int sa_gc_cur_outstanding=0;
+static int sa_gc_max_outstanding=0;
+
+/* display, for semi-debug purposes how many deferred gc work-queue items,
+ * and peak number (which can be reset)
+ */
+module_param(sa_gc_cur_outstanding,int,0444);
+module_param(sa_gc_max_outstanding,int,0644);
 
 static int
 ipsec_sa_gc_init (void)
@@ -1175,6 +1243,10 @@ ipsec_sa_gc_flush (void)
 static void
 ipsec_sa_gc_enqueue(struct ipsec_sa *ips)
 {
+	sa_gc_cur_outstanding++;
+	if(sa_gc_cur_outstanding > sa_gc_max_outstanding)
+		sa_gc_max_outstanding = sa_gc_cur_outstanding;
+	
         if (ipsec_gc_queue) {
                 INIT_WORK(&ips->gc_work, ipsec_sa_gc_func, ips);
                 queue_work(ipsec_gc_queue, &ips->gc_work);
@@ -1191,6 +1263,8 @@ ipsec_sa_gc_func(void *param)
 {
         struct ipsec_sa *ips = param;
 
+	sa_gc_cur_outstanding--;
+
 #ifdef CONFIG_KLIPS_OCF
 	if (ips->ocf_in_use)
 		ipsec_ocf_sa_free(ips);
@@ -1200,8 +1274,13 @@ ipsec_sa_gc_func(void *param)
 		ipsec_alg_sa_wipe(ips);
 	}
 
+#ifdef CONFIG_KLIPS_SA_NEVERFREE
+	memset((caddr_t)ips, 'M', sizeof(*ips));
+	/* never free it */
+#else	
 	memset((caddr_t)ips, 0, sizeof(*ips));
 	kfree(ips);
+#endif
 }
 
 

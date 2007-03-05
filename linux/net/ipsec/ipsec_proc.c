@@ -111,6 +111,7 @@ int debug_esp = 0;
 int debug_ah = 0;
 int sysctl_ipsec_inbound_policy_check = 1;
 int debug_tunnel = 0;
+int debug_xmit = 0;
 int debug_xform = 0;
 int debug_eroute = 0;
 int debug_spi = 0;
@@ -127,6 +128,7 @@ int sysctl_ipsec_tos = 0;
 module_param(debug_esp, int, 0644);
 module_param(debug_ah, int, 0644);
 module_param(debug_tunnel, int, 0644);
+module_param(debug_xmit, int, 0644);
 module_param(debug_xform, int, 0644);
 module_param(debug_eroute, int, 0644);
 module_param(debug_spi, int, 0644);
@@ -209,10 +211,21 @@ ipsec_spi_get_info(char *buffer,
 	spin_lock_bh(&tdb_lock);
 
 	for (i = 0; i < SADB_HASHMOD; i++) {
-		for (sa_p = ipsec_sadb_hash[i];
-		     sa_p;
-		     sa_p = sa_p->ips_hnext) {
-			atomic_inc(&sa_p->ips_refcount);
+		int j=0;
+		sa_p = ipsec_sadb_hash[i];
+
+		while(sa_p != NULL) {
+			j++;
+			KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+				    "klips_debug:ipsec_spi_get_info: "
+				    "dumping sadb_hash[%d,%d]=%p\n",
+				    i, j, sa_p);
+	
+			/* XXX - mcr. why do we have to take the ref count here?
+			 * and, why aren't we doing this with sa_get/sa_put?
+			 */
+			/* atomic_inc(&sa_p->ips_refcount); */
+
 			sa_len = satot(&sa_p->ips_said, 'x', sa, sizeof(sa));
 			len += ipsec_snprintf(buffer+len, length-len, "%s ",
 				       sa_len ? sa : " (error)");
@@ -433,7 +446,7 @@ ipsec_spi_get_info(char *buffer,
 			len += ipsec_snprintf(buffer+len, length-len, " ref=%d",
 				       sa_p->ips_ref);
 #ifdef CONFIG_KLIPS_DEBUG
-			if(debug_xform) {
+			if(debug_xform & IPSEC_DBG_XFORM_SA_PROCEXTRA) {
 			len += ipsec_snprintf(buffer+len, length-len, " reftable=%lu refentry=%lu",
 				       (unsigned long)IPsecSAref2table(sa_p->ips_ref),
 				       (unsigned long)IPsecSAref2entry(sa_p->ips_ref));
@@ -442,7 +455,10 @@ ipsec_spi_get_info(char *buffer,
 
 			len += ipsec_snprintf(buffer+len, length-len, "\n");
 
-                        atomic_dec(&sa_p->ips_refcount);   
+                        /* atomic_dec(&sa_p->ips_refcount);    */
+
+			/* prepare for next interation */
+			sa_p = sa_p->ips_hnext;
                        
                         if (len >= max_content) {
                                /* we've done all that can fit -- stop loops */
@@ -762,8 +778,14 @@ ipsec_klipsdebug_get_info(char *buffer,
 		    length);
 
 	len += ipsec_snprintf(buffer+len, length-len, "debug_tunnel=%08x.\n", debug_tunnel);
-	len += ipsec_snprintf(buffer+len, length-len, "debug_xform=%08x.\n", debug_xform);
-	len += ipsec_snprintf(buffer+len, length-len, "debug_eroute=%08x.\n", debug_eroute);
+	len += ipsec_snprintf(buffer+len, length-len, "debug_xform=%08x ", debug_xform);
+	if(debug_xform) {
+		len += ipsec_snprintf(buffer+len, length-len, "%s %s",
+				      debug_xform & IPSEC_DBG_XFORM_SA_PUT ? "put" : "",
+				      debug_xform & IPSEC_DBG_XFORM_SA_PUTFREE ? "putfree" : "");
+	}
+		
+	len += ipsec_snprintf(buffer+len, length-len, "\ndebug_eroute=%08x.\n", debug_eroute);
 	len += ipsec_snprintf(buffer+len, length-len, "debug_spi=%08x.\n", debug_spi);
 	len += ipsec_snprintf(buffer+len, length-len, "debug_radij=%08x.\n", debug_radij);
 	len += ipsec_snprintf(buffer+len, length-len, "debug_esp=%08x.\n", debug_esp);

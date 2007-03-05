@@ -84,6 +84,7 @@ enum ipsec_rcv_value {
 	IPSEC_RCV_BAD_DECRYPT=-18,
 	IPSEC_RCV_REALLYBAD=-19,
 	IPSEC_RCV_ERRMEMALLOC=-20,
+	IPSEC_RCV_OCFFAIL=-21,
 };
 
 /*
@@ -91,7 +92,7 @@ enum ipsec_rcv_value {
  */
 
 #define IPSEC_RSM_INIT			0	/* make it easy, starting state is 0 */
-#define	IPSEC_RSM_DECAP_INIT	1
+#define	IPSEC_RSM_DECAP_INIT	        1
 #define	IPSEC_RSM_DECAP_CHK		2
 #define	IPSEC_RSM_AUTH_INIT		3
 #define	IPSEC_RSM_AUTH_CALC		4
@@ -193,7 +194,18 @@ extern int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type);
 extern int ipsec_rcv_state_cache_init (void);
 extern void ipsec_rcv_state_cache_cleanup (void);
 
+enum {
+	SKB_STATE_RCV=0x1,
+	SKB_STATE_FSM=0x2,
+	SKB_STATE_NETIF=0x4,
+};
+extern void skbuff_track_update(struct sk_buff *skb, int state);
+
+	
+
 #endif /* IPSEC_RCV_H */
+
+
 
 /*
  * $Log: ipsec_rcv.h,v $
