@@ -50,6 +50,7 @@ char klipsdebug_c_version[] = "RCSID $Id: klipsdebug.c,v 1.58 2005/08/18 14:04:3
 #include "oswlog.h"
 #include "openswan/radij.h"
 #include "openswan/ipsec_encap.h"
+#include "openswan/ipsec_debug.h"
 #ifndef CONFIG_KLIPS_DEBUG
 #define CONFIG_KLIPS_DEBUG
 #endif /* CONFIG_KLIPS_DEBUG */
