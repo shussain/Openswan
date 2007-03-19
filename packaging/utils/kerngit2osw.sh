@@ -15,11 +15,11 @@ klips_revs="v2.6.16.18..HEAD"
 interesting_dirs="net/ipsec include/openswan* include/pfkey* include/crypto/ include/des include/zlib/ crypto/ocf"
 
 # patch for building ocf ...
-build_patches_for="crypto/Kconfig crypto/Makefile include/linux/miscdevice.h include/linux/uio.h"
+#build_patches_for="include/linux/miscdevice.h include/linux/uio.h"
 
 # patch for fixes ...
 # TODO: remove later
-build_patches_for="$build_patches_for crypto/cipher.c drivers/char/random.c include/linux/random.h"
+#build_patches_for="$build_patches_for drivers/char/random.c include/linux/random.h"
 
 #### helper functions
 
