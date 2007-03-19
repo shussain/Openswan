@@ -345,9 +345,11 @@ struct oe_conn oe_private = {
 		 */
 
 		.policy = POLICY_RSASIG|POLICY_ENCRYPT|POLICY_TUNNEL|POLICY_PFS|
-		POLICY_DONT_REKEY|POLICY_OPPO|POLICY_GROUP|POLICY_GROUTED|
+		POLICY_OPPO|POLICY_GROUP|POLICY_GROUTED|
 		POLICY_FAIL_DROP,
-
+		
+		.options[KBF_REKEY]=FALSE,    /* really want REKEY if used */
+		.options_set[KBF_REKEY]=TRUE,
 
 		.desired_state = STARTUP_ROUTE,
 		

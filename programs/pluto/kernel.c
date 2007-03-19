@@ -2122,7 +2122,9 @@ install_inbound_ipsec_sa(struct state *st)
 	    return FALSE;
 	}
     }
+#if 0
     DBG_log("outgoing SA has refhim=%u", st->refhim);
+#endif
 
     /* (attempt to) actually set up the SAs */
     return setup_half_ipsec_sa(st, TRUE);

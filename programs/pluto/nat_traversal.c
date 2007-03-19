@@ -726,7 +726,9 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		st_newest = state_with_serialno(c->newest_isakmp_sa);
 		if ((st_newest)
 		    && ((st_newest->st_state==STATE_MAIN_R3)
-			|| (st_newest->st_state==STATE_MAIN_I4))
+			|| (st_newest->st_state==STATE_MAIN_I4)
+			|| (st_newest->st_state == STATE_AGGR_R2)
+			|| (st_newest->st_state == STATE_AGGR_I2))
 		    && (st_newest->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 		    && ((st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
 			|| (_force_ka)))
@@ -739,6 +741,41 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 	    reset_cur_state();
 	    (*_kap_st)++;
 	}
+
+	if ( ((st->st_state == STATE_QUICK_R2)
+	      || (st->st_state == STATE_QUICK_I2))
+	     &&	(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
+	     &&	((st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
+		 || (_force_ka)))
+	{
+	    /**
+	     * - IPSEC SA established
+	     * - NAT-Traversal detected
+	     * - NAT-KeepAlive needed (we are NATed)
+	     */
+	    if (c->newest_ipsec_sa != st->st_serialno) {
+		/** 
+		 * if newest is also valid, ignore this one, we will only use
+		 * newest. 
+		 */
+		struct state *st_newest;
+		st_newest = state_with_serialno(c->newest_ipsec_sa);
+		if ((st_newest)
+		    && ((st_newest->st_state==STATE_QUICK_R2)
+			|| (st_newest->st_state == STATE_QUICK_I2))
+		    && (st_newest->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
+		    && ((st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
+			|| (_force_ka)))
+		{
+		    return;
+		}
+	    }
+	    set_cur_state(st);
+	    nat_traversal_send_ka(st);
+	    reset_cur_state();
+	    (*_kap_st)++;
+	}
+	
 }
 
 void nat_traversal_ka_event (void)
@@ -855,10 +892,11 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 
 	/**
 	 * If we're initiator and NAT-T (with port floating) is detected, we
-	 * need to change port (MAIN_I3 or QUICK_I1)
+	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
 	 */
-	if (((st->st_state == STATE_MAIN_I3)
-	     || (st->st_state == STATE_QUICK_I1))
+	if ( ((st->st_state == STATE_MAIN_I3)
+	     || (st->st_state == STATE_QUICK_I1) 
+	     || (st->st_state == STATE_AGGR_I2))
 	    && (st->hidden_variables.st_nat_traversal & NAT_T_WITH_PORT_FLOATING)
 	    && (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 	    && (st->st_localport != NAT_T_IKE_FLOAT_PORT))
