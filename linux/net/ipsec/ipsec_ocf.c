@@ -765,7 +765,7 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 	err = crypto_dispatch(crp);
 	if(err != 0) {
 		ocf_rcv_calls_failed++;
-		KLIPS_ERROR(debug_ocf, "crypto_dispatch rcv failure #%u: %u \n", ocf_rcv_calls_failed, err);
+		KLIPS_RATEDEBUG(debug_ocf, "crypto_dispatch rcv failure #%u: %u \n", ocf_rcv_calls_failed, err);
 		crypto_freereq(crp);
 		return IPSEC_RCV_OCFFAIL;
 	}
@@ -1120,7 +1120,7 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 	err = crypto_dispatch(crp);
 	if(err != 0) {
 		ocf_xmit_calls_failed++;
-		KLIPS_ERROR(debug_ocf, "crypto_dispatch xmit failure #%u: %u (ENOMEM=%u)\n", ocf_xmit_calls_failed, err, ENOMEM);
+		KLIPS_RATEDEBUG(debug_ocf, "crypto_dispatch xmit failure #%u: %u (ENOMEM=%u)\n", ocf_xmit_calls_failed, err, ENOMEM);
 		crypto_freereq(crp);
 		return IPSEC_XMIT_OCFFAIL;
 	}
