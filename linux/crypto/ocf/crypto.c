@@ -87,7 +87,10 @@ static int crypto_drivers_num = 0;
 static LIST_HEAD(crp_q);		/* request queues */
 static LIST_HEAD(crp_kq);
 
-static int crypto_q_locked = 0;	/* on !SMP systems, spin locks do nothing :-( */
+static int crypto_q_locked = 0;	/* on !SMP systems, spin locks just disable
+				 * interrupts, which keeps us from noticing
+				 * things for debugging. */
+
 static spinlock_t crypto_q_lock;
 #define	CRYPTO_Q_LOCK() \
 			({ \
@@ -137,6 +140,8 @@ static int crypto_proc_debug = 0;
 module_param(crypto_proc_debug, int, 0644);
 MODULE_PARM_DESC(crypto_proc_debug,
 		 "Enable debug of thread");
+
+struct debugfs_circular *crypto_proc_circ;
 
 #define cp_printk(fmt,msg...) if(crypto_proc_debug) printk(fmt,##msg)
 
@@ -1024,7 +1029,7 @@ crypto_unblock(u_int32_t driverid, int what)
 
 		if (what & CRYPTO_SYMQ) {
 			needwakeup = 1;
-			cap->cc_qblocked = 0;
+			cap->cc_qblocked++;
 		}
 		if (what & CRYPTO_ASYMQ) {
 			needwakeup = 1;
@@ -1060,6 +1065,8 @@ crypto_dispatch(struct cryptop *crp)
 	int result;
 	unsigned long q_flags;
 	struct cryptocap *cap;
+	int q_cnt;
+	static int stamp1000done=0;
 
 	dprintk("%s()\n", __FUNCTION__);
 
@@ -1071,6 +1078,21 @@ crypto_dispatch(struct cryptop *crp)
 		return ENOMEM;
 	}
 	atomic_inc(&crypto_q_cnt);
+
+	q_cnt=atomic_read(&crypto_q_cnt);
+	if(q_cnt == crypto_q_max) {
+		/* X-OFF */
+		if(!stamp1000done) {
+			debugfs_circular_stamp(crypto_proc_circ, 0x22004444);
+		}
+		stamp1000done=1;
+	} else {
+		/* X-ON */
+		if(stamp1000done) {
+			debugfs_circular_stamp(crypto_proc_circ, 0x11004444);
+		}
+		stamp1000done=0;
+	}
 
 	cap = crypto_checkdriver(hid);
 
@@ -1086,7 +1108,7 @@ crypto_dispatch(struct cryptop *crp)
 		 * immediately; dispatch it directly to the
 		 * driver unless the driver is currently blocked.
 		 */
-		if (cap && !cap->cc_qblocked) {
+		if (cap && cap->cc_qblocked>=0) {
 			CRYPTO_Q_UNLOCK();
 			result = crypto_invoke(crp, 0);
 			CRYPTO_Q_LOCK();
@@ -1100,7 +1122,7 @@ crypto_dispatch(struct cryptop *crp)
 				 * order is preserved but this can place them
 				 * behind batch'd ops.
 				 */
-				crypto_drivers[hid].cc_qblocked = 1;
+				crypto_drivers[hid].cc_qblocked--;
 				list_add_tail(&crp->crp_list, &crp_q);
 				crypto_qs++;
 				cryptostats.cs_blocks++;
@@ -1127,7 +1149,7 @@ crypto_dispatch(struct cryptop *crp)
 		cryptop_ts_record (&crypto_proc_thread_times, OCF_TS_PTH_WAKE);
 		cp_printk("crypto proc wake up 2\n");
 		cryptoproc_active++;
-		debugfs_circular_stamp(crypto_proc_circ, 0x00001111);
+		debugfs_circular_stamp(crypto_proc_circ, 0x00001111|(q_cnt<<20));
 		wake_up_interruptible(&cryptoproc_wait);
 		result = 0;
 	}
@@ -1495,10 +1517,10 @@ int crypto_proc_somework(void)
     list_for_each_entry_safe(crp, crpn, &crp_q, crp_list) {
 	    u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 	    cap = crypto_checkdriver(hid);
-			
+
 	    if(!cap) continue;
 
-	    if(!cap->cc_qblocked) goto out;
+	    if(cap->cc_qblocked >= 0) goto out;
     }
 
     list_for_each_entry(krpp, &crp_kq, krp_list) {
@@ -1530,6 +1552,7 @@ crypto_proc(void *arg)
 	struct cryptocap *cap;
 	int result, hint;
 	unsigned long q_flags;
+	int wakeonce1000=1;
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 	daemonize();
@@ -1554,7 +1577,10 @@ crypto_proc(void *arg)
 		submit = NULL;
 		hint = 0;
 
-		debugfs_circular_stamp(crypto_proc_circ, 0x00002222);
+		if (atomic_read(&crypto_q_cnt) != 1000) {
+			int num=atomic_read(&crypto_q_cnt) << 20;
+			debugfs_circular_stamp(crypto_proc_circ, 0x00002222|num);
+		}
 
 		list_for_each_entry_safe(crp, crpn, &crp_q, crp_list) {
 			u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
@@ -1574,7 +1600,7 @@ crypto_proc(void *arg)
 
 			cp_printk("cap was != NULL, crp=%p and cc_qblocked=%u\n", 
 				   crp, cap->cc_qblocked);
-			if (!cap->cc_qblocked) {
+			if (cap->cc_qblocked >= 0) {
 				if (submit != NULL) {
 					/*
 					 * We stop on finding another op,
@@ -1616,6 +1642,7 @@ crypto_proc(void *arg)
 			CRYPTO_Q_UNLOCK();
 			cryptoproc_submitted++;
 			result = crypto_invoke(submit, hint);
+			debugfs_circular_stamp(crypto_proc_circ, 0x00002244);
 			CRYPTO_Q_LOCK();
 			if (result == ERESTART) {
 				/*
@@ -1628,12 +1655,14 @@ crypto_proc(void *arg)
 				 * it at the end does not work.
 				 */
 				/* XXX validate sid again? */
-				crypto_drivers[CRYPTO_SESID2HID(submit->crp_sid)].cc_qblocked = 1;
+				crypto_drivers[CRYPTO_SESID2HID(submit->crp_sid)].cc_qblocked--;
+				debugfs_circular_stamp(crypto_proc_circ, 0x00007777);
+				
 				list_add(&submit->crp_list, &crp_q);
 				crypto_qs++;
 				cryptostats.cs_blocks++;
+				submit=NULL;
 			}
-			continue;
 		}
 
 		/* As above, but for key ops */
@@ -1694,15 +1723,22 @@ crypto_proc(void *arg)
 			cp_printk("crypto proc sleep: %u/%u\n", cryptoproc_active, cryptoproc_generation);
 			CRYPTO_Q_UNLOCK();
 
-			debugfs_circular_stamp(crypto_proc_circ, 0x00002226);
-
 			wait_event_interruptible_timeout(cryptoproc_wait,
-					 cryptoproc == (pid_t) -1 ||
-					 crypto_proc_somework() ||
+							 cryptoproc == (pid_t) -1 ||
+							 (atomic_read(&crypto_q_cnt) >= 0						&& crypto_proc_somework()) ||
 							 cryptoproc_active>0,
-							 msecs_to_jiffies(1));
+							 msecs_to_jiffies(10000));
 
-			debugfs_circular_stamp(crypto_proc_circ, 0x00002223);
+			if (atomic_read(&crypto_q_cnt) != 1000) {
+				debugfs_circular_stamp(crypto_proc_circ, 0x00002223);
+				wakeonce1000=1;
+			} else {
+				if(!wakeonce1000) {
+					wakeonce1000=0;
+					debugfs_circular_stamp(crypto_proc_circ, 0x00002233);
+				}
+			}
+
 			if (signal_pending (current)) {
 				flush_signals(current);
 			}

@@ -686,6 +686,11 @@ typedef struct hifn_mac_result {
 #define	HIFN_POLL_SCALAR	0x0
 #endif
 
+/*
+ * the vulcan does best if you set the cache line size to 4.
+ */
+#define HIFN_BEST_CACHE_LINE_SIZE    4
+
 #define	HIFN_MAX_SEGLEN 	0xffff		/* maximum dma segment len */
 #define	HIFN_MAX_DMALEN		0x3ffff		/* maximum dma length */
 #endif /* __HIFN_H__ */

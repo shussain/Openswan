@@ -65,6 +65,9 @@ __FBSDID("$FreeBSD: src/sys/dev/hifn/hifn7751.c,v 1.32 2005/01/19 17:03:35 sam E
 #include <linux/uio.h>
 #include <linux/sysfs.h>
 #include <linux/miscdevice.h>
+#include <linux/debugfs.h>
+#include <linux/debugfs_circular.h>
+#include <linux/jiffies.h>
 #include <asm/io.h>
 #include <asm/delay.h>
 
@@ -1085,6 +1088,15 @@ hifn_set_retry(struct hifn_softc *sc)
 	pci_write_config_dword(sc->sc_dev, HIFN_TRDY_TIMEOUT, 0);
 }
 
+static void
+hifn_set_cachesize(struct hifn_softc *sc)
+{
+	DPRINTF("%s()\n", __FUNCTION__);
+	pci_write_config_byte(sc->sc_dev, PCI_CACHE_LINE_SIZE, HIFN_BEST_CACHE_LINE_SIZE);
+}
+
+
+
 /*
  * Resets the board.  Values in the regesters are left as is
  * from the reset (i.e. initial values are assigned elsewhere).
@@ -1127,6 +1139,8 @@ hifn_reset_board(struct hifn_softc *sc, int full)
 
 	hifn_puc_wait(sc);
 	hifn_set_retry(sc);
+
+	hifn_set_cachesize(sc);
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		for (reg = 0; reg < 1000; reg++) {
@@ -2546,6 +2560,12 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 
 	HIFN_LOCK(sc);
 
+	{
+		extern struct debugfs_circular *crypto_proc_circ;
+		debugfs_circular_stamp(crypto_proc_circ, 0x00775101);
+	}
+
+
 #ifdef HIFN_DEBUG_VERBOSE
 	if(hifn_debug_dma) {
 		hifn_dump_regs(sc, "interrupt");
@@ -2711,7 +2731,7 @@ done:
 
         verbose_printk ("  sc_needwakeup=%08x\n", sc->sc_needwakeup);
 
-#if 0
+#if 1
 	if (sc->sc_needwakeup) {		/* XXX check high watermark */
 		int wakeup = sc->sc_needwakeup & (CRYPTO_SYMQ|CRYPTO_ASYMQ);
 #ifdef HIFN_DEBUG
