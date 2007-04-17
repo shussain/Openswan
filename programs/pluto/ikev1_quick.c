@@ -2004,8 +2004,18 @@ quick_inI1_outR1_cryptotail(struct dh_continuation *dh
      */
     
     /* HDR* out */
-    echo_hdr(md, TRUE, ISAKMP_NEXT_HASH);
-    
+    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+
+    /* HDR out */
+    {
+	struct isakmp_hdr r_hdr = md->hdr;
+
+	memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+	r_hdr.isa_np = ISAKMP_NEXT_HASH;
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	    return STF_INTERNAL_ERROR;
+    }
+
     /* HASH(2) out -- first pass */
     START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_SA);
 
@@ -2188,7 +2198,7 @@ quick_inR1_outI2(struct msg_digest *md)
 	    , st, &st->st_msgid, TRUE)
 	, "HASH(2)", "Quick R1");
 
-    /* SA in */
+    /* SA in, confirm that it's compatible with us, but don't record! */
     {
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
@@ -2276,7 +2286,6 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
 #endif
 
     /* [ IDci, IDcr ] in; these must match what we sent */
-
     {
 	struct payload_digest *const IDci = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *IDcr;
@@ -2350,7 +2359,19 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
      */
 
     /**************** build reply packet HDR*, HASH(3) ****************/
+    /* HDR* out */
+    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
 
+    /* HDR out */
+    {
+	struct isakmp_hdr r_hdr = md->hdr;
+
+	memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+	r_hdr.isa_np = ISAKMP_NEXT_HASH;
+
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	    return STF_INTERNAL_ERROR;
+    }
     /* HDR* out done */
 
     /* HASH(3) out -- sometimes, we add more content */
@@ -2412,7 +2433,6 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
 	return STF_INTERNAL_ERROR;
 
     /* encrypt message, except for fixed part of header */
-
     if (!encrypt_message(&md->rbody, st))
     {
 	delete_ipsec_sa(st, FALSE);
