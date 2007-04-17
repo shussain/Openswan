@@ -110,6 +110,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdio.h>
 #include <assert.h>
 #define user_assert(foo) assert(foo)
 /* apparently this way to deal with an IPv6 address is not standard. */
