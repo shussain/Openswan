@@ -1,5 +1,11 @@
 Please see docs/KNOWN_BUGS file for more information
 
+#unstable
+v3.0.13
+	fixed bug in QUICK mode when PFS was enabled, and the PFS 
+	calculation was suspended, and another packet was responded
+	to in the interum.
+	
 #stable
 v2.5.10
    Includes fixes for xmlto generation for _confread directory.
