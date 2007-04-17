@@ -959,14 +959,14 @@ send_packet(struct state *st, const char *where, bool verbose)
     }
 
     DBG(DBG_CONTROL|DBG_RAW
-	, DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
+	, DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu,msgid:%08x)"
 		  , (unsigned long) st->st_tpacket.len
 		  , where
 		  , st->st_interface->ip_dev->id_rname
 		  , st->st_interface->port
 		  , ip_str(&st->st_remoteaddr)
 		  , st->st_remoteport
-		  , st->st_serialno));
+		  , st->st_serialno, st->st_msgid));
     DBG(DBG_RAW
 	, DBG_dump(NULL, ptr, len));
 
