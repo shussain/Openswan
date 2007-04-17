@@ -179,7 +179,7 @@ helper_passert_fail(const char *pred_str
 }
 
 
-void pluto_crypto_helper(int fd, int helpernum)
+void pluto_crypto_helper(int fd)
 {
     FILE *in  = fdopen(fd, "rb");
     FILE *out = fdopen(fd, "wb");
@@ -189,12 +189,11 @@ void pluto_crypto_helper(int fd, int helpernum)
     signal(SIGHUP, catchhup);
     signal(SIGUSR1, catchusr1);
 
-    pc_worker_num = helpernum;
     /* make us lower priority that average */
     setpriority(PRIO_PROCESS, 0, 10);
 
     DBG(DBG_CONTROL, DBG_log("helper %d waiting on fd: %d"
-			     , helpernum, fileno(in)));
+			     , pc_helper_num, fileno(in)));
 
     memset(reqbuf, 0, sizeof(reqbuf));
     while(fread((char*)reqbuf, sizeof(r->pcr_len), 1, in) == 1) {
@@ -212,7 +211,7 @@ void pluto_crypto_helper(int fd, int helpernum)
 	/* okay, got a basic size, read the rest of it */
 
 	DBG(DBG_CONTROL, DBG_log("helper %d read %d+4/%d bytesfd: %d"
-				 , helpernum, actnum, r->pcr_len, fileno(in)));
+				 , pc_helper_num, actnum, r->pcr_len, fileno(in)));
 
 	if(actnum != restlen) {
 	    /* faulty read. die, parent will restart us */
@@ -242,7 +241,7 @@ void pluto_crypto_helper(int fd, int helpernum)
     }
 
     if(!feof(in)) {
-	loglog(RC_LOG_SERIOUS, "helper %d got error: %s", helpernum, strerror(ferror(in)));
+	loglog(RC_LOG_SERIOUS, "helper %d got error: %s", pc_helper_num, strerror(ferror(in)));
     }
 
     /* probably normal EOF */
@@ -761,12 +760,15 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	    if(fd != fds[1]) close(fd);
 	}
 	
+	/* set this helper's number for later */
+	pc_helper_num = n;
+
 	pluto_init_log();
 	init_rnd_pool();
 #ifdef HAVE_OCF_AND_OPENSSL
 	load_cryptodev();
 #endif
-	free_preshared_secrets();
+	free_preshared_secrets();  /* get rid of sensitive data */
 	openswan_passert_fail = helper_passert_fail;
 	debug_prefix='!';
 
@@ -778,7 +780,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	}
 #endif	
 
-	pluto_crypto_helper(fds[1], n);
+	pluto_crypto_helper(fds[1]);
 
 #ifdef VULCAN_PK
 	if(using_vulcan_hack) {

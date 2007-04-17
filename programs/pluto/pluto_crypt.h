@@ -145,7 +145,7 @@ extern void pluto_crypto_helper_sockets(fd_set *readfds);
 extern int  pluto_crypto_helper_ready(fd_set *readfds);
 
 extern void pluto_do_crypto_op(struct pluto_crypto_req *r);
-extern void pluto_crypto_helper(int fd, int helpernum);
+extern void pluto_crypto_helper(int fd);
 extern void pluto_crypto_allocchunk(wire_chunk_t *space
 				    , wire_chunk_t *new
 				    , size_t howbig);
