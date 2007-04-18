@@ -77,6 +77,7 @@
 #include "keys.h"
 #include "log.h"
 #include "ocf_cryptodev.h"
+#include "sysqueue.h"
 #include "pluto_crypt.h"
 #include "server.h"
 

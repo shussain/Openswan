@@ -66,6 +66,8 @@
 #include "ocf_cryptodev.h"
 #endif
 
+TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
+
 struct pluto_crypto_worker {
     int   pcw_helpernum;
     pid_t pcw_pid;
@@ -75,12 +77,11 @@ struct pluto_crypto_worker {
     int   pcw_maxcritwork;  /* how many critical things can be queued */
     bool  pcw_dead;         /* worker is dead, waiting for reap */
     bool  pcw_reaped;       /* worker has been reaped, waiting for dealloc */
-    struct pluto_crypto_req_cont *pcw_cont;
+    struct req_queue pcw_active;
 };
 
-static struct pluto_crypto_req_cont *backlogqueue = NULL;
-static struct pluto_crypto_req_cont **backlogqueue_last = &backlogqueue;
-static int                           backlogqueue_len;
+static struct req_queue backlog;
+static int       backlogqueue_len=0;
 
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
 static void cleanup_crypto_helper(struct pluto_crypto_worker *w, int status);
@@ -373,10 +374,8 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r
 
     if(cnt == 0 && r->pcr_pcim >= pcim_demand_crypto) {
 	/* it is very important. Put it all on a queue for later */
-	if(!backlogqueue_last) backlogqueue_last = &backlogqueue;
-	*backlogqueue_last = cn;
-	cn->pcrc_next = NULL;
-	backlogqueue_last  = &cn->pcrc_next;
+	
+	TAILQ_INSERT_TAIL(&backlog, cn, pcrc_list);
 
 	/* copy the request */
 	r = clone_bytes(r, r->pcr_len, "saved cryptorequest");
@@ -412,8 +411,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r
     }
 
     /* link it to the active worker list */
-    cn->pcrc_next = w->pcw_cont;
-    w->pcw_cont = cn;
+    TAILQ_INSERT_TAIL(&w->pcw_active, cn, pcrc_list);
 
     passert(w->pcw_pid != -1);
     passert(w->pcw_pipe != -1);
@@ -439,10 +437,11 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
     struct pluto_crypto_req_cont *cn;
 
     if(backlogqueue_len > 0) {
-	passert(backlogqueue != NULL);
+
+	passert(backlog.tqh_first != NULL);
+	cn = backlog.tqh_first;
+	TAILQ_REMOVE(&backlog, cn, pcrc_list);
 	
-	cn = backlogqueue;
-	backlogqueue = cn->pcrc_next;
 	backlogqueue_len--;
 	
 	r = cn->pcrc_pcr;
@@ -464,8 +463,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 	}
 	
 	/* link it to the active worker list */
-	cn->pcrc_next = w->pcw_cont;
-	w->pcw_cont = cn;
+	TAILQ_INSERT_TAIL(&w->pcw_active, cn, pcrc_list);
 	
 	passert(w->pcw_pid != -1);
 	passert(w->pcw_pipe != -1);
@@ -512,15 +510,12 @@ void delete_cryptographic_continuation(struct state *st)
 
     for(i=0; i<pc_workers_cnt; i++) {
 	struct pluto_crypto_worker *w = &pc_workers[i];
-	struct pluto_crypto_req_cont *cn, **cnp;
+	struct pluto_crypto_req_cont *cn;
 
-	cn = w->pcw_cont;
-	cnp = &w->pcw_cont;
-	while(cn && st->st_serialno != cn->pcrc_serialno) {
-	    cnp = &cn->pcrc_next;
-	    cn = cn->pcrc_next;
-	}
-	
+	for(cn = w->pcw_active.tqh_first;
+	    cn!=NULL && st->st_serialno != cn->pcrc_serialno;
+	    cn = cn->pcrc_list.tqe_next);
+		
 	if(cn == NULL) {
 	    DBG(DBG_CRYPT, DBG_log("no suspended cryptographic state for %lu\n"
 				   , st->st_serialno));
@@ -528,8 +523,7 @@ void delete_cryptographic_continuation(struct state *st)
 	}
 
 	/* unlink it, and free it */
-	*cnp = cn->pcrc_next;
-	cn->pcrc_next = NULL;
+	TAILQ_REMOVE(&w->pcw_active, cn, pcrc_list);
  
 	if(cn->pcrc_free) {
 	    /*
@@ -560,7 +554,7 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
     struct pluto_crypto_req *r;
     int restlen;
     int actlen;
-    struct pluto_crypto_req_cont *cn, **cnp;
+    struct pluto_crypto_req_cont *cn;
 
     DBG(DBG_CRYPT|DBG_CONTROL
 	, DBG_log("helper %u has finished work (cnt now %d)"
@@ -634,13 +628,10 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
     crypto_send_backlog(w);
 
     /* now match up request to continuation, and invoke it */
-    cn = w->pcw_cont;
-    cnp = &w->pcw_cont;
-    while(cn && r->pcr_id != cn->pcrc_id) {
-	cnp = &cn->pcrc_next;
-	cn = cn->pcrc_next;
-    }
-
+    for(cn = w->pcw_active.tqh_first;
+	cn!=NULL && r->pcr_id != cn->pcrc_id;
+	cn = cn->pcrc_list.tqe_next);
+		
     if(cn == NULL) {
 	loglog(RC_LOG_SERIOUS
 	       , "failed to find continuation associated with req %u\n",
@@ -649,8 +640,7 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
     }
 
     /* unlink it */
-    *cnp = cn->pcrc_next;
-    cn->pcrc_next = NULL;
+    TAILQ_REMOVE(&w->pcw_active, cn, pcrc_list);
  
     passert(cn->pcrc_func != NULL);
 
@@ -689,6 +679,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
     w->pcw_work     = 0;
     w->pcw_reaped = FALSE;
     w->pcw_dead   = FALSE;
+    TAILQ_INIT(&w->pcw_active);
 
     /* set the send/received queue length to be at least maxcritwork
      * times sizeof(pluto_crypto_req) in size
@@ -847,6 +838,8 @@ void init_crypto_helpers(int nhelpers)
     pc_workers = NULL;
     pc_workers_cnt = 0;
     pcw_id = 1;
+
+    TAILQ_INIT(&backlog);
 
     cryptodev.calc_dh_shared = calc_dh_shared_gmp;
 #ifdef VULCAN_PK
