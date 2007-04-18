@@ -78,7 +78,7 @@ struct pluto_crypto_worker {
     struct pluto_crypto_req_cont *pcw_cont;
 };
 
-static struct pluto_crypto_req_cont *backlogqueue;
+static struct pluto_crypto_req_cont *backlogqueue = NULL;
 static struct pluto_crypto_req_cont **backlogqueue_last = &backlogqueue;
 static int                           backlogqueue_len;
 
