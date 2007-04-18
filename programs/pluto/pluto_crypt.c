@@ -90,7 +90,7 @@ extern void free_preshared_secrets(void);
 /* may be NULL if we are to do all the work ourselves */
 struct pluto_crypto_worker *pc_workers = NULL;
 int pc_workers_cnt = 0;
-int pc_worker_num;
+int pc_worker_num;  /* count of highest child */
 pcr_req_id pcw_id;
 
 bool using_vulcan_hack=FALSE;
@@ -760,9 +760,6 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	    if(fd != fds[1]) close(fd);
 	}
 	
-	/* set this helper's number for later */
-	pc_helper_num = n;
-
 	pluto_init_log();
 	init_rnd_pool();
 #ifdef HAVE_OCF_AND_OPENSSL
