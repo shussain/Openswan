@@ -81,14 +81,14 @@ export EF_DISABLE_BANNER
 Q=$(if ${V},,@)
 programs ${TESTNAME}: ${TESTNAME}.c ${EXTRAOBJS} ../seam_*.c
 	@echo "file ${TESTNAME}"          >.gdbinit
-	@echo "set args "${UNITTESTARGS} >>.gdbinit
+	@echo "set args "${UNITTEST1ARGS} >>.gdbinit
 	@echo " CC ${TESTNAME}"
 	${Q}${CC} -c -g -O0 ${TESTNAME}.c ${EXTRAFLAGS}
 	@echo " LD ${TESTNAME}"
 	${Q}${CC} -g -O0 -o ${TESTNAME} ${TESTNAME}.o ${EXTRAFLAGS} ${EXTRAOBJS} ${EXTRALIBS}
 
 check:	${WHACKFILE} OUTPUT ${EXTRAOBJS} ${TESTNAME}
-	ulimit -c unlimited && ./${TESTNAME} ${UNITTESTARGS} >OUTPUT/${TESTNAME}.txt 2>&1
+	ulimit -c unlimited && ./${TESTNAME} ${UNITTEST1ARGS} >OUTPUT/${TESTNAME}.txt 2>&1
 	@sed -f ${TESTUTILS}/leak-detective.sed -f ${TESTUTILS}/whack-processing.sed OUTPUT/${TESTNAME}.txt | diff - output.txt
 	@tcpdump -n -t -v -r OUTPUT/${TESTNAME}.pcap | tee OUTPUT/I1-dump.txt | sed -f ${TESTUTILS}/sanity.sed | diff - I1-dump.txt
 
