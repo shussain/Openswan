@@ -89,7 +89,9 @@ UNITTESTS=lp02-parentI1 \
 	lp85-h2h-invalid-deleteSA-I3 \
 	lp86-h2h-invalid-deleteSA-R2-R \
 	lp90-h2h-sareplace-I1 \
-	lp91-h2h-sareplace-R1
+	lp91-h2h-sareplace-R1 \
+	lp66-db2ops \
+	lp67-ike2ops
 
 # running 'make check KEEPGOING=1' will run through all tests w/o stopping
 ERROR_CHECK=$(if ${KEEPGOING},,set -e;)
