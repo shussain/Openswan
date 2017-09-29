@@ -1,5 +1,5 @@
 /* Security Policy Data Base debugging routines
- * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2005-2017 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008 Paul Wouters <paul@xelerance.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -84,12 +84,14 @@ print_sa_attr_ipsec(struct db_attr *at)
 	en = ipsec_attr_val_descs[at->type.ipsec];
     }
     printf("        type: %u(%s) val: %u(%s)\n"
-	   , at->type.ipsec, enum_name(&ipsec_attr_names, at->type.ipsec+ISAKMP_ATTR_AF_TV)
-	   , at->val,  en ? enum_name(en, at->val) : "unknown");
+	   , at->type.ipsec
+           , enum_name(&ipsec_attr_names, at->type.ipsec+ISAKMP_ATTR_AF_TV)
+	   , at->val
+           ,  en ? enum_name(en, at->val) : "unknown");
 }
 
 void
-print_sa_trans(struct db_sa *f, struct db_trans *tr)
+print_sa_trans(bool parentSA, struct db_trans *tr)
 {
     unsigned int i;
     printf("      transform: %u cnt: %u\n",
@@ -100,7 +102,7 @@ print_sa_trans(struct db_sa *f, struct db_trans *tr)
         return;
     }
     for(i=0; i<tr->attr_cnt; i++) {
-	if(f->parentSA) {
+	if(parentSA) {
 	    print_sa_attr_oakley(&tr->attrs[i]);
 	} else {
 	    print_sa_attr_ipsec(&tr->attrs[i]);
@@ -109,7 +111,7 @@ print_sa_trans(struct db_sa *f, struct db_trans *tr)
 }
 
 void
-print_sa_prop(struct db_sa *f, struct db_prop *dp)
+print_sa_prop(bool parentSA, struct db_prop *dp)
 {
     unsigned int i;
     printf("    protoid: %u (%s) cnt: %u\n"
@@ -122,12 +124,12 @@ print_sa_prop(struct db_sa *f, struct db_prop *dp)
         return;
     }
     for(i=0; i<dp->trans_cnt; i++) {
-	print_sa_trans(f, &dp->trans[i]);
+	print_sa_trans(parentSA, &dp->trans[i]);
     }
 }
 
 void
-print_sa_prop_conj(struct db_sa *f, struct db_prop_conj *pc)
+print_sa_prop_conj(bool parentSA, struct db_prop_conj *pc)
 {
     unsigned int i;
     printf("  conjunctions cnt: %u\n",
@@ -138,7 +140,7 @@ print_sa_prop_conj(struct db_sa *f, struct db_prop_conj *pc)
         return;
     }
     for(i=0; i<pc->prop_cnt; i++) {
-	print_sa_prop(f, &pc->props[i]);
+	print_sa_prop(parentSA, &pc->props[i]);
     }
 }
 
@@ -154,8 +156,14 @@ sa_print(struct db_sa *f)
         return;
     }
     for(i=0; i<f->prop_conj_cnt; i++) {
-	print_sa_prop_conj(f, &f->prop_conjs[i]);
+	print_sa_prop_conj(f->parentSA, &f->prop_conjs[i]);
     }
+}
+
+void
+db_print(struct db_context *ctx)
+{
+    print_sa_prop(ctx->prop.protoid == KEY_IKE, &ctx->prop);
 }
 
 /*
