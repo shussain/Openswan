@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 
     tool_init_log();
     init_crypto();
-    load_oswcrypto();
     init_fake_vendorid();
     init_fake_secrets();
     init_local_interface();
