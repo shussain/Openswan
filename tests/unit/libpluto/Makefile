@@ -60,9 +60,10 @@ UNITTESTS_R2+=lp22-certreplymanyR2
 
 
 UNITTESTS_I1+=lp23-davecertI1
+UNITTESTS_R1+=lp70-certreplydaveR1
+UNITTESTS_I2+=lp26-davecertI2
 UNITTESTS_R2+=lp24-certreplydaveR2
 UNITTESTS_R2+=lp25-wrongcacert
-UNITTESTS_I2+=lp26-davecertI2
 
 UNITTESTS_I1+=lp27-dnsloadI1
 UNITTESTS_R2+=lp32-parentR2anychoice
@@ -89,9 +90,9 @@ UNITTESTS_R2+=lp86-h2h-invalid-deleteSA-R2-R
 UNITTESTS_I1+=lp90-h2h-sareplace-I1
 UNITTESTS_R1+=lp91-h2h-sareplace-R1
 
-UNITTESTS_I1+=lp43-parentM1
+UNITTESTS_v1I1+=lp43-parentM1
+UNITTESTS_v1R1+=lp44-h2hR1-deny-ikev1
 
-UNITTESTS_R1+=lp44-h2hR1-deny-ikev1
 UNITTESTS_R1+=lp45-h2hR1-noikev2
 UNITTESTS_I1+=lp46-rekeyikev2-I1
 UNITTESTS_R1+=lp47-rekeyikev2-R1
@@ -119,6 +120,8 @@ UNITTESTS+=${UNITTESTS_R2}
 UNITTESTS+=${UNITTESTS_I3}
 UNITTESTS+=${UNITTESTS_I4}
 UNITTESTS+=${UNITTESTS_R4}
+UNITTESTS+=${UNITTESTS_v1I1}
+UNITTESTS+=${UNITTESTS_v1R1}
 
 # running 'make check KEEPGOING=1' will run through all tests w/o stopping
 ERROR_CHECK=$(if ${KEEPGOING},,set -e;)
