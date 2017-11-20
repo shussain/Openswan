@@ -1,3 +1,4 @@
+#define SEAM_CRYPTO
 #include "parentI2_head.c"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"

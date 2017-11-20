@@ -1,3 +1,4 @@
+#define SEAM_CRYPTO
 #include "../lp10-parentI2/parentI2_head.c"
 #include "seam_gi_sha1.c"
 #include "seam_gi_sha1_group14.c"
