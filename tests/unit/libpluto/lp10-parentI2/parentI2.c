@@ -24,6 +24,7 @@ static void init_fake_secrets(void)
 static void init_loaded(void)
 {   /* nothing */ }
 
+#include "seam_parentI2.c"
 #include "parentI2_main.c"
 
  /*
