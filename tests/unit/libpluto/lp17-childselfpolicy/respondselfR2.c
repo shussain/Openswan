@@ -4,6 +4,7 @@
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_crypt.c"
+#include "seam_gr_sha1_group14.c"
 
 #define TESTNAME "respondselfR2"
 
@@ -23,6 +24,7 @@ static void init_fake_secrets(void)
 static void init_loaded(void)
 {   /* nothing */ }
 
+#include "seam_parentR2.c"
 #include "../lp12-parentR2/parentR2_main.c"
 
  /*

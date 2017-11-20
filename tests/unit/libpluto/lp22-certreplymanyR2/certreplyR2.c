@@ -6,6 +6,7 @@
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_crypt.c"
+#include "seam_gr_sha1_group14.c"
 
 #include "../../programs/pluto/hostpair.c"
 
@@ -37,6 +38,7 @@ static void init_loaded(void)
     hostpair_list();
 }
 
+#include "seam_parentR2.c"
 #include "../lp12-parentR2/parentR2_main.c"
 
  /*

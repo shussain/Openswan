@@ -4,6 +4,7 @@
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_crypt.c"
+#include "seam_gr_sha1_group14.c"
 
 #define TESTNAME "certreplyselfR2"
 
@@ -30,6 +31,7 @@ static void init_loaded(void)
     load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
 }
 
+#include "seam_parentR2.c"
 #include "../lp12-parentR2/parentR2_main.c"
 
  /*
