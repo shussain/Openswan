@@ -3,6 +3,7 @@
 #include "seam_x509_list.c"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
+#include "seam_crypt.c"
 
 #define TESTNAME "certreplyselfR2"
 

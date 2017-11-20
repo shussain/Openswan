@@ -3,6 +3,7 @@
 #include "seam_finish.c"
 #include "seam_x509_list.c"
 #include "seam_host_jamesjohnson.c"
+#include "seam_crypt.c"
 
 #define TESTNAME "certreplyselfR2"
 
