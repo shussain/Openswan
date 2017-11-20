@@ -398,6 +398,15 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb)
                     }
                     if(combo_i < cur_combo) continue;
 
+                    /*
+                     * some of the encr or integ values might not exist in IKEv1,
+                     * so skip them.
+                     */
+                    if(v2tov1_encr(cur_dtf->encr_transid) == 0
+                       || v2tov1_integ(cur_dtf->integ_transid) == 0) {
+                        continue;
+                    }
+
                     DBG(DBG_EMITTING
                         ,DBG_log("new combo %d: dh:%d encr:%d integ:%d"
                                  , cur_combo
