@@ -1,10 +1,16 @@
 #include "../../libpluto/lp12-parentR2/parentR2_head.c"
 #include "seam_host_jamesjohnson.c"
+#include "seam_gr_sha1_group14.c"
+#include "seam_crypt.c"
+#include "seam_dh_v2.c"
+#include "seam_ke.c"
 #include "seam_x509.c"
 #include "seam_gr_sha1_group14.c"
 #include "seam_finish.c"
 
 #define TESTNAME "cryptoR2"
+
+void delete_cryptographic_continuation(struct state *st) {}
 
 static void init_local_interface(void)
 {
@@ -21,6 +27,29 @@ static void init_fake_secrets(void)
 
 static void init_loaded(void)
 {   /* nothing */ }
+
+/* this is replicated in the unit test cases since the patching up of the crypto values is case specific */
+void recv_pcap_packet(u_char *user
+		      , const struct pcap_pkthdr *h
+		      , const u_char *bytes)
+{
+    struct state *st;
+    recv_pcap_packet_gen(user, h, bytes);
+
+    run_continuation(crypto_req);
+}
+
+void recv_pcap_packet2(u_char *user
+                      , const struct pcap_pkthdr *h
+                      , const u_char *bytes)
+{
+    struct state *st;
+
+    cur_debugging |= DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE;
+    recv_pcap_packet_gen(user, h, bytes);
+
+    run_continuation(crypto_req);
+}
 
 #define PCAP_INPUT_COUNT 2
 recv_pcap recv_inputs[PCAP_INPUT_COUNT]={

@@ -586,9 +586,9 @@ sending 528 bytes for STATE_PARENT_I1 through eth0:500 [192.168.1.1:500] to 132.
 | emitting length of IKEv2 Delete Payload: 8
 | emitting 8 raw bytes of padding and length into cleartext
 | padding and length  00 01 02 03  04 05 06 07
-| emitting 12 zero bytes of length of truncated HMAC into IKEv2 Encryption Payload
-| emitting length of IKEv2 Encryption Payload: 48
-| emitting length of ISAKMP Message: 76
+| emitting 16 zero bytes of length of truncated HMAC into IKEv2 Encryption Payload
+| emitting length of IKEv2 Encryption Payload: 52
+| emitting length of ISAKMP Message: 80
 | encrypting as INITIATOR, parent SA #1
 | data before encryption:
 |   00 00 00 08  01 00 00 00  00 01 02 03  04 05 06 07
