@@ -1,7 +1,5 @@
 #ifndef __seam_crypt_c__
 #define __seam_crypt_c__
-void delete_cryptographic_continuation(struct state *st) {}
-
 #include "pluto_crypt.h"
 struct pluto_crypto_req_cont *continuation = NULL;
 
