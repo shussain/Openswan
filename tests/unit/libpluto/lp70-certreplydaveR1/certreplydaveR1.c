@@ -5,7 +5,7 @@
 #include "seam_host_jamesjohnson.c"
 #include "seam_crypt.c"
 #include "seam_rsasig.c"
-#include "seam_gr_sha1_group14.c"
+#include "seam_gi_sha256_group14.c"
 
 #define TESTNAME "certreplyselfR2"
 

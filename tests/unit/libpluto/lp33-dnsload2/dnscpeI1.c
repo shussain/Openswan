@@ -1,6 +1,6 @@
 #include "../lp02-parentI1/parentI1_head.c"
 #include "seam_gi_sha1.c"
-#include "seam_gi_sha1_group14.c"
+#include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_ikev2_sendI1.c"
 #include "seam_demux.c"
@@ -8,6 +8,7 @@
 #include "seam_whack.c"
 #include "seam_host_parker.c"
 #include "seam_makealg.c"
+
 #define TESTNAME "dnscpeI1"
 
 static void init_local_interface(void)
