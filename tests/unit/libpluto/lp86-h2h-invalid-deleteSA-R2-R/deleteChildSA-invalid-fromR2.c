@@ -5,6 +5,7 @@
 #include "seam_crypt.c"
 #include "seam_finish.c"
 #include "seam_rsasig.c"
+#include "seam_ikealg.c"
 
 #define TESTNAME "deleteChildSA-invalid-fromR2"
 

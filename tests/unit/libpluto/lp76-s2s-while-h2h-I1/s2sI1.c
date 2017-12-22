@@ -25,7 +25,7 @@ static void init_fake_secrets(void)
 {
     osw_load_preshared_secrets(&pluto_secrets
 			       , TRUE
-			       , "../samples/parker.secrets"
+			       , SAMPLEDIR "parker.secrets"
 			       , NULL, NULL);
 
     /* and also for the initial statetable entries */

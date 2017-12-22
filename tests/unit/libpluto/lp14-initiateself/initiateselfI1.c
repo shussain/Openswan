@@ -4,6 +4,7 @@
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_ikev2_sendI1.c"
+#include "seam_ikealg.c"
 #include "seam_demux.c"
 #include "../seam_host_rw.c"
 #include "seam_pending.c"

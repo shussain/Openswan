@@ -1,9 +1,12 @@
 #include "../lp13-parentI3/parentI3_head.c"
+#include "seam_host_jamesjohnson.c"
 #include "seam_gi_sha1.c"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_ikev2_sendI1.c"
 #include "seam_debug.c"
+#include "seam_ikealg.c"
+#include "seam_kernel.c"
 
 #define TESTNAME "rekeyParentSA"
 
@@ -70,7 +73,6 @@ recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
     recv_pcap_packet,
     recv_pcap_packet2,
 };
-
 
 #include "../lp13-parentI3/parentI3_main.c"
 
