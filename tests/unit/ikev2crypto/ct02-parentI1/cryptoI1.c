@@ -7,12 +7,12 @@
 #include "seam_x509.c"
 #include "seam_keys2.c"
 #include "seam_dh_v2.c"
-#include "seam_ke.c"
 #include "seam_host_parker.c"
+#include "seam_gi_sha256_group14.c"
+#include "seam_ikev2_sendI1.c"
+#include "seam_finish.c"
 
 #define TESTNAME "cryptoI1"
-
-void delete_cryptographic_continuation(struct state *st) {}
 
 static void init_local_interface(void)
 {
