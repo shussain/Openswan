@@ -86,6 +86,8 @@ run_make_check() {
     return $rc
 }
 
+set -e && make programs
+
 for f in $tests_to_run
 do
     (
