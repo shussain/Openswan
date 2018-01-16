@@ -4,12 +4,14 @@
 #include "seam_finish.c"
 #include "../seam_host_jamesjohnson.c"
 #include "seam_x509_list.c"
+#include "seam_kernelalgs.c"
 
 #define TESTNAME "certreplytselffR1"
 
 static void init_local_interface(void)
 {
     init_jamesjohnson_interface();
+    init_seam_kernelalgs();
 }
 
 static void init_fake_secrets(void)
