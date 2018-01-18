@@ -2,6 +2,7 @@
 #include "pluto_crypt.h"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
+#include "seam_kernel.c"
 #include "seam_ikealg.c"
 #include "seam_x509_list.c"
 #include "seam_host_jamesjohnson.c"
