@@ -8,6 +8,7 @@
 #include "seam_parentR2.c"
 #include "seam_rsasig.c"
 #include "seam_ikealg.c"
+#include "seam_kernel.c"
 
 #define TESTNAME "rekeyParentSA"
 

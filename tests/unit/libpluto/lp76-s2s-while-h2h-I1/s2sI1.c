@@ -9,8 +9,8 @@
 #include "seam_initiate.c"
 #include "seam_keys.c"
 #include "seam_dnskey.c"
-
 #include "seam_host_parker.c"
+#include "seam_kernel.c"
 
 #include "h2hI3-statetable.c"
 
