@@ -225,7 +225,6 @@ stf_status ikev2_emit_ts(struct msg_digest *md   UNUSED
 stf_status ikev2_calc_emit_ts(struct msg_digest *md
 			      , pb_stream *outpbs
 			      , enum phase1_role role
-                              , unsigned int next_payload UNUSED
 			      , struct connection *c0
 			      , lset_t policy UNUSED)
 {
@@ -910,21 +909,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md
         }
     }
 
-    {
-        unsigned int next_payload = ISAKMP_NEXT_NONE;
-        struct payload_digest *p;
-        for(p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-            if ( p->payload.v2n.isan_type == v2N_USE_TRANSPORT_MODE ) {
-                next_payload = ISAKMP_NEXT_v2N;
-                break;
-            }
-        }
-
-        ret = ikev2_calc_emit_ts(md, outpbs, RESPONDER, next_payload
-                                 , c, c->policy);
-        if(ret != STF_OK) {
-            return ret;
-        }
+    ret = ikev2_calc_emit_ts(md, outpbs, RESPONDER
+                             , c, c->policy);
+    if(ret != STF_OK) {
+        return ret;
     }
 
     {
@@ -1232,12 +1220,7 @@ ikev2child_outC1_tail(struct pluto_crypto_req_cont *pcrc
     if(c0) {
         lset_t policy = c0->policy;
         chunk_t child_spi, notify_data;
-        unsigned int next_payload = ISAKMP_NEXT_NONE;
         st->st_connection = c0;
-
-        if( !(st->st_connection->policy & POLICY_TUNNEL) ) {
-            next_payload = ISAKMP_NEXT_v2N;
-        }
 
         ikev2_emit_ipsec_sa(md,&e_pbs_cipher,ISAKMP_NEXT_v2TSi,c0, policy);
 
