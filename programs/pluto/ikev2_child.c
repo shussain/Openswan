@@ -900,8 +900,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md
 
     st1->st_ts_this = ikev2_end_to_ts(&bsr->this, pst->st_localaddr);
     st1->st_ts_that = ikev2_end_to_ts(&bsr->that, pst->st_remoteaddr);
-    ikev2_print_ts(&st1->st_ts_this);
-    ikev2_print_ts(&st1->st_ts_that);
+    if(DBGP(DBG_CONTROLMORE)) {
+        ikev2_print_ts(&st1->st_ts_this);
+        ikev2_print_ts(&st1->st_ts_that);
+    }
 
     /* note that st1 starts == st, but a child SA creation can change that */
     st1->st_connection = c;
@@ -1867,8 +1869,9 @@ stf_status ikev2_child_validate_responder_proposal(struct msg_digest *md
     const int tsi_n = ikev2_parse_ts(tsi_pd, tsi, elemsof(tsi));
     const int tsr_n = ikev2_parse_ts(tsr_pd, tsr, elemsof(tsr));
 
-    DBG_log("checking TSi(%d)/TSr(%d) selectors, looking for exact match"
-            , tsi_n,tsr_n);
+    DBG(DBG_CONTROLMORE
+        , DBG_log("checking TSi(%d)/TSr(%d) selectors, looking for exact match"
+                  , tsi_n,tsr_n));
     if (tsi_n < 0 || tsr_n < 0)
         return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
@@ -1930,8 +1933,10 @@ stf_status ikev2_child_validate_responder_proposal(struct msg_digest *md
         DBG(DBG_CONTROLMORE, DBG_log(("found an acceptable TSi/TSr Traffic Selector")));
         memcpy (&st->st_ts_this , &tsi[best_tsi_i],  sizeof(struct traffic_selector));
         memcpy (&st->st_ts_that , &tsr[best_tsr_i],  sizeof(struct traffic_selector));
-        ikev2_print_ts(&st->st_ts_this);
-        ikev2_print_ts(&st->st_ts_that);
+        if(DBGP(DBG_CONTROLMORE)) {
+            ikev2_print_ts(&st->st_ts_this);
+            ikev2_print_ts(&st->st_ts_that);
+        }
 
         rangetosubnet(&st->st_ts_this.low,
                       &st->st_ts_this.high, &tmp_subnet_i);
