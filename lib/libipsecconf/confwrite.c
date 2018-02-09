@@ -473,99 +473,7 @@ void confwrite_conn(FILE *out,
 	    } else {
 		fprintf(out, "\ttype=transport\n");
 	    }
-
-	    if(conn->policy & POLICY_COMPRESS) {
-		fprintf(out, "\tcompress=yes\n");
-	    } else {
-		fprintf(out, "\tcompress=no\n");
-	    }
-
-	    if(conn->policy & POLICY_PFS) {
-		fprintf(out, "\tpfs=yes\n");
-	    } else {
-		fprintf(out, "\tpfs=no\n");
-	    }
-
-	    if(conn->policy & POLICY_DONT_REKEY) {
-		fprintf(out, "\trekey=no  #duplicate?\n");
-	    } else {
-		fprintf(out, "\trekey=yes\n");
-	    }
-
-	    if(conn->policy & POLICY_OVERLAPIP) {
-		fprintf(out, "\toverlapip=yes\n");
-	    } else {
-		fprintf(out, "\toverlapip=no\n");
-	    }
-
-	    auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
-	    switch(auth_policy) {
-	    case POLICY_PSK:
-		fprintf(out, "\tauthby=secret\n");
-		break;
-
-	    case POLICY_RSASIG:
-		fprintf(out, "\tauthby=rsasig\n");
-		break;
-
-	    default:
-		fprintf(out, "\tauthby=never\n");
-		break;
-	    }
-
-	    switch(phase2_policy) {
-	    case POLICY_AUTHENTICATE:
-		fprintf(out, "\tphase2=ah\n");
-		break;
-
-	    case POLICY_ENCRYPT:
-		fprintf(out, "\tphase2=esp\n");
-		break;
-
-	    case (POLICY_ENCRYPT|POLICY_AUTHENTICATE):
-		fprintf(out, "\tphase2=ah+esp\n");
-		break;
-
-	    default:
-		break;
-	    }
-
-	    switch(failure_policy) {
-	    case POLICY_FAIL_NONE:
-		break;
-
-	    case POLICY_FAIL_PASS:
-		fprintf(out, "\tfailureshunt=passthrough\n");
-		break;
-
-	    case POLICY_FAIL_DROP:
-		fprintf(out, "\tfailureshunt=drop\n");
-		break;
-
-	    case POLICY_FAIL_REJECT:
-		fprintf(out, "\tfailureshunt=reject\n");
-		break;
-	    }
-
-	    switch(ikev2_policy) {
-	    case 0:
-		fprintf(out, "\tikev2=never\n");
-		break;
-
-	    case POLICY_IKEV2_ALLOW:
-		/* it's the default, do not print anything */
-		/* fprintf(out, "\tikev2=permit\n"); */
-		break;
-
-	    case POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE:
-		fprintf(out, "\tikev2=propose\n");
-		break;
-
-	    case POLICY_IKEV1_DISABLE|POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE:
-		fprintf(out, "\tikev2=insist\n");
-		break;
-	    }
-	    break;
+            break;
 
 	case POLICY_SHUNT_PASS:
 	    fprintf(out, "\ttype=passthrough\n");
@@ -581,6 +489,103 @@ void confwrite_conn(FILE *out,
 
 	}
 
+        if(conn->policy & POLICY_COMPRESS) {
+            fprintf(out, "\tcompress=yes\n");
+        } else {
+            fprintf(out, "\tcompress=no\n");
+        }
+
+        if(conn->policy & POLICY_PFS) {
+            fprintf(out, "\tpfs=yes\n");
+        } else {
+            fprintf(out, "\tpfs=no\n");
+        }
+
+        if(conn->policy & POLICY_DONT_REKEY) {
+            fprintf(out, "\trekey=no  #duplicate?\n");
+        } else {
+            fprintf(out, "\trekey=yes\n");
+        }
+
+        if(conn->policy & POLICY_OVERLAPIP) {
+            fprintf(out, "\toverlapip=yes\n");
+        } else {
+            fprintf(out, "\toverlapip=no\n");
+        }
+
+        if(conn->policy & POLICY_IKEV1_DISABLE) {
+            fprintf(out, "\tikev1=no\n");
+        } else {
+            fprintf(out, "\tikev1=yes\n");
+        }
+
+        auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
+        switch(auth_policy) {
+        case POLICY_PSK:
+            fprintf(out, "\tauthby=secret\n");
+            break;
+
+        case POLICY_RSASIG:
+            fprintf(out, "\tauthby=rsasig\n");
+            break;
+
+        default:
+            fprintf(out, "\tauthby=never\n");
+            break;
+        }
+
+        switch(phase2_policy) {
+        case POLICY_AUTHENTICATE:
+            fprintf(out, "\tphase2=ah\n");
+            break;
+
+        case POLICY_ENCRYPT:
+            fprintf(out, "\tphase2=esp\n");
+            break;
+
+        case (POLICY_ENCRYPT|POLICY_AUTHENTICATE):
+            fprintf(out, "\tphase2=ah+esp\n");
+            break;
+
+        default:
+            break;
+        }
+
+        switch(failure_policy) {
+        case POLICY_FAIL_NONE:
+            break;
+
+        case POLICY_FAIL_PASS:
+            fprintf(out, "\tfailureshunt=passthrough\n");
+            break;
+
+        case POLICY_FAIL_DROP:
+            fprintf(out, "\tfailureshunt=drop\n");
+            break;
+
+        case POLICY_FAIL_REJECT:
+            fprintf(out, "\tfailureshunt=reject\n");
+            break;
+        }
+
+        switch(ikev2_policy) {
+        case 0:
+            fprintf(out, "\tikev2=never\n");
+            break;
+
+        case POLICY_IKEV2_ALLOW:
+            /* it's the default, do not print anything */
+            /* fprintf(out, "\tikev2=permit\n"); */
+            break;
+
+        case POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE:
+            fprintf(out, "\tikev2=propose\n");
+            break;
+
+        case POLICY_IKEV1_DISABLE|POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE:
+            fprintf(out, "\tikev2=insist\n");
+            break;
+        }
     }
 
     if(conn->end_addr_family) {
