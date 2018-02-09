@@ -1,7 +1,8 @@
   <varlistentry>
   <term><emphasis remap='B'>ikev2</emphasis></term>
   <listitem>
-<para>IKEv2 (RFC4309) settings to be used. Currently the accepted values
+<para>Enable IKEv2 (RFC7296) protocol. The specifics of the proposal
+are set by the ike= setting.  Currently the accepted values
 are
 <emphasis remap='B'>permit</emphasis>,
 (the default)
@@ -22,8 +23,12 @@ transmitting the IKEv2 capability with IKEv1, Openswan uses a special
 Vendor ID "CAN-IKEv2". If a fall back from IKEv2 to IKEv1 was detected,
 and the IKEv1 negotiation contains Vendor ID "CAN-IKEv2", Openswan will
 immediately attempt and IKEv2 rekey and refuse to use the IKEv1 connection.
+</para>
+<para>
 With an ikev2= setting of <emphasis remap='B'>insist</emphasis>, no IKEv1
-negotiation is allowed, and no bid down attack is possible.</para>
+negotiation is allowed, and no bid down attack is possible.
+This is equivalent to setting <emphasis remap='B'>propose</emphasis> along with ikev1=no.
+</para>
   </listitem>
   </varlistentry>
 

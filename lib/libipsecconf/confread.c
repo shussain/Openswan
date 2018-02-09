@@ -1207,6 +1207,9 @@ static int load_conn (struct starter_config *cfg
 
     KW_POLICY_FLAG(KBF_IKEv2_ALLOW_NARROWING, POLICY_IKEV2_ALLOW_NARROWING);
 
+    /* ikev1 = yes/no */
+    KW_POLICY_NEGATIVE_FLAG(KBF_IKEv1, POLICY_IKEV1_DISABLE);
+
     if(conn->strings_set[KSF_ESP]) {
         conn->esp = clone_str(conn->strings[KSF_ESP],"KSF_ESP");
     }

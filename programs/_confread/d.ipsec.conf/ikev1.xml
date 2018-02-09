@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ikev1</emphasis></term>
+  <listitem>
+<para>Enable IKEv1 (RFC2407) key negotiation protocol. It may be
+set to <emphasis remap='B'>yes</emphasis> (the default) or
+<emphasis remap='B'>no</emphasis>.
+</para>
+<para>
+If ikev2=insist has been set in the default clause, it will be necessary
+to use ikev1=yes to enable ikev1 for a specific connection
+</para>
+  </listitem>
+  </varlistentry>
+

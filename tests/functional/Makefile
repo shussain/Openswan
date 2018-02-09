@@ -16,19 +16,24 @@ srcdir?=${OPENSWANSRCDIR}/tests/functional
 
 include ${OPENSWANSRCDIR}/Makefile.inc
 
-clean check:
-	@${MAKE} -C 01-confread $@
-	@${MAKE} -C 03-plutostart $@
-	@${MAKE} -C 04-whackwrite $@
-	@${MAKE} -C 05-addconn $@
-	@${MAKE} -C 06-dnsdelay $@
-	@${MAKE} -C 06-alsoflip $@
-	@${MAKE} -C 07-sourceipv6 $@
-	@${MAKE} -C 08-sitelocalv6 $@
-	@${MAKE} -C 09-v6inv4 $@
-	@${MAKE} -C 10-defaultroute $@
-	@${MAKE} -C 11-subnets      $@
-	@${MAKE} -C 12-rwcertwrite  $@
-	@${MAKE} -C 13-bigpubkey  $@
+FUNCTEST=
+FUNCTEST+=01-confread
+FUNCTEST+=03-plutostart
+FUNCTEST+=04-whackwrite
+FUNCTEST+=05-addconn
+FUNCTEST+=06-dnsdelay
+FUNCTEST+=06-alsoflip
+FUNCTEST+=07-sourceipv6
+FUNCTEST+=08-sitelocalv6
+FUNCTEST+=09-v6inv4
+FUNCTEST+=10-defaultroute
+FUNCTEST+=11-subnets
+FUNCTEST+=12-rwcertwrite
+FUNCTEST+=13-bigpubkey
 
+clean check pcapupdate programs:
+	@set -e; for test in ${FUNCTEST}; do ${MAKE} -C $$test $@; done
+
+testlist:
+	@echo ${FUNCTEST}
 
