@@ -22,6 +22,7 @@ SAMPLEDIR=../01-confread
 SAMPLE2DIR=../../unit/libpluto/samples
 
 TEST3ARGS=--rootdir=${SAMPLE2DIR}/parker --config ${SAMPLE2DIR}/parker.conf --whackout=${OUTPUTS}/parkerrecord2.whack --all
+TEST4ARGS=--rootdir=${SAMPLE2DIR}/h2h --config ${SAMPLE2DIR}/h2h.conf --whackout=${OUTPUTS}/h2h.whack --all
 
 # note may fail if core dumps are not named "core"
 
@@ -57,12 +58,19 @@ check:
 	@strings ${OUTPUTS}/parkerrecord2.whack | grep parker1--jj2 >/dev/null
 	@strings ${OUTPUTS}/parkerrecord2.whack | grep ikev2:parker--jj >/dev/null
 	@strings ${OUTPUTS}/parkerrecord2.whack | grep parker01.emmjay.credil.org >/dev/null
+	@echo testing ${SAMPLEDIR}/h2h.conf with --all
+	@echo >.gdbinit4 "file ${READWRITE} "
+	@echo >>.gdbinit4 "set args ${TEST4ARGS}"
+	@${READWRITE} ${TEST4ARGS} 2>&1 | tee ${OUTPUTS}/h2h.out | diff - h2h.txt
+	@strings ${OUTPUTS}/h2h.whack | grep pluto-whack-file >/dev/null
+	@strings ${OUTPUTS}/h2h.whack | grep mytunnel-ikev1 >/dev/null
 
 update:
 	cp ../OUTPUTS/parker1load.out  output2.txt
 	cp ../OUTPUTS/parkerload2.out  parkerload2.txt
 	cp ../OUTPUTS/dookuload.out    dookuload.txt
 	cp ../OUTPUTS/parkerload.out   parkerload.txt
+	cp ../OUTPUTS/h2h.out          h2h.txt
 
 
 

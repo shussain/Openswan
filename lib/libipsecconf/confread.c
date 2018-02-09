@@ -1252,7 +1252,7 @@ static int load_conn (struct starter_config *cfg
     if(conn->options_set[KBF_IKEv2]) {
 	switch(conn->options[KBF_IKEv2]) {
 	case fo_never:
-	    conn->policy &= ~POLICY_IKEV2_ALLOW;
+	    conn->policy &= ~(POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE);
 	    break;
 
 	case fo_permit:
