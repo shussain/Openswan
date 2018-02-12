@@ -12,9 +12,10 @@
 #include "seam_ikev1_aggr.c"
 #include "seam_unpend.c"
 
-#define TESTNAME "h2h-deny-ikev1"
+#define TESTNAME "h2h-ikev1"
 
 bool no_cr_send = 0;
+#define MORE_DEBUGGING DBG_PARSING
 
 static void init_local_interface(void)
 {

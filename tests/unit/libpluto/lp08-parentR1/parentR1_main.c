@@ -94,6 +94,9 @@ int main(int argc, char *argv[])
     }
 
     cur_debugging = DBG_CONTROL|DBG_CONTROLMORE;
+#ifdef MORE_DEBUGGING
+    cur_debugging |= MORE_DEBUGGING;
+#endif
     if((whackmsgcount = readwhackmsg(infile)) < 1) {
         fprintf(stderr, "can not read whack infile: %s msgcount=%u\n", infile, whackmsgcount);
         exit(10);
