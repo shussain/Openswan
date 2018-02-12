@@ -393,6 +393,9 @@ USE_LDAP?=false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL?=false
 
+# Should we include IKEv1 code?
+USE_IKEv1?=true
+
 # should we include all manner of known to be broken/weak?
 # use this only if you are building some kind of a testing
 # device. Normal use does not need any of this.

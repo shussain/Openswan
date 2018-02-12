@@ -1172,6 +1172,7 @@ parse_isakmp_sa_body(
               struct isakmp_attribute a;
               pb_stream attr_pbs;
               u_int32_t val;          /* room for larger values */
+              enum ikev1_oakley_attr attr;
 
               if (!in_struct(&a, &isakmp_oakley_attribute_desc, &trans_pbs, &attr_pbs))
                     return BAD_PROPOSAL_SYNTAX;
@@ -1186,22 +1187,21 @@ parse_isakmp_sa_body(
                     return BAD_PROPOSAL_SYNTAX;
               }
 
-              seen_attrs |= LELEM(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+              attr = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
+              seen_attrs |= LELEM(attr);
 
               val = a.isaat_lv;
 
               DBG(DBG_PARSING,
               {
-                    enum_names *vdesc = oakley_attr_val_descs
-                        [a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK];
+                  enum_names *vdesc = oakley_attr_val_descs[val];
 
-                    if (vdesc != NULL)
-                    {
-                        const char *nm = enum_name(vdesc, val);
+                  if (vdesc != NULL) {
+                      const char *nm = enum_name(vdesc, val);
 
-                        if (nm != NULL)
-                              DBG_log("   [%u is %s]", (unsigned)val, nm);
-                    }
+                      if (nm != NULL)
+                          DBG_log("   [%u is %s]", (unsigned)val, nm);
+                  }
               });
 
               switch (a.isaat_af_type)
