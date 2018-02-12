@@ -84,6 +84,23 @@ void ike_alg_show_connection(struct connection *c, const char *instance);
 	for(a=ike_alg_base[IKEv2_TRANS_TYPE_PRF];a;a=a->algo_next)
 #define IKE_DH_ALG_FOR_EACH(idx) for(idx = 0; idx != oakley_group_size; idx++)
 
+#ifdef IKEV1
+extern bool ikev1_alg_enc_present(int ealg, unsigned int keysize);
+extern bool ikev1_alg_enc_ok(int ealg, unsigned key_len, struct alg_info_ike *alg_info_ike, const char **, char *, size_t);
+extern struct ike_alg *ike_alg_ikev1_find(enum ikev2_trans_type algo_type
+                                          , unsigned algo_id
+                                          , unsigned keysize);
+static inline struct ike_encr_desc *ikev1_alg_get_encr(int alg)
+{
+    return (struct ike_encr_desc *) ike_alg_ikev1_find(IKEv2_TRANS_TYPE_ENCR, alg, 0);
+}
+
+static inline struct ike_integ_desc *ikev1_crypto_get_hasher(unsigned int alg)
+{
+    return (struct ike_integ_desc *) ike_alg_ikev1_find(IKEv2_TRANS_TYPE_INTEG, alg, 0);
+}
+#endif
+
 bool ike_alg_enc_present(int ealg, unsigned int keysize);
 bool ike_alg_integ_present(int halg, unsigned int keysize);
 bool ike_alg_prf_present(int halg);
@@ -103,29 +120,26 @@ int ike_alg_add(struct ike_alg *, bool quiet);
 int ike_alg_register_enc(struct ike_encr_desc *e);
 int ike_alg_register_integ(struct ike_integ_desc *a);
 int ike_alg_register_prf(struct ike_prf_desc *a);
-struct ike_alg *ike_alg_find(enum ikev2_trans_type algo_type
-			     , unsigned algo_id
-			     , unsigned keysize);
-
-struct ike_alg *ike_alg_ikev2_find(unsigned algo_type
+struct ike_alg *ike_alg_ikev2_find(enum ikev2_trans_type algo_type
 				   , enum ikev2_trans_type_encr algo_v2id
 				   , unsigned keysize);
 
 static __inline__ struct ike_encr_desc *ike_alg_get_encr(int alg)
 {
-    return (struct ike_encr_desc *) ike_alg_find(IKEv2_TRANS_TYPE_ENCR, alg, 0);
+    return (struct ike_encr_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_ENCR, alg, 0);
 }
+
 static __inline__ struct ike_integ_desc *ike_alg_get_integ(int halg)
 {
-    return (struct ike_integ_desc *) ike_alg_find(IKEv2_TRANS_TYPE_INTEG, halg, 0);
+    return (struct ike_integ_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_INTEG, halg, 0);
 }
 static __inline__ struct ike_prf_desc *ike_alg_get_prf(int prfalg)
 {
-	return (struct ike_prf_desc *) ike_alg_find(IKEv2_TRANS_TYPE_PRF, prfalg, 0);
+	return (struct ike_prf_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_PRF, prfalg, 0);
 }
 static __inline__ struct ike_dh_desc *ike_alg_get_dh(int alg)
 {
-	return (struct ike_dh_desc *) ike_alg_find(IKEv2_TRANS_TYPE_DH, alg, 0);
+	return (struct ike_dh_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_DH, alg, 0);
 }
 
 const struct oakley_group_desc * ike_alg_pfsgroup(struct connection *c, lset_t policy);

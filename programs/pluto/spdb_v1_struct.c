@@ -1214,22 +1214,17 @@ parse_isakmp_sa_body(
               switch (a.isaat_af_type)
               {
                     case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
-                        if (ike_alg_enc_ok(val, 0, c->alg_info_ike, &ugh, ugh_buf, sizeof(ugh_buf))) {
-                            if (ike_alg_enc_present(val, 0)) {
-                                ta.encrypt = val;
-                                ta.encrypter = crypto_get_encrypter(val);
-                                ta.enckeylen = ta.encrypter->keydeflen;
-                            } else {
-                                ugh = builddiag("%s is not supported"
-                                                , enum_show(&oakley_enc_names, val));
-                            }
+                        if (ikev1_alg_enc_ok(val, 0, c->alg_info_ike, &ugh, ugh_buf, sizeof(ugh_buf))) {
+                            ta.encrypt = val;
+                            ta.encrypter = ikev1_alg_get_encr(val);
+                            ta.enckeylen = ta.encrypter->keydeflen;
                         }
                         break;
 
                     case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
                         if (ike_alg_integ_present(val, 0)) {
-                              ta.prf_hash = val;
-                              ta.prf_hasher = crypto_get_hasher(val);
+                              ta.integ_hash = val;
+                              ta.integ_hasher = ikev1_crypto_get_hasher(val);
                         } else {
                             ugh = builddiag("%s is not supported"
                                             , enum_show(&oakley_hash_names, val));
@@ -1477,18 +1472,6 @@ parse_isakmp_sa_body(
                     loglog(RC_LOG_SERIOUS, "%s.  Attribute %s"
                         , ugh, enum_show(&oakley_attr_names, a.isaat_af_type));
                     break;
-              }
-          }
-
-          /*
-           * ML: at last check for allowed transforms in alg_info_ike
-           *     (ALG_INFO_F_STRICT flag)
-           */
-          if (ugh == NULL)
-          {
-              if (!ike_alg_ok_final(ta.encrypt, ta.enckeylen, ta.prf_hash,
-                                    ta.group ? ta.group->group : 65535, c->alg_info_ike)) {
-                  ugh = "OAKLEY proposal refused";
               }
           }
 

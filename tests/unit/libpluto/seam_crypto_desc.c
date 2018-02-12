@@ -35,7 +35,14 @@ struct ike_encr_desc *crypto_get_encrypter(enum ikev2_trans_type_encr ealg)
   return &e1;
 }
 
-struct ike_alg *ike_alg_find(enum ikev2_trans_type algo_type
+struct ike_alg *ike_alg_ikev2_find(enum ikev2_trans_type algo_type
+			     , enum ikev2_trans_type_encr algo_v2id
+			     , unsigned keysize)
+{
+  return &e1.common;
+}
+
+struct ike_alg *ike_alg_ikev1_find(enum ikev2_trans_type algo_type
 			     , unsigned algo_id
 			     , unsigned keysize)
 {

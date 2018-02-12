@@ -9,7 +9,7 @@ init_crypto(void)
 const struct oakley_group_desc unset_group = {0, NULL, NULL, 0};      /* magic signifier */
 
 const struct oakley_group_desc *
-lookup_group(u_int16_t group)
+lookup_group(enum ikev2_trans_type_dh group)
 {
   return &unset_group;
 }
@@ -20,6 +20,7 @@ bool ike_alg_integ_present(int halg, unsigned int keysize)  { return TRUE; }
 bool ike_alg_prf_present(int halg)  { return TRUE; }
 bool ike_alg_group_present(int modpid) { return TRUE; }
 
+bool ikev1_alg_enc_ok(int ealg, unsigned key_len, struct alg_info_ike *alg_info_ike, const char **n, char *m, size_t len) { return TRUE; }
 bool ike_alg_enc_ok(int ealg, unsigned key_len, struct alg_info_ike *alg_info_ike, const char **n, char *m, size_t len) { return TRUE; }
 bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group, struct alg_info_ike *alg_info_ike) { return TRUE; }
 

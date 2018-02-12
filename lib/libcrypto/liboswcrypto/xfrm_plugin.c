@@ -50,7 +50,25 @@
  *=========================================================*/
 struct ike_alg *ike_alg_base[IKEv2_TRANS_TYPE_COUNT+1] = {NULL, NULL};
 
+#ifdef IKEV1
 /*	check if IKE encrypt algo is present */
+bool ikev1_alg_enc_present(int ealg, unsigned keysize)
+{
+	struct ike_encr_desc *encr_desc = ike_alg_get_encr(ealg);
+
+        if(encr_desc == NULL) return FALSE;
+
+        if(keysize != 0 &&
+           (keysize < encr_desc->keyminlen ||
+            keysize > encr_desc->keymaxlen)) {
+            return FALSE;
+        }
+
+        return TRUE;
+}
+#endif
+
+/*	check if IKEv2 encrypt algo is present */
 bool ike_alg_enc_present(int ealg, unsigned keysize)
 {
 	struct ike_encr_desc *encr_desc = ike_alg_get_encr(ealg);
@@ -138,10 +156,61 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 	return ret;
 }
 
+bool ikev1_alg_enc_ok(int ealg, unsigned key_len,
+                      struct alg_info_ike *alg_info_ike __attribute__((unused)),
+                      const char **errp, char *ugh_buf, size_t ugh_buf_len)
+{
+	int ret=TRUE;
+	struct ike_encr_desc *enc_desc;
+
+	enc_desc = ikev1_alg_get_encr(ealg);
+	if (!enc_desc) {
+		/* failure: encrypt algo must be present */
+		snprintf(ugh_buf, ugh_buf_len, "encrypt algo not found");
+		ret = FALSE;
+	} else if ((key_len) && ((key_len < enc_desc->keyminlen) ||
+			 (key_len > enc_desc->keymaxlen))) {
+		/* failure: if key_len specified, it must be in range */
+		snprintf(ugh_buf, ugh_buf_len,
+				"key_len not in range: encalg=%d, "
+				"key_len=%d, keyminlen=%d, keymaxlen=%d",
+				ealg, key_len,
+				enc_desc->keyminlen,
+				enc_desc->keymaxlen
+		       );
+		plog ("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
+		ret = FALSE;
+	}
+
+	DBG(DBG_KLIPS,
+		if (ret) {
+			DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): "
+				"blocksize=%d, keyminlen=%d, "
+				"keydeflen=%d, keymaxlen=%d, "
+				"ret=%d",
+				ealg, key_len,
+				(int)enc_desc->enc_blocksize,
+				enc_desc->keyminlen,
+				enc_desc->keydeflen,
+				enc_desc->keymaxlen,
+				ret);
+		} else {
+			DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): NO",
+				ealg, key_len);
+		}
+	);
+	if (!ret && errp)
+		*errp = ugh_buf;
+	return ret;
+}
+
+
 /*
  * ML: make F_STRICT logic consider enc,hash/auth,modp algorithms
  */
-bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group, struct alg_info_ike *alg_info_ike)
+bool ikev1_alg_ok_final(int ealg, unsigned key_len
+                        , int aalg
+                        , unsigned int group, struct alg_info_ike *alg_info_ike)
 {
 	/*
 	 * simple test to toss low key_len, will accept it only
@@ -178,23 +247,26 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group, 
 	}
 	return TRUE;
 }
+
 /*
- * 	return ike_algo object by {type, id}
+ * 	return ike_algo object by {type, id} (for IKEv1)
  */
-/* XXX:jjo use keysize */
 struct ike_alg *
-ike_alg_find(enum ikev2_trans_type algo_type
+ike_alg_ikev1_find(enum ikev2_trans_type algo_type
              , unsigned algo_id
              , unsigned keysize __attribute__((unused)))
 {
 	struct ike_alg *e=ike_alg_base[algo_type];
 	for(;e!=NULL;e=e->algo_next) {
-		if (e->algo_v2id==algo_id)
+		if (e->algo_id==algo_id)
 			break;
 	}
 	return e;
 }
 
+/*
+ * 	return ike_algo object by {type, id} (for IKEv2)
+ */
 struct ike_alg *
 ike_alg_ikev2_find(unsigned algo_type
 		   , enum ikev2_trans_type_encr algo_v2id
@@ -221,7 +293,7 @@ ike_alg_add(struct ike_alg* a, bool quiet)
 		ugh="Invalid algo_type is larger then IKEv2_TRANS_TYPE_MAX";
 		return_on(ret,-EINVAL);
 	}
-	if (ike_alg_find(a->algo_type, a->algo_v2id, 0))
+	if (ike_alg_ikev2_find(a->algo_type, a->algo_v2id, 0))
 	{
 		ugh="Algorithm type already exists";
 		return_on(ret,-EEXIST);
