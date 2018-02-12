@@ -31,16 +31,6 @@ static void init_fake_secrets(void)
 }
 #include "../lp08-parentR1/parentR1_main.c"
 
-
- /*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * compile-command: "make check"
- * End:
- */
-
-
  /*
  * Local Variables:
  * c-style: pluto
