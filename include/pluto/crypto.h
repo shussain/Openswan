@@ -48,7 +48,7 @@ struct oakley_group_desc {
 };
 
 extern const struct oakley_group_desc unset_group;	/* magic signifier */
-extern const struct oakley_group_desc *lookup_group(u_int16_t group);
+extern const struct oakley_group_desc *lookup_group(enum ikev2_trans_type_dh group);
 extern const struct oakley_group_desc oakley_group[];
 extern const unsigned int oakley_group_size;
 

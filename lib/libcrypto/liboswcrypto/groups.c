@@ -75,7 +75,7 @@ const struct oakley_group_desc oakley_group[] = {
 const unsigned int oakley_group_size = elemsof(oakley_group);
 
 const struct oakley_group_desc *
-lookup_group(u_int16_t group)
+lookup_group(enum ikev2_trans_type_dh group)
 {
     int i;
 

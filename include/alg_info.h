@@ -141,7 +141,7 @@ extern int alg_info_parse_str (struct alg_info *alg_info
 			       , const char **err_p
 			       , void (*parser_init)(struct parser_context *p_ctx)
                                , alg_info_adder alg_info_add
-			       , const struct oakley_group_desc *(*lookup_group_f)(u_int16_t group));
+                               , const struct oakley_group_desc *(*lookup_group)(enum ikev2_trans_type_dh group));
 
 #endif /* ALG_INFO_H */
 
