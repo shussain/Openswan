@@ -1177,7 +1177,14 @@ parse_isakmp_sa_body(
               if (!in_struct(&a, &isakmp_oakley_attribute_desc, &trans_pbs, &attr_pbs))
                     return BAD_PROPOSAL_SYNTAX;
 
-              passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32);
+              if((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) >= 32) {
+                  /* was a passert(), so you can crash Pluto by sending attributes >32 ?? */
+
+                  loglog(RC_LOG_SERIOUS, "ignoring unknown attribute %u in Oakley Transform %u"
+                         , a.isaat_af_type
+                         , trans.isat_transnum);
+                  continue;
+              }
 
               if (LHAS(seen_attrs, a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK))
               {
