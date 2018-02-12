@@ -454,6 +454,7 @@ enum_names certpolicy_type_names =
  */
 
 const char *const oakley_attr_bit_names[] = {
+    "OAKLEY_TRANSFORM_ZERO",
 	"OAKLEY_ENCRYPTION_ALGORITHM",
 	"OAKLEY_HASH_ALGORITHM",
 	"OAKLEY_AUTHENTICATION_METHOD",
@@ -475,8 +476,8 @@ const char *const oakley_attr_bit_names[] = {
     };
 
 enum_names oakley_attr_names = {
-    OAKLEY_ENCRYPTION_ALGORITHM,
-    OAKLEY_GROUP_ORDER,             oakley_attr_bit_names, NULL };
+    0,                              /* keeps bits and attribute numbers aligned */
+    OAKLEY_BLOCK_SIZE,             oakley_attr_bit_names, NULL };
 
 /* for each Oakley attribute, which enum_names describes its values? */
 enum_names *oakley_attr_val_descs[] = {
