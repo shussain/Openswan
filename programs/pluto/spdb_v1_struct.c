@@ -1470,7 +1470,7 @@ parse_isakmp_sa_body(
               if (ugh != NULL)
               {
                     loglog(RC_LOG_SERIOUS, "%s.  Attribute %s"
-                        , ugh, enum_show(&oakley_attr_names, a.isaat_af_type));
+                        , ugh, enum_show(&oakley_attr_names, attr));
                     break;
               }
           }
