@@ -194,6 +194,9 @@ main_outI1(int whack_sock
 	 * OpenPGP peer and have to send the Vendor ID
 	 */
 
+        /* mark this as a parent SA */
+        st->st_sadb->parentSA = TRUE;
+
         if(!extrapolate_v1_from_v2(st->st_sadb)) {
             openswan_log("can not derive IKEv1 policy from IKEv2 settings");
             return STF_INTERNAL_ERROR;
