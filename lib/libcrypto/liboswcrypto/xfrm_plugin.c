@@ -268,7 +268,7 @@ ike_alg_ikev1_find(enum ikev2_trans_type algo_type
  * 	return ike_algo object by {type, id} (for IKEv2)
  */
 struct ike_alg *
-ike_alg_ikev2_find(unsigned algo_type
+ike_alg_ikev2_find(enum ikev2_trans_type algo_type
 		   , enum ikev2_trans_type_encr algo_v2id
 		   , unsigned keysize __attribute__((unused)))
 {
