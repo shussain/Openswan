@@ -354,9 +354,8 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES
 		  ? ISAKMP_NEXT_NATD_RFC : ISAKMP_NEXT_NATD_DRAFTS);
-	if (!out_modify_previous_np(nat_np, outs)) {
-		return FALSE;
-	}
+
+        pbs_set_np(outs, nat_np);
 
 	first      = &(md->sender);
 	firstport  = ntohs(st->st_remoteport);
@@ -526,9 +525,8 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES
 		  ? ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS);
-	if (!out_modify_previous_np(nat_np, outs)) {
-		return FALSE;
-	}
+
+        pbs_set_np(outs, nat_np);
 
 	memset(&natoa, 0, sizeof(natoa));
 	natoa.isanoa_np = nat_np;

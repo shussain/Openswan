@@ -1788,47 +1788,6 @@ out_struct(const void *struct_ptr, struct_desc *sd
     return FALSE;
 }
 
-/* Find last complete top-level payload and change its np
- *  * Note: we must deal with payloads already formatted for the network.
- *  _*_Note:_we_don't_think_a_FALSE_return_should_happen_but_old_routine_did.
- *   */
-/* XXX replace all instances of this */
-bool
-out_modify_previous_np(u_int8_t np, pb_stream *outs)
-{
-    u_int8_t *pl = outs->start;
-    size_t left = outs->cur - outs->start;
-
-    passert(left >= NSIZEOF_isakmp_hdr);    /* not even room for isakmp_hdr! */
-    if (left == NSIZEOF_isakmp_hdr) {
-	/* no payloads, just the isakmp_hdr: insert np here */
-	passert(pl[NOFFSETOF_isa_np] == ISAKMP_NEXT_NONE ||
-		pl[NOFFSETOF_isa_np] == ISAKMP_NEXT_HASH);
-	pl[NOFFSETOF_isa_np] = np;
-    } else {
-	pl += NSIZEOF_isakmp_hdr;       /* skip over isakmp_hdr */
-	left -= NSIZEOF_isakmp_hdr;
-	for (;;) {
-		size_t pllen;
-
-		passert(left >= NSIZEOF_isakmp_generic);
-		pllen = (pl[NOFFSETOF_isag_length] << 8)
-			| pl[NOFFSETOF_isag_length + 1];
-		passert(left >= pllen);
-		if (left == pllen) {
-			/* found last top-level payload */
-			pl[NOFFSETOF_isag_np] = np;
-			break;  /* done */
-		} else {
-			/* this payload is not the last: scan forward */
-			pl += pllen;
-			left -= pllen;
-		}
-	}
-	}
-	return TRUE;
-}
-
 void pbs_set_np(pb_stream *outs, u_int8_t np)
 {
     passert(outs->next_payload_pointer != NULL);
