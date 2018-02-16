@@ -5,6 +5,10 @@
 #include "seam_ikev2_sendI1.c"
 #include "seam_rsasig.c"
 #include "seam_keys.c"
+#include "seam_natt.c"
+#include "seam_crypt.c"
+#include "seam_dh_v2.c"
+#include "seam_ke.c"
 #include "seam_x509.c"
 #include "seam_host_parker.c"
 
