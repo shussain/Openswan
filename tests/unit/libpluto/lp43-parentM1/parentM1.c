@@ -35,7 +35,6 @@ static void init_fake_secrets(void)
 
 bool no_cr_send = FALSE;
 
-
 #include "../lp02-parentI1/parentI1_main.c"
 
 
