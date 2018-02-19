@@ -1225,6 +1225,8 @@ parse_isakmp_sa_body(
                         if (ike_alg_integ_present(val, 0)) {
                               ta.integ_hash = val;
                               ta.integ_hasher = ikev1_crypto_get_hasher(val);
+                              ta.prf_hash = val;
+                              ta.prf_hasher = ta.integ_hasher;
                         } else {
                             ugh = builddiag("%s is not supported"
                                             , enum_show(&oakley_hash_names, val));
