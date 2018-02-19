@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     init_local_interface();
     init_fake_secrets();
     enable_debugging();
+    init_demux();
 
     infile = argv[0];
     conn_name = argv[1];

@@ -10,6 +10,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn
   return STF_SUSPEND;
 }
 
+#if 0
 void finish_dh_secretiv(struct state *st,
 			struct pluto_crypto_req *r)
 {
@@ -28,5 +29,4 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
 {
   return STF_SUSPEND;
 }
-
 #endif
