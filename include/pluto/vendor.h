@@ -166,6 +166,7 @@ enum known_vendorid {
 };
 
 void init_vendorid(void);
+void init_fake_vendorid(void);
 
 struct msg_digest;
 void handle_vendorid (struct msg_digest *md, const char *vid, size_t len, struct state *st);
