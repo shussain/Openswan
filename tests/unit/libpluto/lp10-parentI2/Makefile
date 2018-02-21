@@ -77,6 +77,10 @@ programs ${TESTNAME}: ${TESTNAME}.c $(wildcard ../seam_*.c) ${EXTRAOBJS}
 	@echo " LD ${TESTNAME}"
 	${Q}${CC} -g -O0 -o ${TESTNAME} ${TESTNAME}.o ${EXTRAFLAGS} ${EXTRAOBJS} ${EXTRALIBS}
 
+${TESTNAME}.E: ${TESTNAME}.c $(wildcard ../seam_*.c) ${EXTRAOBJS}
+	@echo CC ${TESTNAME}.E
+	@${CC} -c -E -g -O0 -o ${TESTNAME}.E ${TESTNAME}.c ${EXTRAFLAGS}
+
 check: OUTPUT/I2-dump.txt
 OUTPUT/I2-dump.txt:	${WHACKFILE} ${TESTNAME}
 	@mkdir -p OUTPUT
