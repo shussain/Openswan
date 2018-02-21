@@ -1,3 +1,5 @@
+#define NAPT_ENABLED 1
+#define NAT_TRAVERSAL
 #define INCLUDE_IKEV1_PROCESSING
 /* repeats existing test case */
 #include "../lp08-parentR1/parentR1_head.c"
@@ -14,13 +16,16 @@
 #include "seam_unpend.c"
 #include "seam_finish.c"
 
-#define TESTNAME "h2h-ikev1"
+#define TESTNAME "parentN1"
 
 bool no_cr_send = 0;
 #define MORE_DEBUGGING DBG_PARSING
 
 static void init_local_interface(void)
 {
+    nat_traversal_support_non_ike = TRUE;
+    nat_traversal_support_port_floating = TRUE;
+    nat_traversal_enabled = TRUE;
     init_jamesjohnson_interface();
 }
 

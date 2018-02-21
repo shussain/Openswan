@@ -19,6 +19,12 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid) { return LELEM(N
 void nat_traversal_new_ka_event (void) {}
 
 void init_nat_traversal (bool activate, unsigned int keep_alive_period,
-                         bool fka, bool spf) {}
+                         bool fka, bool spf) {
+#ifdef NAPT_ENABLED
+  nat_traversal_support_non_ike = TRUE;
+  nat_traversal_support_port_floating = TRUE;
+  nat_traversal_enabled = TRUE;
+#endif
+}
 
 #endif
