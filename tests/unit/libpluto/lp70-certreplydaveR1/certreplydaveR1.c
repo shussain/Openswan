@@ -8,6 +8,7 @@
 #include "seam_host_jamesjohnson.c"
 #include "seam_crypt.c"
 #include "seam_rsasig.c"
+#include "seam_natt.c"
 
 #define TESTNAME "certreplyselfR2"
 

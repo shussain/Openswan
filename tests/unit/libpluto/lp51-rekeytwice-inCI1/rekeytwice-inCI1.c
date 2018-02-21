@@ -4,6 +4,7 @@
 #include "seam_x509.c"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
+#include "seam_natt.c"
 
 #define TESTNAME "rekeytwice-inCI1"
 

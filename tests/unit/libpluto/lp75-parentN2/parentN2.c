@@ -8,6 +8,9 @@
 #include "seam_dpd.c"
 #include "seam_ikev1_aggr.c"
 #include "seam_ikev1_phase2.c"
+#include "seam_ikev1_crypto.c"
+#include "seam_gi_sha256_group14.c"
+#include "seam_finish.c"
 #include "seam_unpend.c"
 #include "seam_command.c"
 #include "seam_kernel.c"
@@ -15,7 +18,6 @@
 #include "seam_crypt.c"
 #include "seam_x509.c"
 #include "seam_rsasig.c"
-#include "seam_gr_sha1_group14.c"
 #include "seam_host_jamesjohnson.c"
 
 #define TESTNAME "parentN2"

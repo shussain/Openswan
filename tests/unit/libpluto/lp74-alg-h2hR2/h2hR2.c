@@ -7,6 +7,7 @@
 #include "seam_rsasig.c"
 #include "seam_ikealg.c"
 #include "seam_kernel.c"
+#include "seam_natt.c"
 
 #define TESTNAME "h2hR2"
 

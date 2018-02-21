@@ -1,3 +1,6 @@
+#include "pluto_crypt.h"
+
+/* this is replicated in the unit test cases since the patching up of the crypto values is case specific */
 void recv_pcap_packet(u_char *user
 		      , const struct pcap_pkthdr *h
 		      , const u_char *bytes)

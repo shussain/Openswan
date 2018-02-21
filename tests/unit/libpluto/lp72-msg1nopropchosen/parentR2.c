@@ -7,6 +7,7 @@
 #include "seam_rsasig.c"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
+#include "seam_natt.c"
 
 #define TESTNAME "msg1nopropchosen"
 
