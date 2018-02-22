@@ -1541,6 +1541,14 @@ void process_packet_tail(struct msg_digest **mdp)
 	    SEND_NOTIFICATION(INVALID_FLAGS);
 	    return;
 	}
+
+        if(smc == NULL) {
+	    loglog(RC_LOG_SERIOUS, "packet rejected: state not found, and no microcode");
+	    SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+	    return;
+        }
+
+        /* must be an acceptable unencrypted packet */
     }
 
     TCLCALLOUT("recvMessage", st, (st ? st->st_connection : NULL), md);
