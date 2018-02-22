@@ -56,6 +56,12 @@ int main(int argc, char *argv[])
         pcapin[i] = argv[3+i];
     }
 
+#if 0
+    printf("cfg    file: %s\n", infile);
+    printf("conn   name: %s\n", conn_name);
+    printf("output file: %s\n", pcap_out);
+#endif
+
     cur_debugging = DBG_CONTROL|DBG_CONTROLMORE;
     if(readwhackmsg(infile) == 0) exit(10);
     c1 = con_by_name(conn_name, TRUE);
