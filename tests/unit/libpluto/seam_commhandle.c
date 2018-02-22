@@ -21,6 +21,14 @@ void recv_pcap_setup(char *file)
     dlt_type = pcap_datalink(pt);
 }
 
+/*
+ * if NAPT_ENABLED is defined, then the check for port numbers compares
+ * against output_*.
+ *
+ * NAPT_ENABLED is to be enabled on the machine behind the NAPT, as the
+ * port numbers are adjusted on output.
+ *
+ */
 
 extern unsigned short outside_port500;
 extern unsigned short outside_port4500;
