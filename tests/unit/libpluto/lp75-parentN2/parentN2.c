@@ -40,7 +40,16 @@ static void init_fake_secrets(void)
 static void init_loaded(void)
 {   /* nothing */ }
 
+
+#define PCAP_INPUT_COUNT 2
+
 #include "seam_parentR2.c"
+
+recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
+    recv_pcap_packet1ikev1,
+    recv_pcap_packet1ikev1,
+};
+
 #include "../lp12-parentR2/parentR2_main.c"
 
  /*
