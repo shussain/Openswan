@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     init_crypto();
     init_fake_vendorid();
     init_fake_secrets();
-    init_jamesjohnson_interface();
+    init_local_interface();
     init_demux();
     enable_debugging();
 
