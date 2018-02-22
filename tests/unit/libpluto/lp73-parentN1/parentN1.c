@@ -1,4 +1,3 @@
-#define NAPT_ENABLED 1
 #define NAT_TRAVERSAL
 #define INCLUDE_IKEV1_PROCESSING
 /* repeats existing test case */
