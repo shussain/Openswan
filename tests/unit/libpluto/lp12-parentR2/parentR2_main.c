@@ -43,8 +43,9 @@ int main(int argc, char *argv[])
     init_crypto();
     load_oswcrypto();
     init_fake_vendorid();
-    init_local_interface();
     init_fake_secrets();
+    init_local_interface();
+    init_demux();
     init_seam_kernelalgs();
     enable_debugging();
 

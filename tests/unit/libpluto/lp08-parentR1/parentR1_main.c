@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
     init_local_interface();
     init_demux();
     enable_debugging();
+    init_seam_kernelalgs();
 
     infile = NULL;
     conn_name = NULL;

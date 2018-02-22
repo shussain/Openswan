@@ -38,7 +38,6 @@
 #include "seam_natt.c"
 #include "seam_ikealg.c"
 #include "seam_dnskey.c"
-#include "seam_kernelalgs.c"
 
 
 void recv_pcap_packet(u_char *user		      , const struct pcap_pkthdr *h		      , const u_char *bytes);

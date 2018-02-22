@@ -24,6 +24,7 @@ struct seam_secrets {
 	struct seam_chunk icookie;
 	struct seam_chunk rcookie;
 	struct seam_chunk secret;
+        struct seam_chunk secretr;
 
 	/* results */
 
@@ -82,6 +83,7 @@ static inline void seam_chunk_set(struct seam_chunk *c,
 		__SS_SET(prefix,icookie), \
 		__SS_SET(prefix,rcookie), \
 		__SS_SET(prefix,secret), \
+		__SS_SET(prefix,secretr), \
 		\
 		__SS_SET(prefix##_results,shared), \
 		__SS_SET(prefix##_results,skeyseed), \
