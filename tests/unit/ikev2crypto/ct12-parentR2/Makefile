@@ -5,7 +5,7 @@ EXTRAFLAGS+=-DSAMPLEDIR=\"${SAMPLEDIR}\"
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev2_crypto.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev2_rsa.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev2_psk.o
-#EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/pluto_crypt.o
+EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/signatures.o
 
 # Local Variables:
 # gdb-command: ""

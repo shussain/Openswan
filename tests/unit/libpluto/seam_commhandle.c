@@ -26,7 +26,7 @@ void recv_pcap_setup(char *file)
  * against output_*.
  *
  * NAPT_ENABLED is to be enabled on the machine behind the NAPT, as the
- * port numbers are adjusted on output.
+ * port numbers are adjusted on output, and then wild-carded on input.
  *
  */
 

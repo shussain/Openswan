@@ -11,5 +11,6 @@ EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev2_rsa.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev2_psk.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/kernel.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/kernel_forces.o
+EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/signatures.o
 
 

@@ -1,6 +1,5 @@
 #define INCLUDE_IKEV1_PROCESSING
 #define OMIT_MAIN_MODE
-#define NAPT_ENABLED 1
 #define NAT_TRAVERSAL
 #define SEAM_CRYPTO
 #include "../lp12-parentR2/parentR2_head.c"
@@ -26,6 +25,9 @@ bool no_cr_send = TRUE;
 
 static void init_local_interface(void)
 {
+    nat_traversal_support_non_ike = TRUE;
+    nat_traversal_support_port_floating = TRUE;
+    nat_traversal_enabled = TRUE;
     init_jamesjohnson_interface();
 }
 
@@ -47,7 +49,7 @@ static void init_loaded(void)
 
 recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
     recv_pcap_packet1ikev1,
-    recv_pcap_packet1ikev1,
+    recv_pcap_packet2ikev1,
 };
 
 #include "../lp12-parentR2/parentR2_main.c"

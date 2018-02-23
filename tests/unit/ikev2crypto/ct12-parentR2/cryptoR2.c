@@ -7,12 +7,16 @@
 #include "seam_ke.c"
 #include "seam_x509.c"
 #include "seam_finish.c"
+#include "seam_natt.c"
 #include "seam_cryptocontinue.c"
 
 #define TESTNAME "cryptoR2"
 
 static void init_local_interface(void)
 {
+    nat_traversal_support_non_ike = TRUE;
+    nat_traversal_support_port_floating = TRUE;
+    nat_traversal_enabled = TRUE;
     init_jamesjohnson_interface();
 }
 
