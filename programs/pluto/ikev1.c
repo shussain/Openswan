@@ -1595,8 +1595,8 @@ void process_packet_tail(struct msg_digest **mdp)
                         * don't accept NAT-D/NAT-OA reloc directly in message,
                         * unless we're using NAT-T RFC
                         */
-                       DBG_log("st_nat_traversal was: %u\n",
-                               st->hidden_variables.st_nat_traversal);
+                       openswan_log("rejected NATD/NATOA message, as st_nat_traversal did not enable that payload (was: %08x)\n",
+                                    st->hidden_variables.st_nat_traversal);
                        sd = NULL;
                    }
                    break;
@@ -1632,7 +1632,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		    SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 		    return;
 		}
-	    passert(sd != NULL);
+                passert(sd != NULL);
 	    }
 
 	    {
