@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     }
     /* argv[1] == "-r" ?? */
 
+    oco = osw_init_options();
     tool_init_log();
     init_crypto();
     init_fake_vendorid();
