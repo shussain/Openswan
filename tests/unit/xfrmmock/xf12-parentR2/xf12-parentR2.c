@@ -12,6 +12,7 @@
 #include "seam_ke.c"
 #include "seam_mockxfrm.c"
 #include "seam_cryptocontinue.c"
+#include "seam_natt.c"
 
 #define TESTNAME "xf12-parentR2"
 
