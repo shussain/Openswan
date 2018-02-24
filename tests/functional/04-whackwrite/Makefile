@@ -22,7 +22,7 @@ SAMPLEDIR=../01-confread
 SAMPLE2DIR=../../unit/libpluto/samples
 
 TEST3ARGS=--rootdir=${SAMPLE2DIR}/parker --config ${SAMPLE2DIR}/parker.conf --whackout=${OUTPUTS}/parkerrecord2.whack --all
-TEST4ARGS=--rootdir=${SAMPLE2DIR}/h2h --config ${SAMPLE2DIR}/h2h.conf --whackout=${OUTPUTS}/h2h.whack --all
+TEST4ARGS=--rootdir=${SAMPLE2DIR}/h2h --config ${SAMPLE2DIR}/h2h.conf --whackout=${OUTPUTS}/h2h.whack --debug --all
 
 # note may fail if core dumps are not named "core"
 
