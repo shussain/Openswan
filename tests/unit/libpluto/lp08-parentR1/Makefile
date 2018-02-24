@@ -40,6 +40,7 @@ EXTRALIBS+=${OBJDIRTOP}/programs/pluto/ikev2_alg.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/demux.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/crypt_utils.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/cookie.o
+EXTRALIBS+=${OBJDIRTOP}/programs/pluto/keymgmt.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/spdb_struct.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/spdb_v2_struct.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/crypto.o

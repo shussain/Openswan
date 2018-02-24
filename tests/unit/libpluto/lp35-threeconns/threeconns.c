@@ -10,7 +10,6 @@
 #include "seam_initiate.c"
 #include "seam_dnskey.c"
 #include "seam_x509.c"
-#include "seam_keys.c"
 
 #define TESTNAME "threeconns"
 
