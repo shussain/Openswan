@@ -100,6 +100,7 @@ UNITTESTS_v1R1+=lp44-h2hR1-deny-ikev1
 UNITTESTS_v1R1+=lp73-parentN1
 UNITTESTS_v1I2+=lp74-parentM2
 UNITTESTS_v1R2+=lp75-parentN2
+UNITTESTS_v1I3+=lp76-parentM3
 
 UNITTESTS_R1+=lp45-h2hR1-noikev2
 UNITTESTS_I1+=lp46-rekeyikev2-I1

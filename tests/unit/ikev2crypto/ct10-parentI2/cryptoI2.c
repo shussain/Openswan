@@ -47,6 +47,14 @@ void recv_pcap_packet(u_char *user
     run_continuation(crypto_req);
 }
 
+#ifndef PCAP_INPUT_COUNT
+#define PCAP_INPUT_COUNT 1
+recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
+    recv_pcap_packet,
+};
+#endif
+
+
 #include "../lp10-parentI2/parentI2_main.c"
 
  /*

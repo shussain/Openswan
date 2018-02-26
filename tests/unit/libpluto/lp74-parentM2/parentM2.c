@@ -58,13 +58,21 @@ void recv_pcap_packet(u_char *user
         st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE;
         st->hidden_variables.st_nat_traversal |= NAT_T_WITH_NATD;
 
-        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc14_ni, tc14_ni_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc14_gi, tc14_gi_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc14_secretr,tc14_secretr_len);
+        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   SS(ni.ptr), SS(ni.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  SS(gi.ptr), SS(gi.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secretr.ptr), SS(secretr.len));
     }
 
     run_continuation(crypto_req);
 }
+
+#ifndef PCAP_INPUT_COUNT
+#define PCAP_INPUT_COUNT 1
+recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
+    recv_pcap_packet,
+};
+#endif
+
 
 #include "../lp10-parentI2/parentI2_main.c"
 

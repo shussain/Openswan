@@ -1,7 +1,7 @@
 # -*- makefile -*-
 CONNNAME=gateway--any
 PCAPOUTPUT=parentI2.pcap
-UNITTEST1ARGS=-r ${WHACKFILE} ${CONNNAME} parentR1.pcap      OUTPUT/${PCAPOUTPUT}
+UNITTEST1ARGS=-r ${WHACKFILE} ${CONNNAME} OUTPUT/${PCAPOUTPUT} parentR1.pcap
 ENDNAME=rw
 
 TESTNAME=initiateselfI2

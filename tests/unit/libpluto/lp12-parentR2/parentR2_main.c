@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
     }
 
     if(argc != 3+PCAP_INPUT_COUNT) {
+        fprintf(stderr, "Wrong number of arguments, received: %u rather than %u\n",
+                argc, 3+PCAP_INPUT_COUNT);
 	fprintf(stderr, "Usage: %s <whackrecord> <conn-name> <pcapout> <pcapin1> <pcapin2>..\n", progname);
 	exit(10);
     }
