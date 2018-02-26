@@ -1,0 +1,15 @@
+This test case is an IKEv1 initiator, using main mode, sending the I3 packet.
+This test receives the R3 main mode packet from the responder, and sends the
+first quick Q1 packet.
+
+
+
+
+
+
+
+
+
+
+
+

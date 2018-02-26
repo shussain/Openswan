@@ -5,7 +5,6 @@
 void gw_addref(struct gw_info *gw) {}
 void gw_delref(struct gw_info **gwp) {}
 
-bool in_pending_use(struct connection *c) { return FALSE; }
 bool kick_adns_connection_lookup(struct connection *c UNUSED
                                  , struct end *end UNUSED, bool restart UNUSED) {
   end->host_address_list.addresses_available = TRUE;

@@ -16,6 +16,7 @@ aggr_outI1(int whack_sock,
 #include "seam_ikev1_main.c"
 #endif
 
+#ifndef INCLUDE_QUICK_MODE
 stf_status
 quick_outI1(int whack_sock
 	    , struct state *isakmp_sa
@@ -28,6 +29,7 @@ quick_outI1(int whack_sock
 	fprintf(stderr, "IKEv1 quick output requested\n");
 	osw_abort();
 }
+#endif
 
 #ifndef INCLUDE_IKEV1_PROCESSING
 void

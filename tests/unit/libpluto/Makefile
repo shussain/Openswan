@@ -102,6 +102,7 @@ UNITTESTS_v1I2+=lp74-parentM2
 UNITTESTS_v1R2+=lp75-parentN2
 UNITTESTS_v1I3+=lp76-parentM3
 UNITTESTS_v1R3+=lp77-parentN3
+UNITTESTS_v1Q1+=lp78-childQI1
 
 UNITTESTS_R1+=lp45-h2hR1-noikev2
 UNITTESTS_I1+=lp46-rekeyikev2-I1
@@ -143,6 +144,7 @@ UNITTESTS+=${UNITTESTS_I4}
 UNITTESTS+=${UNITTESTS_R4}
 UNITTESTS+=${UNITTESTS_v1I1}
 UNITTESTS+=${UNITTESTS_v1R1}
+UNITTESTS+=${UNITTESTS_v1Q1}
 
 # running 'make check KEEPGOING=1' will run through all tests w/o stopping
 ERROR_CHECK=$(if ${KEEPGOING},,set -e;)
