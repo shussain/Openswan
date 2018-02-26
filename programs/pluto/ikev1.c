@@ -170,6 +170,7 @@
  */
 
 struct state_microcode {
+    const char *smc_name;
     enum state_kind state, next_state;
     lset_t flags;
     lset_t req_payloads;	/* required payloads (allows just one) */
@@ -231,7 +232,7 @@ static const struct state_microcode
     *ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
 
 #define PHONY_STATE(X) \
-    { X, X \
+    { ##X, X, X         \
     , 0 \
     , 0, P(VID) | P(CR), PT(NONE) \
     , 0, NULL}
@@ -247,7 +248,7 @@ static const struct state_microcode state_microcode_table[] = {
     /* STATE_MAIN_R0: I1 --> R1
      * HDR, SA --> HDR, SA
      */
-    { STATE_MAIN_R0, STATE_MAIN_R1
+    { "state01",STATE_MAIN_R0, STATE_MAIN_R1
     , SMF_ALL_AUTH | SMF_REPLY
     , P(SA), P(VID) | P(CR), PT(NONE)
     , EVENT_RETRANSMIT, main_inI1_outR1},
@@ -262,7 +263,7 @@ static const struct state_microcode state_microcode_table[] = {
      * Note: since we don't know auth at start, we cannot differentiate
      * microcode entries based on it.
      */
-    { STATE_MAIN_I1, STATE_MAIN_I2
+    { "state02",STATE_MAIN_I1, STATE_MAIN_I2
     , SMF_ALL_AUTH | SMF_INITIATOR | SMF_REPLY
     , P(SA), P(VID) | P(CR), PT(NONE) /* don't know yet */
     , EVENT_RETRANSMIT, main_inR1_outI2 },
@@ -275,7 +276,7 @@ static const struct state_microcode state_microcode_table[] = {
      *	    HDR, [ HASH(1), ] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDi1_b>Ke_i [,<<Cert-I_b>Ke_i]
      *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
      */
-    { STATE_MAIN_R1, STATE_MAIN_R2
+    { "state03",STATE_MAIN_R1, STATE_MAIN_R2
     , SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
 #ifdef NAT_TRAVERSAL
     , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
@@ -284,12 +285,12 @@ static const struct state_microcode state_microcode_table[] = {
 #endif
     , EVENT_RETRANSMIT, main_inI2_outR2 },
 
-    { STATE_MAIN_R1, STATE_UNDEFINED
+    { "state04",STATE_MAIN_R1, STATE_UNDEFINED
     , SMF_PKE_AUTH | SMF_REPLY
     , P(KE) | P(ID) | P(NONCE), P(VID) | P(CR) | P(HASH), PT(KE)
     , EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
-    { STATE_MAIN_R1, STATE_UNDEFINED
+    { "state05",STATE_MAIN_R1, STATE_UNDEFINED
     , SMF_RPKE_AUTH | SMF_REPLY
     , P(NONCE) | P(KE) | P(ID), P(VID) | P(CR) | P(HASH) | P(CERT), PT(NONCE)
     , EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
@@ -304,7 +305,7 @@ static const struct state_microcode state_microcode_table[] = {
      * SMF_RPKE_AUTH: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
      *	    --> HDR*, HASH_I
      */
-    { STATE_MAIN_I2, STATE_MAIN_I3
+    { "state06",STATE_MAIN_I2, STATE_MAIN_I3
     , SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY
 #ifdef NAT_TRAVERSAL
     , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
@@ -313,12 +314,12 @@ static const struct state_microcode state_microcode_table[] = {
 #endif
     , EVENT_RETRANSMIT, main_inR2_outI3 },
 
-    { STATE_MAIN_I2, STATE_UNDEFINED
+    { "state07",STATE_MAIN_I2, STATE_UNDEFINED
     , SMF_PKE_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY
     , P(KE) | P(ID) | P(NONCE), P(VID) | P(CR), PT(HASH)
     , EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
-    { STATE_MAIN_I2, STATE_UNDEFINED
+    { "state08",STATE_MAIN_I2, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY
     , P(NONCE) | P(KE) | P(ID), P(VID) | P(CR), PT(HASH)
     , EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
@@ -330,19 +331,19 @@ static const struct state_microcode state_microcode_table[] = {
      * SMF_DS_AUTH: HDR*, IDi1, [ CERT, ] SIG_I --> HDR*, IDr1, [ CERT, ] SIG_R
      * SMF_PKE_AUTH, SMF_RPKE_AUTH: HDR*, HASH_I --> HDR*, HASH_R
      */
-    { STATE_MAIN_R2, STATE_MAIN_R3
+    { "state09",STATE_MAIN_R2, STATE_MAIN_R3
     , SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED
       | SMF_REPLY | SMF_RELEASE_PENDING_P2
     , P(ID) | P(HASH), P(VID) | P(CR), PT(NONE)
     , EVENT_SA_REPLACE, main_inI3_outR3 },
 
-    { STATE_MAIN_R2, STATE_MAIN_R3
+    { "state10",STATE_MAIN_R2, STATE_MAIN_R3
     , SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED
       | SMF_REPLY | SMF_RELEASE_PENDING_P2
     , P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE)
     , EVENT_SA_REPLACE, main_inI3_outR3 },
 
-    { STATE_MAIN_R2, STATE_UNDEFINED
+    { "state11",STATE_MAIN_R2, STATE_UNDEFINED
     , SMF_PKE_AUTH | SMF_RPKE_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED
       | SMF_REPLY | SMF_RELEASE_PENDING_P2
     , P(HASH), P(VID) | P(CR), PT(NONE)
@@ -354,33 +355,33 @@ static const struct state_microcode state_microcode_table[] = {
      * SMF_PKE_AUTH, SMF_RPKE_AUTH: HDR*, HASH_R --> done
      * May initiate quick mode by calling quick_outI1
      */
-    { STATE_MAIN_I3, STATE_MAIN_I4
+    { "state12",STATE_MAIN_I3, STATE_MAIN_I4
     , SMF_PSK_AUTH | SMF_INITIATOR
       | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2
     , P(ID) | P(HASH), P(VID) | P(CR), PT(NONE)
     , EVENT_SA_REPLACE, main_inR3 },
 
-    { STATE_MAIN_I3, STATE_MAIN_I4
+    { "state13",STATE_MAIN_I3, STATE_MAIN_I4
     , SMF_DS_AUTH | SMF_INITIATOR
       | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2
     , P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE)
     , EVENT_SA_REPLACE, main_inR3 },
 
-    { STATE_MAIN_I3, STATE_UNDEFINED
+    { "state14",STATE_MAIN_I3, STATE_UNDEFINED
     , SMF_PKE_AUTH | SMF_RPKE_AUTH | SMF_INITIATOR
       | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2
     , P(HASH), P(VID) | P(CR), PT(NONE)
     , EVENT_SA_REPLACE, unexpected /* ??? not yet implemented */ },
 
     /* STATE_MAIN_R3: can only get here due to packet loss */
-    { STATE_MAIN_R3, STATE_UNDEFINED
+    { "state14",STATE_MAIN_R3, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RETRANSMIT_ON_DUPLICATE
     , LEMPTY, LEMPTY
     , PT(NONE), EVENT_NULL, unexpected },
 
 
     /* STATE_MAIN_I4: can only get here due to packet loss */
-    { STATE_MAIN_I4, STATE_UNDEFINED
+    { "state15",STATE_MAIN_I4, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED
     , LEMPTY, LEMPTY
     , PT(NONE), EVENT_NULL, unexpected },
@@ -395,12 +396,12 @@ static const struct state_microcode state_microcode_table[] = {
      *                -->  HDR, SA, KE, Nr, IDir, HASH_R
      * SMF_DS_AUTH:  HDR, KE, Nr, SIG --> HDR*, IDi1, HASH_I
      */
-    { STATE_AGGR_R0, STATE_AGGR_R1,
+    { "aggr16",STATE_AGGR_R0, STATE_AGGR_R1,
       SMF_PSK_AUTH| SMF_REPLY,
       P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
       EVENT_RETRANSMIT, aggr_inI1_outR1_psk },
 
-    { STATE_AGGR_R0, STATE_AGGR_R1,
+    { "aggr17",STATE_AGGR_R0, STATE_AGGR_R1,
       SMF_DS_AUTH | SMF_REPLY,
       P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
       EVENT_RETRANSMIT, aggr_inI1_outR1_rsasig },
@@ -411,12 +412,12 @@ static const struct state_microcode state_microcode_table[] = {
      * SMF_DS_AUTH: HDR, SA, KE, Nr, IDir, SIG_R
      *                                 --> HDR*, SIG_I
      */
-    { STATE_AGGR_I1, STATE_AGGR_I2,
+    { "aggr18",STATE_AGGR_I1, STATE_AGGR_I2,
       SMF_PSK_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
       P(SA) | P(KE) | P(NONCE) | P(ID) | P(HASH), P(VID) | P(NATD_RFC) , PT(NONE),
       EVENT_SA_REPLACE, aggr_inR1_outI2 },
 
-    { STATE_AGGR_I1, STATE_AGGR_I2,
+    { "aggr19",STATE_AGGR_I1, STATE_AGGR_I2,
       SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
       P(SA) | P(KE) | P(NONCE) | P(ID) | P(SIG), P(VID) | P(NATD_RFC) , PT(NONE),
       EVENT_SA_REPLACE, aggr_inR1_outI2 },
@@ -425,26 +426,26 @@ static const struct state_microcode state_microcode_table[] = {
      * SMF_PSK_AUTH: HDR*, HASH_I --> done
      * SMF_DS_AUTH: HDR*, SIG_I   --> done
      */
-    { STATE_AGGR_R1, STATE_AGGR_R2,
+    { "aggr20",STATE_AGGR_R1, STATE_AGGR_R2,
       SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT
       | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
       P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
       EVENT_SA_REPLACE, aggr_inI2 },
 
     /* STATE_AGGR_R1: HDR*, HASH_I --> done */
-    { STATE_AGGR_R1, STATE_AGGR_R2,
+    { "aggr21",STATE_AGGR_R1, STATE_AGGR_R2,
       SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT
       | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
       P(SIG), P(VID) | P(NATD_RFC), PT(NONE),
       EVENT_SA_REPLACE, aggr_inI2 },
 
     /* STATE_AGGR_I2: can only get here due to packet loss */
-    { STATE_AGGR_I2, STATE_UNDEFINED,
+    { "aggr22",STATE_AGGR_I2, STATE_UNDEFINED,
       SMF_ALL_AUTH | SMF_INITIATOR | SMF_RETRANSMIT_ON_DUPLICATE,
       LEMPTY, LEMPTY, PT(NONE), EVENT_NULL, unexpected },
 
     /* STATE_AGGR_R2: can only get here due to packet loss */
-    { STATE_AGGR_R2, STATE_UNDEFINED,
+    { "aggr23",STATE_AGGR_R2, STATE_UNDEFINED,
       SMF_ALL_AUTH,
       LEMPTY, LEMPTY, PT(NONE), EVENT_NULL, unexpected },
 #else
@@ -476,7 +477,7 @@ static const struct state_microcode state_microcode_table[] = {
      * is set to NONE to suppress early emission of HDR*.
      * ??? it is legal to have multiple SAs, but we don't support it yet.
      */
-    { STATE_QUICK_R0, STATE_QUICK_R1
+    { "quick24",STATE_QUICK_R0, STATE_QUICK_R1
     , SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY
 #ifdef NAT_TRAVERSAL
     , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(NATOA_RFC), PT(NONE)
@@ -491,7 +492,7 @@ static const struct state_microcode state_microcode_table[] = {
      * Installs inbound and outbound IPsec SAs, routing, etc.
      * ??? it is legal to have multiple SAs, but we don't support it yet.
      */
-    { STATE_QUICK_I1, STATE_QUICK_I2
+    { "quick25",STATE_QUICK_I1, STATE_QUICK_I2
     , SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_REPLY
 #ifdef NAT_TRAVERSAL
     , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(NATOA_RFC), PT(HASH)
@@ -503,19 +504,19 @@ static const struct state_microcode state_microcode_table[] = {
     /* STATE_QUICK_R1: HDR*, HASH(3) --> done
      * Installs outbound IPsec SAs, routing, etc.
      */
-    { STATE_QUICK_R1, STATE_QUICK_R2
+    { "quick26",STATE_QUICK_R1, STATE_QUICK_R2
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(HASH), LEMPTY, PT(NONE)
     , EVENT_SA_REPLACE, quick_inI2 },
 
     /* STATE_QUICK_I2: can only happen due to lost packet */
-    { STATE_QUICK_I2, STATE_UNDEFINED
+    { "quick27",STATE_QUICK_I2, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_RETRANSMIT_ON_DUPLICATE
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, unexpected },
 
     /* STATE_QUICK_R2: can only happen due to lost packet */
-    { STATE_QUICK_R2, STATE_UNDEFINED
+    { "quick28",STATE_QUICK_R2, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, unexpected },
@@ -523,36 +524,36 @@ static const struct state_microcode state_microcode_table[] = {
     /***** informational messages *****/
 
     /* STATE_INFO: */
-    { STATE_INFO, STATE_UNDEFINED
+    { "info29",STATE_INFO, STATE_UNDEFINED
     , SMF_ALL_AUTH
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, informational },
 
     /* STATE_INFO_PROTECTED: */
-    { STATE_INFO_PROTECTED, STATE_UNDEFINED
+    { "info30",STATE_INFO_PROTECTED, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(HASH), LEMPTY, PT(NONE)
     , EVENT_NULL, informational },
 
 #ifdef XAUTH
-    { STATE_XAUTH_R0, STATE_XAUTH_R1
+    { "xauth31",STATE_XAUTH_R0, STATE_XAUTH_R1
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(ATTR) | P(HASH), P(VID), PT(NONE)
     , EVENT_NULL, xauth_inR0 },  /*Re-transmit may be done by previous state*/
 
-    { STATE_XAUTH_R1, STATE_MAIN_R3
+    { "xauth32",STATE_XAUTH_R1, STATE_MAIN_R3
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(ATTR) | P(HASH), P(VID), PT(NONE)
     , EVENT_SA_REPLACE, xauth_inR1 },
 
 #if 0
     /* for situation where there is XAUTH + ModeCFG */
-    { STATE_XAUTH_R2, STATE_XAUTH_R3
+    { "xauth33",STATE_XAUTH_R2, STATE_XAUTH_R3
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(ATTR) | P(HASH), P(VID), PT(NONE)
     , EVENT_SA_REPLACE, xauth_inR2 },
 
-    { STATE_XAUTH_R3, STATE_MAIN_R3
+    { "xauth34",STATE_XAUTH_R3, STATE_MAIN_R3
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(ATTR) | P(HASH), P(VID), PT(NONE)
     , EVENT_SA_REPLACE, xauth_inR3 },
@@ -569,34 +570,34 @@ static const struct state_microcode state_microcode_table[] = {
  *			<-	Ack(ok)
  */
 
-    { STATE_MODE_CFG_R0, STATE_MODE_CFG_R1
+    { "modecfg35",STATE_MODE_CFG_R0, STATE_MODE_CFG_R1
     , SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY
     , P(ATTR) | P(HASH), P(VID), PT(HASH)
     , EVENT_SA_REPLACE, modecfg_inR0 },
 
-    { STATE_MODE_CFG_R1, STATE_MODE_CFG_R2
+    { "modecfg36",STATE_MODE_CFG_R1, STATE_MODE_CFG_R2
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , P(ATTR) | P(HASH), P(VID), PT(HASH)
     , EVENT_SA_REPLACE, modecfg_inR1 },
 
-    { STATE_MODE_CFG_R2, STATE_UNDEFINED
+    { "modecfg37",STATE_MODE_CFG_R2, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, unexpected },
 
-    { STATE_MODE_CFG_I1, STATE_MAIN_I4
+    { "modecfg38",STATE_MODE_CFG_I1, STATE_MAIN_I4
     , SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2
     , P(ATTR) | P(HASH), P(VID), PT(HASH)
     , EVENT_SA_REPLACE, modecfg_inR1 },
 #endif
 
 #ifdef XAUTH
-    { STATE_XAUTH_I0, STATE_XAUTH_I1
+    { "xauth35",STATE_XAUTH_I0, STATE_XAUTH_I1
     , SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2
     , P(ATTR) | P(HASH), P(VID), PT(HASH)
     , EVENT_SA_REPLACE, xauth_inI0 },
 
-    { STATE_XAUTH_I1, STATE_MAIN_I4
+    { "xauth36",STATE_XAUTH_I1, STATE_MAIN_I4
     , SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2
     , P(ATTR) | P(HASH), P(VID), PT(HASH)
     , EVENT_SA_REPLACE, xauth_inI1 },
