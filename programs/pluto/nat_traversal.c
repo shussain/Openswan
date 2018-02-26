@@ -975,7 +975,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	    DBG(DBG_NATT,
 	        char b1[ADDRTOT_BUF];
 	        char b2[ADDRTOT_BUF];
-		DBG_log("NAT-T connection has wrong interface definition %s:%u vs %s:%u"
+		DBG_log("NAT-T, moving to interface %s:%u from %s:%u"
 			, (addrtot(&st->st_localaddr, 0, b1, sizeof(b1)),b1)
 			, st->st_localport
 			, (addrtot(&st->st_interface->ip_addr, 0, b2, sizeof(b2)),b2)

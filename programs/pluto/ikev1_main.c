@@ -1476,6 +1476,10 @@ main_inR2_outI3_continue(struct msg_digest *md
         return STF_FAIL + INVALID_KEY_INFORMATION;
     }
 
+    /* set the localport and address */
+    st->st_localaddr  = md->iface->ip_addr;
+    st->st_localport  = md->iface->port;
+
     /* decode certificate requests */
     decode_cr(md, &requested_ca);
 

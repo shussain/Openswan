@@ -1,6 +1,6 @@
 # -*- makefile -*-
-CONNNAME=mytunnel-ikev1
-ENDNAME=h2h
+CONNNAME=t4901
+ENDNAME=h2h-ikev1
 INPUTPCAPS=parentM1.pcap parentM2.pcap parentM3.pcap
 UNITTEST1ARGS=${WHACKFILE} ${CONNNAME} OUTPUT/${TESTNAME}.pcap ${INPUTPCAPS}
 WHACKFILE=${OUTPUTS}/ikev2client.record.${ARCH}

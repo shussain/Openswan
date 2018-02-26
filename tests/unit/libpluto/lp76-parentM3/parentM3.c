@@ -51,7 +51,7 @@ void recv_pcap_packet(u_char *user
     st = state_with_serialno(1);
     if(st != NULL) {
         passert(st != NULL);
-        st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE;
+        st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE|DBG_NATT;
         st->hidden_variables.st_nat_traversal |= NAT_T_WITH_NATD;
 
         clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc14_ni, tc14_ni_len);
