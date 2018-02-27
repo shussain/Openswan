@@ -1757,6 +1757,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
           pb_stream attr_pbs;
           enum_names *vdesc;
           u_int32_t val;          /* room for larger value */
+          u_int32_t type;
           bool ipcomp_inappropriate = is_ipcomp;          /* will get reset if OK */
 
           if (!in_struct(&a, &isakmp_ipsec_attribute_desc, trans_pbs, &attr_pbs))
@@ -1775,18 +1776,12 @@ parse_ipsec_transform(struct isakmp_transform *trans
               return FALSE;
           }
 
-          seen_attrs |= LELEM(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+          type = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
+          seen_attrs |= LELEM(type);
 
           val = a.isaat_lv;
 
-          vdesc  = ipsec_attr_val_descs[a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK
-#ifdef HAVE_LABELED_IPSEC
-          /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32, */
-          /* so for retaining the same behavior when this is < 32 and if more than >= 32 setting it to 0, */
-          /* which is NULL in ipsec_attr_val_desc*/
-                                                  >= 32 ? 0 : a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK
-#endif
-                                             ];
+          vdesc  = ipsec_attr_val_descs[type];
           if (vdesc != NULL)
           {
               if (enum_name(vdesc, val) == NULL)
@@ -1801,10 +1796,10 @@ parse_ipsec_transform(struct isakmp_transform *trans
                               , (unsigned)val, enum_show(vdesc, val)));
           }
 
-          switch (a.isaat_af_type)
+          switch (type)
           {
 #ifdef HAVE_LABELED_IPSEC
-             case SECCTX | ISAKMP_ATTR_AF_TLV:
+          case SECCTX:
                     {
                     pb_stream *   pbs=&attr_pbs;
                         if (!parse_secctx_attr (pbs, st)) {
@@ -1813,7 +1808,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
                 }
                     break;
 #endif
-              case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
+          case SA_LIFE_TYPE:
                     ipcomp_inappropriate = FALSE;
                     if (LHAS(seen_durations, val))
                     {
@@ -1824,43 +1819,46 @@ parse_ipsec_transform(struct isakmp_transform *trans
                     seen_durations |= LELEM(val);
                     life_type = val;
                     break;
-              case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
-                    val = decode_long_duration(&attr_pbs);
-                    /* fall through */
-              case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
-                    ipcomp_inappropriate = FALSE;
-                    if (!LHAS(seen_attrs, SA_LIFE_DURATION))
-                    {
-                        loglog(RC_LOG_SERIOUS, "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
-                        return FALSE;
-                    }
-                    seen_attrs &= ~(LELEM(SA_LIFE_DURATION) | LELEM(SA_LIFE_TYPE));
 
-                    switch (life_type)
-                    {
-                        case SA_LIFE_TYPE_SECONDS:
-                            /* silently limit duration to our maximum */
-			    if(val <= SA_LIFE_DURATION_MAXIMUM) {
-				if(val < (unsigned)st->st_connection->sa_ipsec_life_seconds) {
-				    attrs->life_seconds = val;
-				} else {
-				    attrs->life_seconds = st->st_connection->sa_ipsec_life_seconds;
-				}
-			    }
-			    else {
-				attrs->life_seconds = SA_LIFE_DURATION_MAXIMUM;
-			    }
-                            break;
-                        case SA_LIFE_TYPE_KBYTES:
-                              attrs->life_kilobytes = val;
-                              break;
-                        default:
-                              bad_case(life_type);
-                    }
-                    break;
-              case GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-                    if (is_ipcomp)
-                    {
+          case SA_LIFE_DURATION:
+              if(a.isaat_af_type & ISAKMP_ATTR_AF_TV) {
+                  val = decode_long_duration(&attr_pbs);
+                  /* fall through */
+              }
+              ipcomp_inappropriate = FALSE;
+              if (!LHAS(seen_attrs, SA_LIFE_DURATION))
+                  {
+                      loglog(RC_LOG_SERIOUS, "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
+                      return FALSE;
+                  }
+              seen_attrs &= ~(LELEM(SA_LIFE_DURATION) | LELEM(SA_LIFE_TYPE));
+
+              switch (life_type)
+                  {
+                  case SA_LIFE_TYPE_SECONDS:
+                      /* silently limit duration to our maximum */
+                      if(val <= SA_LIFE_DURATION_MAXIMUM) {
+                          if(val < (unsigned)st->st_connection->sa_ipsec_life_seconds) {
+                              attrs->life_seconds = val;
+                          } else {
+                              attrs->life_seconds = st->st_connection->sa_ipsec_life_seconds;
+                          }
+                      }
+                      else {
+                          attrs->life_seconds = SA_LIFE_DURATION_MAXIMUM;
+                      }
+                      break;
+                  case SA_LIFE_TYPE_KBYTES:
+                      attrs->life_kilobytes = val;
+                      break;
+                  default:
+                      loglog(RC_LOG_SERIOUS, "invalid life type: %u", life_type);
+                      return FALSE;
+                  }
+              break;
+          case GROUP_DESCRIPTION:
+              if (is_ipcomp)
+                  {
                         /* Accept reluctantly.  Should not happen, according to
                          * draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
                          */
@@ -1877,7 +1875,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
                     }
                     break;
 
-              case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
+          case ENCAPSULATION_MODE:
                     ipcomp_inappropriate = FALSE;
 #ifdef NAT_TRAVERSAL
                     switch (val) {
@@ -1973,29 +1971,29 @@ parse_ipsec_transform(struct isakmp_transform *trans
                     attrs->encapsulation = val;
 #endif
                     break;
-              case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
+          case AUTH_ALGORITHM:
                     attrs->transattrs.integ_hash = val;
                     break;
-              case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
+          case KEY_LENGTH:
                     attrs->transattrs.enckeylen = val;
                     break;
 #if 0
-              case KEY_ROUNDS | ISAKMP_ATTR_AF_TV:
+          case KEY_ROUNDS:
                     attrs->key_rounds = val;
                     break;
 #endif
 #if 0 /* not yet implemented */
-              case COMPRESS_DICT_SIZE | ISAKMP_ATTR_AF_TV:
+          case COMPRESS_DICT_SIZE:
                     break;
-              case COMPRESS_PRIVATE_ALG | ISAKMP_ATTR_AF_TV:
+          case COMPRESS_PRIVATE_ALG:
                     break;
 
-              case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
+          case SA_LIFE_DURATION:
                     break;
-              case COMPRESS_PRIVATE_ALG | ISAKMP_ATTR_AF_TLV:
-                    break;
+          case COMPRESS_PRIVATE_ALG:
+              break;
 #endif
-              default:
+          default:
 #ifdef HAVE_LABELED_IPSEC
                     if(a.isaat_af_type == (secctx_attr_value | ISAKMP_ATTR_AF_TLV) ) {
                         pb_stream *   pbs=&attr_pbs;

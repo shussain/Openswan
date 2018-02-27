@@ -516,59 +516,18 @@ static const char *const ipsec_attr_name[] = {
 	"ECN_TUNNEL",
     };
 
-static const char *const ipsec_var_attr_name[] = {
-	"SA_LIFE_DURATION (variable length)",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	"COMPRESS_PRIVATE_ALG (variable length)",
-	"NULL", /*ECN TUNNEL*/
-    };
-
 static const char *const ipsec_private_attr_name[] = {
 	"SECCTX" /*32001*/
 };
 
-enum_names ipsec_private_attr_names_tv = {
-  SECCTX + ISAKMP_ATTR_AF_TV, SECCTX + ISAKMP_ATTR_AF_TV, ipsec_private_attr_name, NULL};
-
 enum_names ipsec_private_attr_names = {
-  SECCTX, SECCTX, ipsec_private_attr_name, &ipsec_private_attr_names_tv};
-
-static enum_names ipsec_attr_desc_tv = {
-    SA_LIFE_TYPE + ISAKMP_ATTR_AF_TV,
-#ifdef HAVE_LABELED_IPSEC
-    ECN_TUNNEL + ISAKMP_ATTR_AF_TV,
-#else
-    COMPRESS_PRIVATE_ALG + ISAKMP_ATTR_AF_TV,
-#endif
-    ipsec_attr_name,
-#ifdef HAVE_LABELED_IPSEC
-    &ipsec_private_attr_names};
-#else
-    NULL };
-#endif
+    SECCTX, SECCTX, ipsec_private_attr_name, NULL};
 
 enum_names ipsec_attr_names = {
-#ifdef HAVE_LABELED_IPSEC
     SA_LIFE_TYPE,
-#else
-    SA_LIFE_DURATION,
-#endif
-#ifdef HAVE_LABELED_IPSEC
     ECN_TUNNEL,
-#else
-    COMPRESS_PRIVATE_ALG,
-#endif
-#ifdef HAVE_LABELED_IPSEC
     ipsec_attr_name,
-#else
-     ipsec_var_attr_name,
-#endif
-      &ipsec_attr_desc_tv };
+    &ipsec_private_attr_names };
 
 /* for each IPsec attribute, which enum_names describes its values? */
 enum_names *ipsec_attr_val_descs[] = {
