@@ -237,10 +237,14 @@ kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 
 err_t
 kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
-                          struct alg_info_esp *alg_info __attribute__((unused)))
+                      struct alg_info_esp *alg_info)
 {
     struct pluto_sadb_alg *alg_p=NULL;
     err_t ugh = NULL;
+
+    if(alg_info == NULL) {
+        alg_info=alg_info_esp_defaults();
+    }
 
     /*
      * test #1: encrypt algo must be present

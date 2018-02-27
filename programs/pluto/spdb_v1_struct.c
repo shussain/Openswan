@@ -2484,16 +2484,12 @@ parse_ipsec_sa_body(
 
                     previous_transnum = esp_trans.isat_transnum;
 
-                    ugh = "no alg";
-
-                    if(c->alg_info_esp) {
-                        ugh = kernel_alg_esp_enc_ok(esp_attrs.transattrs.encrypt
+                    ugh = kernel_alg_esp_enc_ok(esp_attrs.transattrs.encrypt
                                                             , esp_attrs.transattrs.enckeylen
                                                             , c->alg_info_esp);
-                    }
 
                     if(ugh != NULL) {
-                        loglog(RC_LOG_SERIOUS, "kernel algorithm does not like: %s", ugh);
+                        loglog(RC_LOG_SERIOUS, "proposal refused due to: %s", ugh);
                         loglog(RC_LOG_SERIOUS, "unsupported ESP Transform %s from %s"
                                , enum_show(&esp_transformid_names, esp_attrs.transattrs.encrypt)
                                , ip_str(&c->spd.that.host_addr));
