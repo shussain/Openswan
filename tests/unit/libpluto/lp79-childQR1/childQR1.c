@@ -1,4 +1,5 @@
 #define INCLUDE_IKEV1_PROCESSING
+#define INCLUDE_QUICK_MODE
 #define OMIT_MAIN_MODE
 #define NAT_TRAVERSAL
 #define SEAM_CRYPTO
@@ -6,15 +7,15 @@
 #include "nat_traversal.h"
 #include "seam_dpd.c"
 #include "seam_ikev1_aggr.c"
-#include "seam_ikev1_phase2.c"
-#include "seam_unpend.c"
 #include "seam_command.c"
 #include "seam_kernel.c"
 #include "seam_ikealg.c"
 #include "seam_crypt.c"
 #include "seam_x509.c"
+#include "seam_nonce.c"
 #include "seam_rsasig.c"
 #include "seam_rsa_check.c"
+#include "seam_ikev1_crypto.c"
 #include "seam_gr_sha1_group14.c"
 #include "seam_host_jamesjohnson.c"
 
@@ -50,7 +51,7 @@ recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
     recv_pcap_packet1ikev1,
     recv_pcap_packet2ikev1,
     recv_pcap_packet2ikev1,
-    recv_pcap_packet1ikev1,
+    recv_pcap_packet3ikev1,
 };
 
 #include "../lp12-parentR2/parentR2_main.c"

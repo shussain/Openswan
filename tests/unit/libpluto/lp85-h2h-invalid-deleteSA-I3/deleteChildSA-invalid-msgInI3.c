@@ -5,6 +5,8 @@
 #include "seam_ikev2_sendI1.c"
 #include "seam_debug.c"
 #include "ikev2_microcode.h"
+#include "seam_ikev1.c"
+#include "seam_pending.c"
 #include "seam_kernel.c"
 #include "seam_ikealg.c"
 

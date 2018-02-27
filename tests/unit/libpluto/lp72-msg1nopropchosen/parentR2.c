@@ -1,4 +1,7 @@
 #include "../lp12-parentR2/parentR2_head.c"
+#include "seam_pending.c"
+#include "seam_ikev1.c"
+#include "seam_ikev1_aggr.c"
 #include "seam_kernel.c"
 #include "seam_ikealg.c"
 #include "seam_host_jamesjohnson.c"

@@ -22,8 +22,6 @@
 #include "seam_debug.c"
 #include "seam_timer.c"
 #include "seam_fakevendor.c"
-#include "seam_pending.c"
-#include "seam_ikev1.c"
 #include "seam_rnd.c"
 #include "seam_log.c"
 #include "seam_xauth.c"

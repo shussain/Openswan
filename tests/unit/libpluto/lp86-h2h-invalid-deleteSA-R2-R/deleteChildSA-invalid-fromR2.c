@@ -4,6 +4,8 @@
 #include "seam_gi_sha256_group14.c"
 #include "seam_crypt.c"
 #include "seam_finish.c"
+#include "seam_ikev1.c"
+#include "seam_pending.c"
 #include "seam_rsasig.c"
 #include "seam_ikealg.c"
 #include "seam_kernel.c"

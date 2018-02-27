@@ -11,7 +11,6 @@
 #include "seam_rsa_check.c"
 #include "seam_dpd.c"
 #include "seam_command.c"
-#include "seam_ikev1_aggr.c"
 #include "seam_unpend.c"
 #include "seam_finish.c"
 

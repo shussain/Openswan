@@ -9,8 +9,11 @@ TESTNAME=childQR1
 
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev1.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev1_main.o
+EXTRALIBS+=${OBJDIRTOP}/programs/pluto/ikev1_quick.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/spdb_v1_struct.o
 EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev1_crypto.o
+EXTRALIBS+=${OBJDIRTOP}/programs/pluto/initiate.o
+EXTRALIBS+=${OBJDIRTOP}/programs/pluto/pending.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/nat_traversal.o
 
 EXTRALIBS+=${LIBPLUTO}

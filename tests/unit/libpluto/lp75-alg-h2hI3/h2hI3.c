@@ -3,6 +3,8 @@
 #include "seam_finish.c"
 #include "seam_ikev2_sendI1.c"
 #include "seam_kernel.c"
+#include "seam_ikev1.c"
+#include "seam_pending.c"
 #include "seam_ikealg.c"
 
 #define TESTNAME "h2hI3"

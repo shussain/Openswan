@@ -3,9 +3,11 @@
 #define NAT_TRAVERSAL
 #define SEAM_CRYPTO
 #include "../lp12-parentR2/parentR2_head.c"
+#include "seam_pending.c"
+#include "seam_ikev1.c"
+#include "seam_ikev1_aggr.c"
 #include "nat_traversal.h"
 #include "seam_dpd.c"
-#include "seam_ikev1_aggr.c"
 #include "seam_ikev1_phase2.c"
 #include "seam_ikev1_crypto.c"
 #include "seam_gi_sha256_group14.c"
