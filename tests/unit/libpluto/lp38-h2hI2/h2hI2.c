@@ -6,6 +6,8 @@
 #include "seam_pending.c"
 #include "seam_natt.c"
 #include "seam_rsasig.c"
+#include "seam_host_parker.c"
+#include "seam_pending.c"
 #include "seam_natt.c"
 #include "seam_crypt.c"
 #include "seam_dh_v2.c"
