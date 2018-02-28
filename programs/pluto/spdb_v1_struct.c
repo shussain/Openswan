@@ -1700,15 +1700,15 @@ static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 
 static bool
 parse_ipsec_transform(struct isakmp_transform *trans
-, struct ipsec_trans_attrs *attrs
-, pb_stream *prop_pbs
-, pb_stream *trans_pbs
-, struct_desc *trans_desc
-, int previous_transnum          /* or -1 if none */
-, bool selection
-, bool is_last
-, bool is_ipcomp
-, struct state *st)          /* current state object */
+                      , struct ipsec_trans_attrs *attrs   /* must be in IKEv2 number space */
+                      , pb_stream *prop_pbs
+                      , pb_stream *trans_pbs
+                      , struct_desc *trans_desc
+                      , int previous_transnum          /* or -1 if none */
+                      , bool selection
+                      , bool is_last
+                      , bool is_ipcomp
+                      , struct state *st)          /* current state object */
 {
     lset_t seen_attrs = 0
           , seen_durations = 0;

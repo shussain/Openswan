@@ -1423,9 +1423,10 @@ static err_t setup_esp_sa(struct connection *c
     /* divide up keying material */
     /* passert(st->st_esp.keymat_len == ei->enckeylen + ei->authkeylen); */
 
-    if(st->st_esp.keymat_len != key_len + ei.authkeylen)
-        DBG_log("keymat_len=%d key_len=%d authkeylen=%d",
-        st->st_esp.keymat_len, (int)key_len, (int)ei.authkeylen);
+    if(st->st_esp.keymat_len != key_len + ei.authkeylen) {
+        DBG_log("keymat_len=%d key_len=%d authkeylen=%d does not add up",
+                st->st_esp.keymat_len, (int)key_len, (int)ei.authkeylen);
+    }
     passert(st->st_esp.keymat_len == (key_len + ei.authkeylen));
 
     set_text_said(text_said, &dst, esp_spi, SA_ESP);
