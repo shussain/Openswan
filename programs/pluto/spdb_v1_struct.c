@@ -1972,7 +1972,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 #endif
                     break;
           case AUTH_ALGORITHM:
-                    attrs->transattrs.integ_hash = val;
+                    attrs->transattrs.integ_hash = ikev1toikev2integ(val);
                     break;
           case KEY_LENGTH:
                     attrs->transattrs.enckeylen = val;
@@ -2401,7 +2401,7 @@ parse_ipsec_sa_body(
 
                     previous_transnum = ah_trans.isat_transnum;
 
-                    /* we must understand ah_attrs.transid
+                    /* we must understand ah_attrs.transid:
                      * COMBINED with ah_attrs.transattrs.integ_hash.
                      * See RFC 2407 "IPsec DOI" section 4.4.3
                      * The following combinations are legal,
@@ -2434,6 +2434,8 @@ parse_ipsec_sa_body(
                         case AUTH_ALGORITHM_DES_MAC:
                               ok_transid = AH_DES;
                               break;
+
+                    default:
                     }
                     if (ah_attrs.transattrs.encrypt != ok_transid)
                     {
