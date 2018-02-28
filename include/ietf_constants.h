@@ -874,21 +874,21 @@ enum oakley_enc_ikev1 {
 
 #define OAKLEY_ENCRYPT_MAX      65535	/* pretty useless :) */
 
-/* Oakley Hash Algorithm attribute
+/* Oakley Hash Algorithm attribute (IKEv1)
  * draft-ietf-ipsec-ike-01.txt appendix A
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
 
-typedef u_int16_t oakley_hash_t;
 /* extern enum_names oakley_hash_names; */
-
-#define OAKLEY_MD5      1
-#define OAKLEY_SHA1     2
-#define OAKLEY_SHA      OAKLEY_SHA1
-#define OAKLEY_TIGER    3
-#define OAKLEY_SHA2_256        4
-#define OAKLEY_SHA2_384        5
-#define OAKLEY_SHA2_512        6
+enum oakley_hash_t {
+  OAKLEY_MD5     =1,
+  OAKLEY_SHA1    =2,
+  OAKLEY_SHA     =OAKLEY_SHA1,
+  OAKLEY_TIGER   =3,
+  OAKLEY_SHA2_256 =4,
+  OAKLEY_SHA2_384 =5,
+  OAKLEY_SHA2_512 =6
+};
 
 #define OAKLEY_HASH_MAX      7
 

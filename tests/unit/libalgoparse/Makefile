@@ -20,6 +20,7 @@ UNITTESTS=ap01-alginfo
 UNITTESTS+=ap02-algonames
 UNITTESTS+=ap03-espinfo
 UNITTESTS+=ap04-kernelalg2ikev2
+UNITTESTS+=ap05-ikev1toikev2
 
 clean check pcapupdate:
 	@set -e; for unittest in ${UNITTESTS}; do ${MAKE} -C $$unittest $@; done

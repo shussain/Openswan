@@ -208,6 +208,26 @@ alg_info_esp_defaults(void)
     return esp_info;
 }
 
+/* Translate from IKEv1->IKEv2 */
+enum ikev2_trans_type_integ ikev1toikev2integ(enum oakley_hash_t num)
+{
+    switch(num) {
+    case OAKLEY_MD5:
+        return IKEv2_AUTH_HMAC_MD5_96;
+    case OAKLEY_SHA1:
+        return IKEv2_AUTH_HMAC_SHA1_96;
+    case OAKLEY_TIGER:
+        return IKEv2_AUTH_NONE;
+    case OAKLEY_SHA2_256:
+        return IKEv2_AUTH_HMAC_SHA2_256_128;
+    case OAKLEY_SHA2_384:
+        return IKEv2_AUTH_HMAC_SHA2_384_192;
+    case OAKLEY_SHA2_512:
+        return IKEv2_AUTH_HMAC_SHA2_512_256;
+    }
+    return IKEv2_AUTH_NONE;
+}
+
 
 
 
