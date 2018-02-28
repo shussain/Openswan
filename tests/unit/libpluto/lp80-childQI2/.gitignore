@@ -1,0 +1,4 @@
+childQI2
+*.o
+OUTPUT
+.gdb1init

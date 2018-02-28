@@ -1,0 +1,16 @@
+This test case is an IKEv1 initiator, using main mode, sending the I3 packet.
+This test receives the QR1 qwuick mode packet from the responder, and sends the
+final QI2 packet.
+This is step 5 of the series started in lp43.
+
+
+
+
+
+
+
+
+
+
+
+
