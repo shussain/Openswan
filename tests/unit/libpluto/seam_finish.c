@@ -30,6 +30,16 @@ void finish_dh_v2(struct state *st,
     st->hidden_variables.st_skeyid_calculated = TRUE;
 }
 
+void finish_dh_secretiv(struct state *st,
+			struct pluto_crypto_req *r)
+{
+  /* XXX maybe should do something ... */
+
+  ikev2_validate_key_lengths(st);
+
+  st->hidden_variables.st_skeyid_calculated = TRUE;
+}
+
 void finish_dh_secret(struct state *st,
 		      struct pluto_crypto_req *r)
 {

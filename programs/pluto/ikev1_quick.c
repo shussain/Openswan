@@ -2220,12 +2220,12 @@ quick_inI1_outR1_cryptotail(struct dh_continuation *dh
 
     /* [ KE ] out (for PFS) */
     if (st->st_pfs_group != NULL && r!=NULL) {
+	finish_dh_secret(st, r);
 	if (!justship_KE(&st->st_gr
 			 , &md->rbody
 			 , id_pd != NULL? ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
 	    return STF_INTERNAL_ERROR;
 
-	finish_dh_secret(st, r);
         if(!r->pcr_success) {
             return STF_FAIL + INVALID_KEY_INFORMATION;
         }
