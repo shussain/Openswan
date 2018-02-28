@@ -19,6 +19,7 @@ include ${OPENSWANSRCDIR}/Makefile.inc
 UNITTESTS=
 UNITTESTS+=xf12-parentR2
 UNITTESTS+=xf13-parentI3
+UNITTESTS+=xf79-childQR1
 
 programs pcapupdate clean check:
 	@for unittest in ${UNITTESTS}; do ${MAKE} -C $$unittest $@; done
