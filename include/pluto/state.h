@@ -75,8 +75,8 @@ extern msgid_t generate_msgid(struct state *isakmp_sa);
 struct trans_attrs {
     u_int16_t encrypt;		/* Encryption algorithm */
     u_int16_t enckeylen;	/* encryption key len (bits) */
-    oakley_hash_t prf_hash;	/* Hash algorithm for PRF */
-    oakley_hash_t integ_hash;	/* Hash algorithm for integ */
+    enum ikev2_trans_type_prf    prf_hash;	/* Hash algorithm for PRF */
+    enum ikev2_trans_type_integ  integ_hash;	/* Hash algorithm for integ */
     enum ikev2_trans_type_esn esn;  /* if Extended Sequence Numbers are enabled */
 
     oakley_auth_t auth;		/* Authentication method (RSA,PSK) */

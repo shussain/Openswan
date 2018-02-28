@@ -46,30 +46,6 @@
 struct oakley_group_desc;
 
 /* sadb/ESP aa attrib converters */
-enum ipsec_authentication_algo
-alg_info_esp_aa2sadb(enum ikev1_auth_attribute auth)
-{
-	switch(auth) {
-		case AUTH_ALGORITHM_HMAC_MD5:
-		    return AH_MD5;
-		case AUTH_ALGORITHM_HMAC_SHA1:
-		    return AH_SHA;
-		case AUTH_ALGORITHM_HMAC_SHA2_256:
-		    return AH_SHA2_256;
-		case AUTH_ALGORITHM_HMAC_SHA2_384:
-		    return AH_SHA2_384;
-		case AUTH_ALGORITHM_HMAC_SHA2_512:
-		    return AH_SHA2_512;
-		case AUTH_ALGORITHM_HMAC_RIPEMD:
-		    return AH_RIPEMD;
-		case AUTH_ALGORITHM_NONE:
-		    return AH_NONE;
-
-		default:
-		    bad_case(auth);
-	}
-	return 0;
-}
 
 int /* __attribute__ ((unused)) */
 alg_info_esp_sadb2aa(int sadb_aalg)

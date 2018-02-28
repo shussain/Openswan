@@ -58,12 +58,13 @@ extern int kernel_alg_esp_enc_keylen(int alg_id);
 /* returns bool success if esp auth alg is present  */
 extern err_t kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
 
-extern int kernel_alg_ah_auth_keylen(int auth);
 extern err_t kernel_alg_ah_auth_ok(int auth,struct alg_info_esp *alg_info);
 
 
 /* returns auth keylen in BYTES for esp auth alg passed */
-extern int kernel_alg_esp_auth_keylen(int auth);
+extern int kernel_alg_esp_auth_keylen(enum ikev2_trans_type_integ authnum);
+extern int kernel_alg_ah_auth_keylen(enum ikev2_trans_type_integ authnum);
+
 /* returns 0 if read ok from /proc/net/pf_key_supported */
 extern int kernel_alg_proc_read(void);
 

@@ -45,6 +45,8 @@
 /* ALG storage */
 struct pluto_sadb_alg esp_aalg[K_SADB_AALG_MAX+1];
 struct pluto_sadb_alg esp_ealg[K_SADB_EALG_MAX+1];
+
+/* intended to be maximum values, but not used this way yet */
 int esp_ealg_num=0;
 int esp_aalg_num=0;
 
@@ -374,32 +376,39 @@ kernel_alg_esp_sadb_aalg(int alg_id)
     return sadb_alg;
 }
 
-int
-kernel_alg_esp_auth_keylen(int auth)
+struct pluto_sadb_alg *
+kernel_alg_esp_auth_byikev2(enum ikev2_trans_type_integ authnum)
 {
-          int sadb_aalg=alg_info_esp_aa2sadb(auth);
-          int a_keylen=0;
-          if (sadb_aalg)
-                    a_keylen=esp_aalg[sadb_aalg].kernel_sadb_alg.sadb_alg_maxbits/BITS_PER_BYTE;
+    struct pluto_sadb_alg *psa = esp_aalg;
+    int i;
+    /* resort to a search of esp_aalg for a matching algorithm: it happens in frequently,
+     * and the list is only a couple dozen entries at most.
+     */
 
-          DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING
-                        , DBG_log("kernel_alg_esp_auth_keylen(auth=%d, sadb_aalg=%d): "
-                        "a_keylen=%d", auth, sadb_aalg, a_keylen));
-          return a_keylen;
+    for(i=0; i<K_SADB_EALG_MAX; i++, psa++) {
+        if(psa->integ_id == authnum) return psa;
+    }
+    return NULL;
 }
 
+/* return number of BYTES to key auth algorithm */
 int
-kernel_alg_ah_auth_keylen(int auth)
+kernel_alg_esp_auth_keylen(enum ikev2_trans_type_integ authnum)
 {
-          int sadb_aalg=alg_info_esp_aa2sadb(auth);
-          int a_keylen=0;
-          if (sadb_aalg)
-                    a_keylen=esp_aalg[sadb_aalg].kernel_sadb_alg.sadb_alg_maxbits/BITS_PER_BYTE;
+    struct pluto_sadb_alg *psa = kernel_alg_esp_auth_byikev2(authnum);
 
-          DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING
-                        , DBG_log("kernel_alg_ah_auth_keylen(auth=%d, sadb_aalg=%d): "
-                        "a_keylen=%d", auth, sadb_aalg, a_keylen));
-          return a_keylen;
+    if(psa) {
+        return psa->kernel_sadb_alg.sadb_alg_minbits/8;
+    } else {
+        return 0;
+    }
+}
+
+/* AH algorithms numbers are the name as ESP AUTH numbers */
+int
+kernel_alg_ah_auth_keylen(enum ikev2_trans_type_integ authnum)
+{
+    return kernel_alg_esp_auth_keylen(authnum);
 }
 
 bool kernel_alg_esp_info(struct esp_info *ei
