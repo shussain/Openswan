@@ -11,7 +11,7 @@ EXTRALIBS+=${LIBPLUTO}
 
 CONNNAME=t4901
 ENDNAME=h2h-ikev1
-UNITTEST1ARGS=${WHACKFILE} ${CONNNAME} OUTPUT/childQI1.pcap parentN1.pcap parentN2.pcap parentN3.pcap childQR1.pcap
+UNITTEST1ARGS=${WHACKFILE} ${CONNNAME} OUTPUT/childQI2.pcap parentN1.pcap parentN2.pcap parentN3.pcap childQR1.pcap
 WHACKFILE=${OUTPUTS}/ikev2client.record.${ARCH}
 
 TESTNAME=childQI2
