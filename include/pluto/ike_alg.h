@@ -129,11 +129,11 @@ static __inline__ struct ike_encr_desc *ike_alg_get_encr(int alg)
     return (struct ike_encr_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_ENCR, alg, 0);
 }
 
-static __inline__ struct ike_integ_desc *ike_alg_get_integ(int halg)
+static __inline__ struct ike_integ_desc *ike_alg_get_integ(enum ikev2_trans_type_integ halg)
 {
     return (struct ike_integ_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_INTEG, halg, 0);
 }
-static __inline__ struct ike_prf_desc *ike_alg_get_prf(int prfalg)
+static __inline__ struct ike_prf_desc *ike_alg_get_prf(enum ikev2_trans_type_prf prfalg)
 {
 	return (struct ike_prf_desc *) ike_alg_ikev2_find(IKEv2_TRANS_TYPE_PRF, prfalg, 0);
 }
