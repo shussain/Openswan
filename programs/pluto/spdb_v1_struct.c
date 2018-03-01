@@ -2188,9 +2188,13 @@ parse_ipsec_sa_body(
     while (next_full)
     {
           int propno = next_proposal.isap_proposal;
-          pb_stream ah_prop_pbs, esp_prop_pbs, ipcomp_prop_pbs;
+          pb_stream esp_prop_pbs, ipcomp_prop_pbs;
           struct isakmp_proposal ah_proposal, esp_proposal, ipcomp_proposal;
-          ipsec_spi_t ah_spi, esp_spi, ipcomp_cpi;
+#ifdef IPSEC_IKEV1_AH_BROKEN
+          pb_stream ah_prop_pbs;
+          ipsec_spi_t ah_spi = 0;
+#endif
+          ipsec_spi_t esp_spi, ipcomp_cpi;
           bool ah_seen = FALSE, esp_seen = FALSE, ipcomp_seen = FALSE;
           int inner_proto = 0;
           bool tunnel_mode = FALSE;
@@ -2202,7 +2206,6 @@ parse_ipsec_sa_body(
 
           ipcomp_cpi = 0;
           esp_spi = 0;
-          ah_spi = 0;
 
           memset(&ah_proposal, 0, sizeof(ah_proposal));
           memset(&esp_proposal, 0, sizeof(esp_proposal));
@@ -2308,6 +2311,7 @@ parse_ipsec_sa_body(
 
               switch (next_proposal.isap_protoid)
               {
+#ifdef IPSEC_IKEV1_AH_BROKEN
               case PROTO_IPSEC_AH:
                     if (ah_seen)
                     {
@@ -2319,6 +2323,7 @@ parse_ipsec_sa_body(
                     ah_proposal = next_proposal;
                     ah_spi = next_spi;
                     break;
+#endif
 
               case PROTO_IPSEC_ESP:
                     if (esp_seen)
@@ -2379,6 +2384,7 @@ parse_ipsec_sa_body(
 
           if (ah_seen)
           {
+#ifdef IPSEC_IKEV1_AH_BROKEN
               int previous_transnum = -1;
               int tn;
 
@@ -2415,6 +2421,7 @@ parse_ipsec_sa_body(
                      */
                     switch (ah_attrs.transattrs.integ_hash)
                     {
+AA                        XXXX;
                         case AUTH_ALGORITHM_NONE:
                               loglog(RC_LOG_SERIOUS, "AUTH_ALGORITHM attribute missing in AH Transform");
                               return BAD_PROPOSAL_SYNTAX;
@@ -2435,7 +2442,6 @@ parse_ipsec_sa_body(
                               ok_transid = AH_DES;
                               break;
 
-                    default:
                     }
                     if (ah_attrs.transattrs.encrypt != ok_transid)
                     {
@@ -2462,6 +2468,10 @@ parse_ipsec_sa_body(
               inner_proto = IPPROTO_AH;
               if (ah_attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL)
                     tunnel_mode = TRUE;
+#else
+              loglog(RC_LOG_SERIOUS, "AH in IKEv1 mode is not supported. Proposal rejected");
+              continue;
+#endif
           }
 
           if (esp_seen)
