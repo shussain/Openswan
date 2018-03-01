@@ -68,8 +68,8 @@ struct pcr_skeyid_q {
 
   /* XXX should be switched for IKEv2 values */
   oakley_auth_t auth;
-  oakley_hash_t integ_hash;
-  oakley_hash_t prf_hash;
+  enum ikev2_trans_type_integ v2_integ_hash;
+  enum ikev2_trans_type_integ v2_prf_hash;
   enum phase1_role init;
   size_t        keysize;     /* of encryptor */
   wire_chunk_t gi;

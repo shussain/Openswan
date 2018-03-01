@@ -503,7 +503,7 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
     )
 {
     oakley_auth_t auth = skq->auth;
-    oakley_hash_t hash = skq->prf_hash;       /* v2 to v1 hash convert? */
+    enum ikev2_trans_type_integ hash = skq->v2_prf_hash;
     const struct ike_prf_desc *hasher = crypto_get_hasher(hash);
     chunk_t pss;
     chunk_t ni;
@@ -1242,12 +1242,12 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 
     DBG(DBG_CONTROLMORE
 	, DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%lu"
-		  , enum_name(&trans_type_prf_names, skq->prf_hash)
-		  , enum_name(&trans_type_integ_names, skq->integ_hash)
+		  , enum_name(&trans_type_prf_names,   skq->v2_prf_hash)
+		  , enum_name(&trans_type_integ_names, skq->v2_integ_hash)
 		  , (long unsigned)keysize));
 
 #ifdef HAVE_LIBNSS
-    const struct ike_prf_desc *hasher = (struct ike_prf_desc *)ike_alg_ikev2_find(IKEv2_TRANS_TYPE_PRF, skq->prf_hash, 0);
+    const struct ike_prf_desc *hasher = (struct ike_prf_desc *)ike_alg_ikev2_find(IKEv2_TRANS_TYPE_PRF, skq->v2_prf_hash, 0);
     passert(hasher);
 
 
@@ -1268,7 +1268,7 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
     passert(skeyseed_k);
 
 #else
-    vpss.prf_hasher = ike_alg_get_prf(skq->prf_hash);
+    vpss.prf_hasher = ike_alg_get_prf(skq->v2_prf_hash);
     passert(vpss.prf_hasher);
 
     /* generate SKEYSEED from key=(Ni|Nr), hash of shared */
@@ -1311,7 +1311,7 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	/* SK_p needs PRF hasher*2 key bits */
 	/* SK_e needs keysize*2 key bits */
 	/* SK_a needs hash's key bits size */
-	const struct ike_integ_desc *integ_hasher = ike_alg_get_integ(skq->integ_hash);
+	const struct ike_integ_desc *integ_hasher = ike_alg_get_integ(skq->v2_integ_hash);
 #ifdef HAVE_LIBNSS
        int skd_bytes = hasher->hash_key_size;
        int skp_bytes = hasher->hash_key_size;
