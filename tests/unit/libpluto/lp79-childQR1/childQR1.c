@@ -57,12 +57,12 @@ recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
 #define FINISH_NEGOTIATION
 static void finish_negotiation(void)
 {
-    struct state *st;
+    volatile struct state *st;
     st = state_with_serialno(1);
     passert(st != NULL);
 
-    passert(st->st_oakley.integ_hash == IKEv2_AUTH_HMAC_SHA2_256_128);
-    passert(st->st_oakley.prf_hash   == IKEv2_PRF_HMAC_SHA2_256);
+    passert(st->st_oakley.integ_hash == IKEv2_AUTH_HMAC_SHA1_96);
+    passert(st->st_oakley.prf_hash   == IKEv2_AUTH_HMAC_SHA1_96);
     passert(st->st_oakley.encrypt    == IKEv2_ENCR_AES_CBC);
     passert(st->st_oakley.enckeylen  == 128);
 
@@ -70,7 +70,7 @@ static void finish_negotiation(void)
     passert(st != NULL);
 
     passert(st->st_esp.present);
-    passert(st->st_esp.attrs.transattrs.integ_hash == IKEv2_AUTH_HMAC_SHA2_256_128);
+    passert(st->st_esp.attrs.transattrs.integ_hash == IKEv2_AUTH_HMAC_SHA1_96);
     passert(st->st_esp.attrs.transattrs.encrypt    == IKEv2_ENCR_AES_CBC);
     passert(st->st_esp.attrs.transattrs.enckeylen  == 128);
 }
