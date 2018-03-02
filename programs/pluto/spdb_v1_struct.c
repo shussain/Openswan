@@ -1215,18 +1215,18 @@ parse_isakmp_sa_body(
               {
                     case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
                         if (ikev1_alg_enc_ok(val, 0, c->alg_info_ike, &ugh, ugh_buf, sizeof(ugh_buf))) {
-                            ta.encrypt = val;
                             ta.encrypter = ikev1_alg_get_encr(val);
+                            ta.encrypt   = ta.encrypter->common.algo_v2id;
                             ta.enckeylen = ta.encrypter->keydeflen;
                         }
                         break;
 
                     case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
                         if (ike_alg_integ_present(val, 0)) {
-                              ta.integ_hash = val;
                               ta.integ_hasher = ikev1_crypto_get_hasher(val);
-                              ta.prf_hash = val;
-                              ta.prf_hasher = ta.integ_hasher;
+                              ta.integ_hash   = ta.integ_hasher->common.algo_v2id;
+                              ta.prf_hasher   = ta.integ_hasher;
+                              ta.prf_hash     = ta.integ_hash;
                         } else {
                             ugh = builddiag("%s is not supported"
                                             , enum_show(&oakley_hash_names, val));
