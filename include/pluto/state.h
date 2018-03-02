@@ -73,7 +73,7 @@ extern msgid_t generate_msgid(struct state *isakmp_sa);
  * Names are chosen to match corresponding names in state.
  */
 struct trans_attrs {
-    u_int16_t encrypt;		/* Encryption algorithm */
+    enum ikev2_trans_type_encr   encrypt;		/* Encryption algorithm */
     u_int16_t enckeylen;	/* encryption key len (bits) */
     enum ikev2_trans_type_prf    prf_hash;	/* Hash algorithm for PRF */
     enum ikev2_trans_type_integ  integ_hash;	/* Hash algorithm for integ */

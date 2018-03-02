@@ -564,6 +564,7 @@ enum ikev2_trans_type {
 
 /** IKEv2 encryption (enum_names: trans_type_encr_names) */
 enum ikev2_trans_type_encr {
+        IKEv2_ENCR_NONE = 0,
 	IKEv2_ENCR_DES_IV64 = 1,
 	IKEv2_ENCR_DES      = 2,
 	IKEv2_ENCR_3DES     = 3,
