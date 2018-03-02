@@ -96,6 +96,10 @@ int main(int argc, char *argv[])
 
     finish_pcap();
 
+#ifdef FINISH_NEGOTIATION
+    finish_negotiation();
+#endif
+
     /* clean up so that we can see any leaks */
     st = state_with_serialno(1);
     if(st!=NULL) {

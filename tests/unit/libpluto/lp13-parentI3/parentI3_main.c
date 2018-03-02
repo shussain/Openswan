@@ -105,6 +105,10 @@ int main(int argc, char *argv[])
 
     AFTER_CONN();
 
+#ifdef FINISH_NEGOTIATION
+    finish_negotiation();
+#endif
+
     show_states_status();
 
     /* dump the delete message that comes out */
