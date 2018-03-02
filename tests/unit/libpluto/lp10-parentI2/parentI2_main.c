@@ -96,6 +96,10 @@ int main(int argc, char *argv[])
 
     finish_pcap();
 
+#ifdef FINISH_NEGOTIATION
+    finish_negotiation();
+#endif
+
     send_packet_setup_pcap("/dev/null");
     fprintf(stderr, "%u: output closed\n", i);
     delete_connection(c1, TRUE);

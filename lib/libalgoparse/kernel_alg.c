@@ -103,7 +103,7 @@ enum ikev2_trans_type_integ kernelalg2ikev2(enum ipsec_authentication_algo kerne
 
 
 static struct pluto_sadb_alg *
-sadb_alg_ptr (int satype, int exttype, int alg_id, int rw
+sadb_alg_ptr (int satype UNUSED, int exttype, int alg_id, int rw
               ,char **extname   /* if NON-NULL, return name of extype */
               ,const struct enum_names **alg_names /* if NON-NULL, return enum_names */
               ,unsigned int *p_ikev2_id       /* if NON-NULL, pass back IKEv2 value */
@@ -150,12 +150,12 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw
     alg_p = &wanted_structure[alg_id];
     alg_p->exttype = exttype;   /* redundant, as structures are not shared */
 
-    switch(satype) {
-    case SADB_SATYPE_AH:
+    switch(exttype) {
+    case SADB_EXT_SUPPORTED_AUTH:
         alg_p->integ_id = v2_auth_id;
         break;
 
-    case SADB_SATYPE_ESP:
+    case SADB_EXT_SUPPORTED_ENCRYPT:
         alg_p->encr_id  = alg_id;
         break;
 
@@ -379,14 +379,8 @@ kernel_alg_esp_sadb_aalg(int alg_id)
 struct pluto_sadb_alg *
 kernel_alg_esp_auth_byikev2(enum ikev2_trans_type_integ authnum)
 {
-    struct pluto_sadb_alg *psa = esp_aalg;
-    int i;
-    /* resort to a search of esp_aalg for a matching algorithm: it happens in frequently,
-     * and the list is only a couple dozen entries at most.
-     */
-
-    for(i=0; i<K_SADB_EALG_MAX; i++, psa++) {
-        if(psa->integ_id == authnum) return psa;
+    if(ESP_AALG_VALID(authnum)) {
+        return &esp_aalg[authnum];
     }
     return NULL;
 }
