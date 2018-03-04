@@ -2191,8 +2191,8 @@ static void look_for_replacement_state(struct state *st)
 
     DBG(DBG_CONTROL,
 	DBG_log("checking if this is a replacement state");
-	DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu "
-		, st, ost, st->st_serialno, ost?ost->st_serialno : 0));
+	DBG_log("  st->serialno=#%lu ost->serialno=#%lu "
+		, st->st_serialno, ost?ost->st_serialno : 0));
 
     if(ost && ost != st && ost->st_serialno != st->st_serialno) {
 	/*
