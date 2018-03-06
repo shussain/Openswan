@@ -4,6 +4,7 @@
 #define NAPT_ENABLED 1
 #define NAT_TRAVERSAL
 #define SEAM_CRYPTO
+#undef WANT_TIMER
 #include "../lp10-parentI2/parentI2_head.c"
 #include "nat_traversal.h"
 #include "seam_rsasig.c"
@@ -91,6 +92,8 @@ static void finish_negotiation(void)
     passert(st->st_esp.attrs.transattrs.integ_hash == IKEv2_AUTH_HMAC_SHA1_96);
     passert(st->st_esp.attrs.transattrs.encrypt    == IKEv2_ENCR_AES_CBC);
     passert(st->st_esp.attrs.transattrs.enckeylen  == 128);
+
+    timer_list();
 }
 
 

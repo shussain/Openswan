@@ -7,6 +7,7 @@ EXTRALIBS+=${OBJDIRTOP}/programs/pluto/ikev1_quick.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/initiate.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/nat_traversal.o
 EXTRALIBS+=${OBJDIRTOP}/programs/pluto/pending.o
+#EXTRALIBS+=${OBJDIRTOP}/programs/pluto/timer.o
 EXTRALIBS+=${LIBPLUTO}
 
 CONNNAME=t4901
