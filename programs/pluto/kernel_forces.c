@@ -997,8 +997,8 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 		case SADB_X_AALG_SHA2_512HMAC:
 		{
 			struct xfrm_algo_auth algo;
-                        memset(&algo, 0, sizeof(algo));
 
+                        memset(&algo, 0, sizeof(algo));
 			algo.alg_key_len = sa->esp_info.authkeylen * BITS_PER_BYTE;
                         switch (sa->esp_info.auth_info->kernel_alg_info->kernel_alg_id)
                             {
@@ -1040,6 +1040,7 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 		{
 			struct xfrm_algo algo_old;
 
+                        memset(&algo_old, 0, sizeof(algo_old));
 			algo_old.alg_key_len = sa->esp_info.authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
