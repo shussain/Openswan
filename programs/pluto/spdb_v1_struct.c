@@ -1821,7 +1821,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
                     break;
 
           case SA_LIFE_DURATION:
-              if(a.isaat_af_type & ISAKMP_ATTR_AF_TV) {
+              if((a.isaat_af_type & ISAKMP_ATTR_AF_TV) == 0) {
                   val = decode_long_duration(&attr_pbs);
                   /* fall through */
               }

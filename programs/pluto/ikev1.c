@@ -2116,19 +2116,22 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 */
 			delay = c->sa_ipsec_life_seconds;
 			if (st->st_ah.present
-			&& delay >= st->st_ah.attrs.life_seconds)
+                            && st->st_ah.attrs.life_seconds > 0
+                            && delay >= st->st_ah.attrs.life_seconds)
 			{
 			    agreed_time = TRUE;
 			    delay = st->st_ah.attrs.life_seconds;
 			}
 			if (st->st_esp.present
-			&& delay >= st->st_esp.attrs.life_seconds)
+                            && st->st_esp.attrs.life_seconds > 0
+                            && delay >= st->st_esp.attrs.life_seconds)
 			{
 			    agreed_time = TRUE;
 			    delay = st->st_esp.attrs.life_seconds;
 			}
 			if (st->st_ipcomp.present
-			&& delay >= st->st_ipcomp.attrs.life_seconds)
+                            && st->st_ipcomp.attrs.life_seconds > 0
+                            && delay >= st->st_ipcomp.attrs.life_seconds)
 			{
 			    agreed_time = TRUE;
 			    delay = st->st_ipcomp.attrs.life_seconds;
