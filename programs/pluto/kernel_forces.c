@@ -570,7 +570,7 @@ netlink_raw_eroute(const ip_address *this_host
     bool enoent_ok;
     ip_subnet local_client;
 
-    if(DBGP(DBG_NETKEY) || 1) {
+    if(DBGP(DBG_NETKEY)) {
         char sa_this[ADDRTOT_BUF];
         char sa_that[ADDRTOT_BUF];
 
