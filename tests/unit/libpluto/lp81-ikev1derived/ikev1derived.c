@@ -14,7 +14,7 @@
 
 #include "seam_host_parker.c"
 
-#define TESTNAME "parentM1"
+#define TESTNAME "ikev1derived"
 
 static void init_local_interface(void)
 {
