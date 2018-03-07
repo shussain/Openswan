@@ -1,0 +1,4 @@
+This test case is an IKEv1 initiator, it derives it's policy from the
+IKEv2 ike= that was set.
+
+

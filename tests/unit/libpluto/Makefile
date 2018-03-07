@@ -96,6 +96,7 @@ UNITTESTS_I1+=lp90-h2h-sareplace-I1
 UNITTESTS_R1+=lp91-h2h-sareplace-R1
 
 UNITTESTS_v1I1+=lp43-parentM1
+UNITTESTS_v1I1+=lp81-ikev1derived
 UNITTESTS_v1R1+=lp44-h2hR1-deny-ikev1
 UNITTESTS_v1R1+=lp73-parentN1
 UNITTESTS_v1I2+=lp74-parentM2
