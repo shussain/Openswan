@@ -281,7 +281,7 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb)
     }
 
     /* there is probably an additional combination at the end */
-    if(transform_values[IKEv2_TRANS_TYPE_DH] != -1
+    if((transform_values[IKEv2_TRANS_TYPE_DH] != -1 || sadb->parentSA == FALSE)
        && transform_values[IKEv2_TRANS_TYPE_ENCR] != -1
        && transform_values[IKEv2_TRANS_TYPE_INTEG] != -1) {
         tot_combos++;
