@@ -247,7 +247,7 @@ int parser_y_include (const char *filename)
 
 int parser_y_eof(void)
 {
-	if(stacktop->state != YY_CURRENT_BUFFER) {
+	if(stacktop->state != YY_CURRENT_BUFFER && ic_private.stack_ptr > 0) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 	}
 
@@ -275,9 +275,11 @@ int parser_y_eof(void)
 		parser_y_close(stacktop);
 
 		if (--ic_private.stack_ptr < 0) {
+                        starter_log(LOG_LEVEL_DEBUG, "end of top file reached");
 			return 1;
 		}
 		stacktop = &ic_private.stack[ic_private.stack_ptr];
+
 	}
 	return 0;
 }
@@ -298,8 +300,10 @@ int parser_y_eof(void)
 %%
 
 <<EOF>>	{
+        /* maybe end of this file, return to parent include */
 	if(parser_y_eof()) {
-		yyterminate();
+          /* nope, it is really end of everything */
+          yyterminate();
 	}
 }
 
