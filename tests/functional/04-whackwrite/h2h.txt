@@ -1,5 +1,6 @@
 debugging mode enabled
 end of file ../../unit/libpluto/samples/h2h.conf
+end of top file reached
 Loading default conn
 Loading conn berri
 Loading conn peel
