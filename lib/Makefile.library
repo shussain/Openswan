@@ -7,11 +7,7 @@ MANSRCDIR=${OPENSWANSRCDIR}/lib/libopenswan
 include ${OPENSWANSRCDIR}/Makefile.common
 
 LEX=flex
-ifeq ($(USE_YACC),true)
-BISON=yacc -b parser
-else
 BISON=bison
-endif
 
 VPATH+= ${KLIPSSRCDIR}
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')

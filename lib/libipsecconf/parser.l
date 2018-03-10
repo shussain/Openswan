@@ -296,6 +296,7 @@ int parser_y_eof(void)
      */
 
 %x USERDEF BOOLEAN COMMENTEQUAL COMMENTSTRING
+%option noyywrap
 
 %%
 
@@ -449,10 +450,6 @@ include			return INCLUDE;
 
 .			yyerror(yytext);
 %%
-
-int yywrap(void) {
-	return 1;
-}
 
 /*
  * Local Variables:
