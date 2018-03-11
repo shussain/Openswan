@@ -20,6 +20,7 @@ PROGRAM=readwriteconf
 NOINSTALL=true
 
 PROGLIBS=${WHACKLIB} ${LIBIPSECCONF} ${LIBPLUTO} ${LIBOSWKEYS}
+#PROGLIBS+=${LIBEFENCE}
 
 # reach into pluto for now.
 INCLUDES=-I${OPENSWANSRCDIR}/programs/pluto

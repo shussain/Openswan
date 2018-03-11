@@ -25,6 +25,8 @@ TEST3ARGS=--rootdir=${SAMPLE2DIR}/parker --config ${SAMPLE2DIR}/parker.conf --wh
 TEST4ARGS=--rootdir=${SAMPLE2DIR}/h2h --config ${SAMPLE2DIR}/h2h.conf --whackout=${OUTPUTS}/h2h.whack --debug --all
 TEST6ARGS=--rootdir=${SAMPLE2DIR}/carol --config c2-missing-trailing-newline.conf --whackout=${OUTPUTS}/c2-missing-trailing-newline.whack --all
 
+export EF_DISABLE_BANNER=1
+
 # note may fail if core dumps are not named "core"
 
 check:	check1 check2 check2b check3 check4 check6
@@ -90,8 +92,9 @@ check6: OUTPUTS
 	@echo >>.gdbinit6 "set args ${TEST6ARGS}"
 	@${READWRITE} ${TEST6ARGS} 2>&1 | tee ${OUTPUTS}/c2-missing-trailing-newline.out | diff - c2-missing-trailing-newline.txt
 	@if [ -r core ]; then echo CORE DUMP; exit 1; fi
-	@strings ${OUTPUTS}/c2-missing-trailing-newline.whack | grep pluto-whack-file >/dev/null
-	@strings ${OUTPUTS}/c2-missing-trailing-newline.whack | grep home >/dev/null
+#: no whack file, as it has an error
+#@strings ${OUTPUTS}/c2-missing-trailing-newline.whack | grep pluto-whack-file >/dev/null
+#@strings ${OUTPUTS}/c2-missing-trailing-newline.whack | grep home >/dev/null
 
 update:
 	-cp ${OUTPUTS}/parker1load.out  output2.txt
@@ -101,6 +104,7 @@ update:
 	-cp ${OUTPUTS}/h2h.out          h2h.txt
 	-cp ${OUTPUTS}/c2-missing-trailing-newline.out        c2-missing-trailing-newline.txt
 
-
+clean:
+	-rm core
 
 

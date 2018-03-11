@@ -66,6 +66,7 @@ struct ic_inputsource {
 
 static struct {
 	int stack_ptr;
+        int eof_reached;
 	struct ic_inputsource stack[MAX_INCLUDE_DEPTH];
 } ic_private;
 
@@ -247,6 +248,10 @@ int parser_y_include (const char *filename)
 
 int parser_y_eof(void)
 {
+        if(ic_private.eof_reached) {
+                return 1;
+        }
+
 	if(stacktop->state != YY_CURRENT_BUFFER && ic_private.stack_ptr > 0) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 	}
@@ -268,14 +273,17 @@ int parser_y_eof(void)
 			}
 		}
 
-		if(stacktop->state != YY_CURRENT_BUFFER)  {
+		if(stacktop->state != YY_CURRENT_BUFFER && stacktop->state != NULL)  {
 			yy_switch_to_buffer(stacktop->state);
 		}
 
 		parser_y_close(stacktop);
 
 		if (--ic_private.stack_ptr < 0) {
+#if 0
                         starter_log(LOG_LEVEL_DEBUG, "end of top file reached");
+#endif
+                        ic_private.eof_reached = 1;
 			return 1;
 		}
 		stacktop = &ic_private.stack[ic_private.stack_ptr];
