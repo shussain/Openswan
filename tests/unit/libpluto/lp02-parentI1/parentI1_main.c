@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
         argc--; argv++;
     }
 
+    oco = osw_init_options();
     tool_init_log();
     init_crypto();
     init_fake_vendorid();
