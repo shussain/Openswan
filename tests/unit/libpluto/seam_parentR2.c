@@ -2,10 +2,16 @@
 
 void update_ngi(struct pcr_kenonce *kn)
 {
-  /* now fill in the KE values from a constant.. not calculated */
-  clonetowirechunk(&kn->thespace, kn->space, &kn->n,   SS(nr.ptr), SS(nr.len));
-  clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  SS(gr.ptr), SS(gr.len));
-  clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secretr.ptr), SS(secretr.len));
+
+    if(kn->thespace.len == 0) {
+        fprintf(stderr, "failed to setup crypto_req, exiting\n");
+        exit(89);
+    }
+
+    /* now fill in the KE values from a constant.. not calculated */
+    clonetowirechunk(&kn->thespace, kn->space, &kn->n,   SS(nr.ptr), SS(nr.len));
+    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  SS(gr.ptr), SS(gr.len));
+    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secretr.ptr), SS(secretr.len));
 }
 
 /* this is replicated in the unit test cases since the patching up of the crypto values is case specific */

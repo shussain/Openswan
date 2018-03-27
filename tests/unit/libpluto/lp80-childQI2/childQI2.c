@@ -6,6 +6,7 @@
 #define SEAM_CRYPTO
 #undef WANT_TIMER
 #include "../lp10-parentI2/parentI2_head.c"
+#include "ikev2sendI1.c"
 #include "nat_traversal.h"
 #include "seam_rsasig.c"
 #include "seam_x509.c"

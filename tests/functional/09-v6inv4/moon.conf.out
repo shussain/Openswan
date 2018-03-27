@@ -47,8 +47,8 @@ conn rw
 	rekeymargin=180
 	keyingtries=1
 	ikelifetime=3600
-	ike=3des-md5;modp1024
-	phase2alg=3des-md5;modp1024
+	ike=3des-md5;modp1536
+	phase2alg=3des-md5;modp1536
 	auto=add
 	type=tunnel
 	compress=no

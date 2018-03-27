@@ -240,11 +240,11 @@ void finish_dh_v2(struct state *st,
     CLONEIT(skey_er);
     CLONEIT(skey_pi);
     CLONEIT(skey_pr);
-#undef CLONEIT
 
     st->hidden_variables.st_skeyid_calculated = TRUE;
 }
 
+#undef CLONEIT
 #define GI_SHA1_TC3
 #endif /* TC3 */
 
