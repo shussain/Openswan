@@ -14,6 +14,7 @@
 #include "seam_command.c"
 #include "seam_rsa_check.c"
 #include "seam_host_carol.c"
+#include "seam_sendI1.c"
 
 #define TESTNAME "v1certM2"
 
@@ -58,9 +59,9 @@ void recv_pcap_packet(u_char *user
         st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE;
         st->hidden_variables.st_nat_traversal |= NAT_T_WITH_NATD;
 
-        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc14_ni, tc14_ni_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc14_gi, tc14_gi_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc14_secretr,tc14_secretr_len);
+        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_ni, tc3_ni_len);
+        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gi, tc3_gi_len);
+        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,tc3_secret_len);
     }
 
     run_continuation(crypto_req);
