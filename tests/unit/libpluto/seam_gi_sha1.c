@@ -204,7 +204,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn UNUSED
 			     , u_int16_t oakley_group2     UNUSED)
 {
   continuation = cn;
-  return STF_INLINE;
+  return STF_SUSPEND;
 }
 
 void finish_dh_secretiv(struct state *st,

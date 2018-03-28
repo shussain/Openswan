@@ -84,7 +84,7 @@ void recv_pcap_packet2ikev1(u_char *user
     if(st) {
       st->st_connection->extra_debugging = DBG_PRIVATE|DBG_CRYPT|DBG_PARSING|DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
       update_ngi(kn);
-      run_one_continuation(crypto_req);
+      run_continuation(crypto_req);
     }
 }
 
@@ -94,6 +94,9 @@ void recv_pcap_packet3ikev1(u_char *user
 {
     struct state *st;
     struct pcr_kenonce *kn = &crypto_req->pcr_d.kn;
+
+    /* before receiving the packet, need to complete the async calculation of the g^xy */
+
 
     cur_debugging |= DBG_PRIVATE|DBG_CRYPT|DBG_PARSING|DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
     recv_pcap_packet_gen(user, h, bytes);
