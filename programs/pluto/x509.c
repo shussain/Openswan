@@ -70,7 +70,7 @@
  */
 static void
 list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
- , bool utc)
+                    , bool utc)
 {
     bool first = TRUE;
     time_t tnow;
@@ -100,8 +100,7 @@ list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
 		first = FALSE;
 	    }
 
-	    whack_log(RC_COMMENT, "%s, count: %d", timetoa(&cert->installed, utc, tbuf, sizeof(tbuf)),
-		      cert->count);
+	    whack_log(RC_COMMENT, "count: %d", cert->count);
 	    dntoa(buf, ASN1_BUF_LEN, cert->subject);
 	    whack_log(RC_COMMENT, "       subject: '%s'", buf);
 	    dntoa(buf, ASN1_BUF_LEN, cert->issuer);
