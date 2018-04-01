@@ -62,6 +62,7 @@ EXTRAFLAGS+=${NSS_HDRDIRS}  ${FIPS_HDRDIRS}
 
 READWRITE=${OBJDIRTOP}/programs/readwriteconf/readwriteconf
 SAMPLEDIR=../../libpluto/samples/
+EXTRAFLAGS+=-DSAMPLEDIR=\"${SAMPLEDIR}\"
 OUTPUTS=OUTPUT
 
 include Makefile.testcase
