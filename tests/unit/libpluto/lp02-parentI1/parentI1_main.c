@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     EF_PROTECT_FREE=1;
 #endif
 
+    unsetenv("TZ"); tzset();
     progname = argv[0];
     leak_detective = 1;
 

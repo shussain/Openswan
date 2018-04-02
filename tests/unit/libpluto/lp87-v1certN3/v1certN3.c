@@ -59,9 +59,9 @@ static void init_loaded(void)
     /* loading attribute certificates (experimental) */
     load_acerts();
 
-    list_certs(0);
+    list_certs(1);
 
-    list_authcerts("CA", AUTH_CA, 0);
+    list_authcerts("CA", AUTH_CA, 1);
 }
 
 

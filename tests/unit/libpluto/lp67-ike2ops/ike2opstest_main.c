@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
     struct alg_info_ike *ai;
     const char *ikepolicy;
 
+    unsetenv("TZ"); tzset();
     progname = argv[0];
     leak_detective=1;
 
