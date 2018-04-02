@@ -305,9 +305,14 @@ crypto_cbc_encrypt(const struct ike_encr_desc *e, bool enc
 
 #if 0
     DBG(DBG_CRYPT
-	, DBG_log("encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d"
-		  , buf, size, st->st_enc_key.ptr
-		  , st->st_enc_key.len, st->st_new_iv, enc));
+	, DBG_log("%scrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d"
+                  , (enc ? "en" : "de")
+		  , buf, (int)size, st->st_enc_key.ptr
+		  , (int)st->st_enc_key.len, st->st_new_iv, enc));
+#endif
+#if 1
+    DBG_cond_dump(DBG_CRYPT, "crypting using IV:"
+                  , st->st_new_iv, st->st_new_iv_len);
 #endif
 
     e->do_crypt(buf, size, st->st_enc_key.ptr
