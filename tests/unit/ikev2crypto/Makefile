@@ -22,6 +22,7 @@ UNITTESTS+=ct10-parentI2
 UNITTESTS+=ct12-parentR2
 UNITTESTS+=ct13-parentI3
 UNITTESTS+=ct14-bigkeyI2
+UNITTESTS+=ct87-v1certN3
 
 # XXX TODO
 #UNITTESTS+=ct67-supportedalgos
