@@ -1,3 +1,17 @@
+void update_ngi(struct pcr_kenonce *kn)
+{
+
+    if(kn->thespace.len == 0) {
+        fprintf(stderr, "failed to setup crypto_req, exiting\n");
+        exit(89);
+    }
+
+    /* now fill in the KE values from a constant.. not calculated */
+    clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_ni, tc3_ni_len);
+    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gi, tc3_gi_len);
+    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,tc3_secret_len);
+}
+
 /* this is replicated in the unit test cases since the patching up of the crypto values is case specific */
 void recv_pcap_packet(u_char *user
 		      , const struct pcap_pkthdr *h
@@ -15,9 +29,8 @@ void recv_pcap_packet(u_char *user
         st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE;
         st->hidden_variables.st_nat_traversal |= NAT_T_WITH_NATD;
 
-        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_ni, tc3_ni_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gi, tc3_gi_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,tc3_secret_len);
+        update_ngi(kn);
+
     }
 
     run_continuation(crypto_req);
@@ -60,4 +73,3 @@ void recv_pcap_packet3ikev1(u_char *user
       run_continuation(crypto_req);
     }
 }
-
