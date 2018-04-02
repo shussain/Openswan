@@ -372,6 +372,9 @@ void free_state(struct state *st)
     free_sa(st->st_sadb);
     st->st_sadb=NULL;
 
+    /* clean up any keys received */
+    free_public_keys(&st->st_keylist);
+
     if (st->st_sec_in_use) {
 #ifdef HAVE_LIBNSS
 	SECKEYPrivateKey *privk;

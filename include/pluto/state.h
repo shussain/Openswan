@@ -253,6 +253,9 @@ struct state
 
     struct db_sa      *st_sadb;
 
+    /* keys received inband, which were validated */
+    struct pubkey_list *st_keylist;
+
     /* IKEv1 things */
     msgid_t            st_msgid;               /* MSG-ID from header.
 						  Network Order! */

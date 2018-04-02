@@ -257,6 +257,20 @@ check_signature_gen(struct connection *c
         }
     }
 
+    /* now try keys attached to the state (which arrived inband, and
+     * were validated in some fashion
+     */
+    {
+        struct pubkey_list *nxt = st->st_keylist;
+        while(nxt != NULL) {
+            //if(same_id(&gw->gw_id, &c->spd.that.id)
+            if(check_specific_key(&s, nxt->key) == STF_OK) {
+                return STF_OK;
+            }
+            nxt = nxt->next;
+        }
+    }
+
     /* if no key was found (evidenced by best_ugh == NULL)
      * and that side of connection is key_from_DNS_on_demand
      * then go search DNS for keys for peer.

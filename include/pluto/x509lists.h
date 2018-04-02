@@ -2,6 +2,8 @@
 #include "x509.h"
 #include "pgp.h"
 
+struct pubkey_list;
+
 extern void add_x509_public_key_to_list(struct pubkey_list **pl
                                         , struct id *keyid
                                         , x509cert_t *cert, time_t until
