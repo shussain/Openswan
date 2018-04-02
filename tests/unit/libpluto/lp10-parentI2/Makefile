@@ -63,7 +63,8 @@ EXTRAFLAGS+=${NSS_FLAGS}    ${FIPS_FLAGS}
 EXTRAFLAGS+=${NSS_HDRDIRS}  ${FIPS_HDRDIRS}
 
 READWRITE=${OBJDIRTOP}/programs/readwriteconf/readwriteconf
-SAMPLEDIR=../samples
+SAMPLEDIR=../samples/
+EXTRAFLAGS+=-DSAMPLEDIR=\"${SAMPLEDIR}\"
 OUTPUTS=OUTPUT
 
 include Makefile.testcase
