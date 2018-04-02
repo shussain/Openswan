@@ -288,7 +288,8 @@ store_x509certs(x509cert_t **firstcert, bool strict)
 	    DBG(DBG_X509 | DBG_PARSING,
 		DBG_log("public key validated")
 		);
-	    add_x509_public_key(NULL, cert, valid_until, DAL_SIGNED);
+	    add_x509_public_key_to_list(&pluto_pubkeys
+                                        , NULL, cert, valid_until, DAL_SIGNED);
 	}
 	else
 	{
@@ -724,14 +725,41 @@ add_pgp_public_key(pgpcert_t *cert , time_t until
     install_public_key(pk, &pluto_pubkeys);
 }
 
+/*
+ * add an X.509 certificate to a specific list of public keys.
+ */
+void
+add_x509_altnames_to_list(struct pubkey_list **pl
+                          , const generalName_t *gn
+                          , x509cert_t *cert
+                          , time_t until
+                          , enum dns_auth_level dns_auth_level)
+{
+    cert_t c = { FALSE, CERT_X509_SIGNATURE, {cert} };
+    struct pubkey *pk;
+    struct id id = empty_id;
+
+    gntoid(&id, gn);
+    if (id.kind != ID_NONE)  {
+        pk = allocate_RSA_public_key(c);
+        pk->id = id;
+        pk->dns_auth_level = dns_auth_level;
+        pk->until_time = until;
+        clonereplacechunk(pk->issuer, cert->issuer.ptr,cert->issuer.len, "issuer");
+        delete_public_keys(pl, &pk->id, pk->alg);
+        install_public_key(pk, pl);
+    }
+}
+
 /* extract id and public key from x.509 certificate and
  * insert it into a pubkeyrec
  */
 void
-add_x509_public_key(struct id *keyid
-                   , x509cert_t *cert
-                   , time_t until
-                   , enum dns_auth_level dns_auth_level)
+add_x509_public_key_to_list(struct pubkey_list **pl
+                            , struct id *keyid
+                            , x509cert_t *cert
+                            , time_t until
+                            , enum dns_auth_level dns_auth_level)
 {
     generalName_t *gn;
     struct pubkey *pk;
@@ -748,27 +776,14 @@ add_x509_public_key(struct id *keyid
     pk->dns_auth_level = dns_auth_level;
     pk->until_time = until;
     pk->issuer = cert->issuer;
-    delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-    install_public_key(pk, &pluto_pubkeys);
+    delete_public_keys(pl, &pk->id, pk->alg);
+    install_public_key(pk, pl);
 
     gn = cert->subjectAltName;
-
     while (gn != NULL) /* insert all subjectAltNames */
     {
-       struct id id = empty_id;
-
-       gntoid(&id, gn);
-       if (id.kind != ID_NONE)
-       {
-           pk = allocate_RSA_public_key(c);
-           pk->id = id;
-           pk->dns_auth_level = dns_auth_level;
-           pk->until_time = until;
-           pk->issuer = cert->issuer;
-           delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-           install_public_key(pk, &pluto_pubkeys);
-       }
-       gn = gn->next;
+        add_x509_altnames_to_list(&pluto_pubkeys, gn, cert, until, dns_auth_level);
+        gn = gn->next;
     }
 
     if(keyid != NULL &&
@@ -780,8 +795,8 @@ add_x509_public_key(struct id *keyid
        pk->dns_auth_level = dns_auth_level;
        pk->until_time = until;
        pk->issuer = cert->issuer;
-       delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-       install_public_key(pk, &pluto_pubkeys);
+       delete_public_keys(pl, &pk->id, pk->alg);
+       install_public_key(pk, pl);
     }
 }
 

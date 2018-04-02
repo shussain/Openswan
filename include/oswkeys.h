@@ -15,11 +15,11 @@
 #ifndef _OSWKEYS_H
 #define _OSWKEYS_H
 
+#include "constants.h"
 #include "secrets.h"
 
 extern err_t str2pubkey(const unsigned char *key1, enum pubkey_alg kind, osw_public_key *opk);
 extern void calculate_rsa_ckaid(osw_public_key *pub);
-
 
 #endif /* _OSWKEYS_H */
 /*

@@ -569,7 +569,7 @@ load_end_certificate(const char *filename, struct end *dst)
 	    DBG(DBG_CONTROL,
 		DBG_log("certificate is valid")
 		);
-	    add_x509_public_key(&dst->id, cert.u.x509, valid_until, DAL_LOCAL);
+	    add_x509_public_key_to_list(&pluto_pubkeys, &dst->id, cert.u.x509, valid_until, DAL_LOCAL);
 	    dst->cert.type = cert.type;
 	    dst->cert.u.x509 = add_x509cert(cert.u.x509);
 
