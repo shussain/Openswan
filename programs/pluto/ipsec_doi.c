@@ -620,8 +620,17 @@ decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		     , enum_show(&ident_names, id->isaid_idtype), buf);
     }
 
-    /* check for certificates */
-    decode_cert(md);
+    switch(id->isaid_idtype) {
+    case ID_DER_ASN1_DN:
+    case ID_DER_ASN1_GN:
+        /* check for certificates */
+        decode_cert(md);
+        break;
+
+    default:
+        /* do not look at certificate, it can not matter */
+        break;
+    }
 
     /* Now that we've decoded the ID payload, let's see if we
      * need to switch connections.
