@@ -83,7 +83,7 @@ decode_cert(struct msg_digest *md)
 		    DBG(DBG_X509 | DBG_PARSING,
 			DBG_log("Public key validated")
 		    )
-			add_x509_public_key_to_list(&st->st_keylist, NULL, &cert2, valid_until, DAL_SIGNED);
+			add_x509_public_key_to_list(&st->st_keylist, NULL, &cert2, valid_until, DAL_SIGNED, NULL);
 		}
 		else
 		{
@@ -146,7 +146,7 @@ ikev2_decode_cert(struct msg_digest *md)
 
                     /* insert it to the state's cache, not the global cache */
                     add_x509_public_key_to_list(&st->st_keylist, NULL, &cert2
-                                                , valid_until, DAL_SIGNED);
+                                                , valid_until, DAL_SIGNED, NULL);
 		}
 		else
 		{

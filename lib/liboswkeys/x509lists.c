@@ -289,7 +289,7 @@ store_x509certs(x509cert_t **firstcert, bool strict)
 		DBG_log("public key validated")
 		);
 	    add_x509_public_key_to_list(&pluto_pubkeys
-                                        , NULL, cert, valid_until, DAL_SIGNED);
+                                        , NULL, cert, valid_until, DAL_SIGNED, NULL);
 	}
 	else
 	{
@@ -759,7 +759,8 @@ add_x509_public_key_to_list(struct pubkey_list **pl
                             , struct id *keyid
                             , x509cert_t *cert
                             , time_t until
-                            , enum dns_auth_level dns_auth_level)
+                            , enum dns_auth_level dns_auth_level
+                            , struct pubkey **p_key)
 {
     generalName_t *gn;
     struct pubkey *pk;
@@ -771,6 +772,10 @@ add_x509_public_key_to_list(struct pubkey_list **pl
     /* ID type: ID_DER_ASN1_DN  (X.509 subject field) */
     pk = allocate_RSA_public_key(c);
     passert(pk != NULL);
+    if(p_key) {
+        *p_key = pk;
+        reference_key(pk);
+    }
     pk->id.kind = ID_DER_ASN1_DN;
     pk->id.name = cert->subject;
     pk->dns_auth_level = dns_auth_level;
