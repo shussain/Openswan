@@ -509,6 +509,7 @@ load_end_certificate(const char *filename, struct end *dst)
     time_t valid_until;
     cert_t cert;
     err_t ugh = NULL;
+    struct pubkey **key = NULL;
 
     memset(&dst->cert, 0, sizeof(dst->cert));
 
@@ -563,21 +564,28 @@ load_end_certificate(const char *filename, struct end *dst)
 	{
 	    openswan_log("  %s", ugh);
 	    free_x509cert(cert.u.x509);
+            return;
 	}
-	else
-	{
-	    DBG(DBG_CONTROL,
-		DBG_log("certificate is valid")
-		);
-	    add_x509_public_key_to_list(&pluto_pubkeys, &dst->id, cert.u.x509, valid_until, DAL_LOCAL);
-	    dst->cert.type = cert.type;
-	    dst->cert.u.x509 = add_x509cert(cert.u.x509);
 
-	    /* if no CA is defined, use issuer as default */
-	    if (dst->ca.ptr == NULL)
-		dst->ca = dst->cert.u.x509->issuer;
-	}
+        DBG(DBG_CONTROL,
+            DBG_log("certificate is valid")
+            );
+
+        if(dst->key1 == NULL) {
+            key = &dst->key1;
+        } else if(dst->key2 == NULL) {
+            key = &dst->key2;
+        }
+
+        add_x509_public_key_to_list(&pluto_pubkeys, &dst->id, cert.u.x509, valid_until, DAL_LOCAL, key);
+        dst->cert.type = cert.type;
+        dst->cert.u.x509 = add_x509cert(cert.u.x509);
+
+        /* if no CA is defined, use issuer as default */
+        if (dst->ca.ptr == NULL)
+            dst->ca = dst->cert.u.x509->issuer;
 	break;
+
     default:
 	break;
     }
