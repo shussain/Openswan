@@ -43,6 +43,7 @@ conn rw
 	leftsubnet=10.1.0.0/16
 	leftcert=moonCert.pem
 	right=%any
+	rightca="C=CA, ST=Ontario, L=Ottawa, O=Xelerance Corporation, OU=Doctor Taylor Plumage, CN=testing.xelerance.com, E=mcr@xelerance.com"
 	salifetime=1200
 	rekeymargin=180
 	keyingtries=1
