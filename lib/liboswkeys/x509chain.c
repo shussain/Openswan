@@ -253,6 +253,7 @@ trusted_ca(chunk_t a, chunk_t b, int *pathlen)
 {
     bool match = FALSE;
     char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
+    zero(abuf); zero(bbuf);
 
     dntoa(abuf, ASN1_BUF_LEN, a);
     dntoa(bbuf, ASN1_BUF_LEN, b);

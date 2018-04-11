@@ -2236,10 +2236,19 @@ find_host_connection2(const char *func, bool exact
  * extracts the peer's ca from the chained list of public keys
  */
 static chunk_t
-get_peer_ca(const struct id *peer_id)
+get_peer_ca(const struct state *st, const struct id *peer_id)
 {
     struct pubkey_list *p;
 
+    for (p = st->st_keylist; p != NULL; p = p->next)
+    {
+       struct pubkey *key = p->key;
+
+       if (key->alg == PUBKEY_ALG_RSA && same_id(peer_id, &key->id))
+       {
+           return key->issuer;
+       }
+    }
     for (p = pluto_pubkeys; p != NULL; p = p->next)
     {
        struct pubkey *key = p->key;
@@ -2345,14 +2354,15 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 	 , DBG_log("refine_connection: starting with %s"
 		   , c->name));
 
-    peer_ca = get_peer_ca(peer_id);
+    peer_ca = get_peer_ca(st, peer_id);
 
     if (same_id(&c->spd.that.id, peer_id)
 	&& (peer_ca.ptr != NULL)
 	&& trusted_ca(peer_ca, c->spd.that.ca, &peer_pathlen)
 	&& peer_pathlen == 0
-	&& match_requested_ca(c->requested_ca, c->spd.this.ca, &our_pathlen)
-	&& our_pathlen == 0
+	&& (c->spd.this.id.kind !=ID_DER_ASN1_DN
+            || ( match_requested_ca(c->requested_ca, c->spd.this.ca, &our_pathlen)
+                 && our_pathlen == 0))
 	) {
 
 	DBG(DBG_CONTROLMORE
