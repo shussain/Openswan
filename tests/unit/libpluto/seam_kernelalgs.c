@@ -32,6 +32,11 @@ init_seam_kernelalgs(void)
 	sa.sadb_alg_minbits = 16*8;
 	sa.sadb_alg_maxbits = 16*8;
 	ret=kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_AUTH, &sa);
+
+	sa.sadb_alg_id = AH_SHA2_256;
+	sa.sadb_alg_minbits = 32*8;
+	sa.sadb_alg_maxbits = 32*8;
+	ret=kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_AUTH, &sa);
 }
 
 
