@@ -13,9 +13,9 @@
 #include "seam_ke.c"
 #include "seam_dh_v2.c"
 #include "seam_nonce.c"
-#include "seam_host_carol.c"
 #include "seam_sendI1.c"
 #include "seam_mockxfrm.c"
+#include "seam_host_carol.c"
 
 #define TESTNAME "childQI1"
 
