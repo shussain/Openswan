@@ -66,6 +66,8 @@ static void init_loaded(void)
     list_certs(1);
 
     list_authcerts("CA", AUTH_CA, 1);
+
+    xfrm_init_base_algorithms();
 }
 
 
@@ -147,6 +149,28 @@ recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
     recv_pcap_packet3ikev1,
     recv_pcap_packet3ikev1,
 };
+
+#define FINISH_NEGOTIATION
+static void finish_negotiation(void)
+{
+    volatile struct state *st;
+    st = state_with_serialno(1);
+    passert(st != NULL);
+
+    passert(st->st_oakley.integ_hash == IKEv2_AUTH_HMAC_MD5_96);
+    passert(st->st_oakley.prf_hash   == IKEv2_AUTH_HMAC_MD5_96);
+    passert(st->st_oakley.encrypt    == IKEv2_ENCR_3DES);
+    passert(st->st_oakley.enckeylen  == 192);
+
+    st = state_with_serialno(2);
+    passert(st != NULL);
+
+    passert(st->st_esp.present);
+    passert(st->st_esp.attrs.transattrs.integ_hash == IKEv2_AUTH_HMAC_MD5_96);
+    passert(st->st_esp.attrs.transattrs.encrypt    == IKEv2_ENCR_3DES);
+    passert(st->st_esp.attrs.transattrs.enckeylen  == 192);
+}
+
 
 #include "../lp12-parentR2/parentR2_main.c"
 
