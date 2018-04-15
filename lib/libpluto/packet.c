@@ -229,7 +229,7 @@ static field_desc isat_fields_ah[] = {
     { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
-    { ft_enum, 8/BITS_PER_BYTE, "transform ID", &ah_transformid_names },
+    { ft_enum, 8/BITS_PER_BYTE, "AH transform ID", &ah_transformid_names },
     { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
@@ -244,7 +244,7 @@ static field_desc isat_fields_esp[] = {
     { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
-    { ft_enum, 8/BITS_PER_BYTE, "transform ID", &esp_transformid_names },
+    { ft_enum, 8/BITS_PER_BYTE, "ESP transform ID", &esp_transformid_names },
     { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
@@ -259,7 +259,7 @@ static field_desc isat_fields_ipcomp[] = {
     { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
-    { ft_enum, 8/BITS_PER_BYTE, "transform ID", &ipcomp_transformid_names },
+    { ft_enum, 8/BITS_PER_BYTE, "IPCOMP transform ID", &ipcomp_transformid_names },
     { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };

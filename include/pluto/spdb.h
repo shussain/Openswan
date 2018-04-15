@@ -137,6 +137,8 @@ extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 extern int v2tov1_encr(enum ikev2_trans_type_encr encr);
+extern int v2tov1_encr_child(enum ikev2_trans_type_encr encr);
+
 extern int v2tov1_integ(enum ikev2_trans_type_integ v2integ);
 
 extern bool extrapolate_v1_from_v2(struct db_sa *sadb);

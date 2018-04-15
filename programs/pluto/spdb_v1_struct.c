@@ -88,6 +88,28 @@ int v2tov1_encr(enum ikev2_trans_type_encr encr)
     }
 }
 
+int v2tov1_encr_child(enum ikev2_trans_type_encr encr)
+{
+    switch(encr) {
+    case IKEv2_ENCR_DES:
+        return ESP_DES;
+    case  IKEv2_ENCR_IDEA:
+        return ESP_IDEA;
+    case  IKEv2_ENCR_BLOWFISH:
+        return ESP_BLOWFISH;
+    case  IKEv2_ENCR_RC5:
+        return ESP_RC5;
+    case  IKEv2_ENCR_3DES:
+        return ESP_3DES;
+    case  IKEv2_ENCR_CAST:
+        return ESP_CAST;
+    case  IKEv2_ENCR_AES_CBC:
+        return ESP_AES;
+    default:
+	return 0;
+    }
+}
+
 int v2tov1_integ(enum ikev2_trans_type_integ v2integ)
 {
     switch(v2integ) {
@@ -437,13 +459,47 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb)
 
     cur_dtf = dtf;
     for(i=0; i<cur_combo; i++, cur_dtf++) {
-        db_trans_add(sadb->prop_v1_ctx, KEY_IKE);
-        db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_ENCRYPTION_ALGORITHM,
-                           v2tov1_encr(cur_dtf->encr_transid));
-        db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_HASH_ALGORITHM,
-                           v2tov1_integ(cur_dtf->integ_transid));
-        db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_GROUP_DESCRIPTION,
-                           cur_dtf->group_transid);
+        if(sadb->parentSA) {
+            lset_t policies[][2] = {
+                { POLICY_PSK,              OAKLEY_PRESHARED_KEY},
+                { POLICY_RSASIG,           OAKLEY_RSA_SIG      },
+                { POLICY_XAUTH|POLICY_PSK,    XAUTHInitPreShared},
+                { POLICY_XAUTH|POLICY_RSASIG, XAUTHInitRSA     },
+            };
+
+            unsigned int pol_j;
+            for(pol_j = 0; pol_j < elemsof(policies); pol_j++) {
+                lset_t possible = policies[pol_j][0];
+                if((policy & possible) == possible) {  /* must match exactly */
+
+                    unsigned int oakley_auth_alg = policies[pol_j][1];
+
+                    if(role == RESPONDER) {
+                        oakley_auth_alg++;   /* because they are sequential */
+                    }
+
+                    db_trans_add(sadb->prop_v1_ctx, KEY_IKE);
+                    db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_AUTHENTICATION_METHOD,
+                                       oakley_auth_alg);
+                    db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_ENCRYPTION_ALGORITHM,
+                                       v2tov1_encr(cur_dtf->encr_transid));
+                    db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_HASH_ALGORITHM,
+                                       v2tov1_integ(cur_dtf->integ_transid));
+                    db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_GROUP_DESCRIPTION,
+                                       cur_dtf->group_transid);
+                }
+            }
+        } else {
+            /* child SA policy */
+            db_trans_add(sadb->prop_v1_ctx, KEY_IKE);
+            db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_ENCRYPTION_ALGORITHM,
+                               v2tov1_encr_child(cur_dtf->encr_transid));
+            db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_HASH_ALGORITHM,
+                               v2tov1_integ(cur_dtf->integ_transid));
+            db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_GROUP_DESCRIPTION,
+                               cur_dtf->group_transid);
+            /* XXX could add ESN here too !*/
+        }
     }
 
     sadb->prop_conjs = alloc_thing(struct db_prop_conj, "v1 policy proposal conj");
