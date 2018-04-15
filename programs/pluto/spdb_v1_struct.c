@@ -491,9 +491,7 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb)
             }
         } else {
             /* child SA policy */
-            db_trans_add(sadb->prop_v1_ctx, KEY_IKE);
-            db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_ENCRYPTION_ALGORITHM,
-                               v2tov1_encr_child(cur_dtf->encr_transid));
+            db_trans_add(sadb->prop_v1_ctx, v2tov1_encr_child(cur_dtf->encr_transid));
             db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_HASH_ALGORITHM,
                                v2tov1_integ(cur_dtf->integ_transid));
             db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_GROUP_DESCRIPTION,
