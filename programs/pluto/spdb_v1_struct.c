@@ -815,7 +815,7 @@ out_sa(pb_stream *outs
                          * (draft-shacham-ippcp-rfc2393bis-05.txt 4.1).
                          */
                         if (p->protoid != PROTO_IPCOMP
-                        || st->st_policy & POLICY_TUNNEL)
+                            || st->st_policy & POLICY_TUNNEL)
                         {
                               if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
                                         (!(st->st_policy & POLICY_TUNNEL))) {
