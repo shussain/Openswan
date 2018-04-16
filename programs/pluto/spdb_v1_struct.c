@@ -492,10 +492,12 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb)
         } else {
             /* child SA policy */
             db_trans_add(sadb->prop_v1_ctx, v2tov1_encr_child(cur_dtf->encr_transid));
-            db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_HASH_ALGORITHM,
+            db_attr_add_ipsec_values(sadb->prop_v1_ctx, AUTH_ALGORITHM,
                                v2tov1_integ(cur_dtf->integ_transid));
-            db_attr_add_values(sadb->prop_v1_ctx, OAKLEY_GROUP_DESCRIPTION,
-                               cur_dtf->group_transid);
+            if(cur_dtf->group_transid) {
+                db_attr_add_ipsec_values(sadb->prop_v1_ctx, GROUP_DESCRIPTION,
+                                         cur_dtf->group_transid);
+            }
             /* XXX could add ESN here too !*/
         }
     }
@@ -869,25 +871,32 @@ out_sa(pb_stream *outs
                     }
 
                     /* spit out attributes from table */
-                    for (an = 0; an != t->attr_cnt; an++)
+                    for (an = 0; an < t->attr_cnt; an++)
                     {
                         struct db_attr *a = &t->attrs[an];
-
+                        const enum_names *thing;
+                        int type;
 
                         if(phase_one_mode) {
-                            int type = a->type.oakley;
-                            if(transmitted & LELEM(type)) continue;
-                            transmitted |= LELEM(type);
-                            out_attr(type, a->val
-                                     , attr_desc, attr_val_descs
-                                     , &trans_pbs);
+                            type = a->type.oakley;
+                            thing= &oakley_attr_names;
                         } else {
-                            int type = a->type.ipsec;
-                            if(transmitted & LELEM(type)) continue;
-                            transmitted |= LELEM(type);
-                            out_attr(type,  a->val , attr_desc, attr_val_descs , &trans_pbs);
+                            type = a->type.ipsec;
+                            thing= &ipsec_attr_names;
                         }
 
+                        if(0) {
+                            DBG(DBG_EMITTING
+                                , DBG_log("emitting transform for %s with value %u"
+                                          , enum_name(thing, type)
+                                          , a->val));
+                        }
+
+                        if(transmitted & LELEM(type)) continue;
+                        transmitted |= LELEM(type);
+                        out_attr(type, a->val
+                                 , attr_desc, attr_val_descs
+                                 , &trans_pbs);
                     }
 
                     close_output_pbs(&trans_pbs);

@@ -319,6 +319,7 @@ db_attr_add(struct db_context *ctx, const struct db_attr *a)
 	ctx->trans_cur->attr_cnt++;
 	return 0;
 }
+
 /*	Add attr copy (by value) to current transform,
  *	expanding attrs0 if needed, just calls db_attr_add().
  */
@@ -327,6 +328,18 @@ db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 {
 	struct db_attr attr;
 	attr.type.oakley = type;
+	attr.val = val;
+	return db_attr_add (ctx, &attr);
+}
+
+/*	Add attr copy (by value) to current transform,
+ *	expanding attrs0 if needed, just calls db_attr_add(), but for IPsec attributes
+ */
+int
+db_attr_add_ipsec_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
+{
+	struct db_attr attr;
+	attr.type.ipsec = type;
 	attr.val = val;
 	return db_attr_add (ctx, &attr);
 }
