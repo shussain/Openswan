@@ -72,7 +72,7 @@ static void finish_negotiation(void)
     passert(st->st_esp.present);
     passert(st->st_esp.attrs.transattrs.integ_hash == IKEv2_AUTH_HMAC_SHA1_96);
     passert(st->st_esp.attrs.transattrs.encrypt    == IKEv2_ENCR_AES_CBC);
-    passert(st->st_esp.attrs.transattrs.enckeylen  == 128);
+    passert(st->st_esp.attrs.transattrs.enckeylen  == 0); /* 0 is default */
 }
 
 
