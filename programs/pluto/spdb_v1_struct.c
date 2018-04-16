@@ -767,6 +767,7 @@ out_sa(pb_stream *outs
                     pb_stream trans_pbs;
                     struct isakmp_transform trans;
                     unsigned int an;
+                    lset_t transmitted = LEMPTY;
 
                     trans.isat_np = (tn == p->trans_cnt - 1)
                         ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_T;
@@ -827,14 +828,17 @@ out_sa(pb_stream *outs
                                                   "using Tunnel mode.  Rebuild Openswan with USE_NAT_TRAVERSAL_TRANSPORT_MODE=true in Makefile.inc to support transport mode.");
                               }
 
+                              transmitted |= LELEM(ENCAPSULATION_MODE);
                               out_attr(ENCAPSULATION_MODE
                                        , NAT_T_ENCAPSULATION_MODE(st,st->st_policy)
                                        , attr_desc, attr_val_descs
                                        , &trans_pbs);
                         }
+                        transmitted |= LELEM(SA_LIFE_TYPE);
                         out_attr(SA_LIFE_TYPE, SA_LIFE_TYPE_SECONDS
                               , attr_desc, attr_val_descs
                               , &trans_pbs);
+                        transmitted |= LELEM(SA_LIFE_DURATION);
                         out_attr(SA_LIFE_DURATION
                               , st->st_connection->sa_ipsec_life_seconds
                               , attr_desc, attr_val_descs
@@ -869,13 +873,19 @@ out_sa(pb_stream *outs
                     {
                         struct db_attr *a = &t->attrs[an];
 
-                        if(phase_one_mode) {
-                              out_attr(a->type.oakley, a->val
-                                         , attr_desc, attr_val_descs
-                                         , &trans_pbs);
-                        } else {
-                                        out_attr(a->type.ipsec,  a->val , attr_desc, attr_val_descs , &trans_pbs);
 
+                        if(phase_one_mode) {
+                            int type = a->type.oakley;
+                            if(transmitted & LELEM(type)) continue;
+                            transmitted |= LELEM(type);
+                            out_attr(type, a->val
+                                     , attr_desc, attr_val_descs
+                                     , &trans_pbs);
+                        } else {
+                            int type = a->type.ipsec;
+                            if(transmitted & LELEM(type)) continue;
+                            transmitted |= LELEM(type);
+                            out_attr(type,  a->val , attr_desc, attr_val_descs , &trans_pbs);
                         }
 
                     }
