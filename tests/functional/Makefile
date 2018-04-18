@@ -30,6 +30,8 @@ FUNCTEST+=10-defaultroute
 FUNCTEST+=11-subnets
 FUNCTEST+=12-rwcertwrite
 FUNCTEST+=13-bigpubkey
+FUNCTEST+=14-deadalgos
+FUNCTEST+=15-certload
 
 clean check pcapupdate programs:
 	@set -e; for test in ${FUNCTEST}; do ${MAKE} -C $$test $@; done
