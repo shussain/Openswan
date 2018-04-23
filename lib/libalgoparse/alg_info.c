@@ -534,112 +534,112 @@ parser_alg_info_add(struct parser_context *p_ctx
     int ealg_id, aalg_id, prfalg_id;
     enum ikev2_trans_type_dh    modp_id= OAKLEY_INVALID_GROUP;
 
-	ealg_id=aalg_id=-1;
-	if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
-            auxinfo = 0;
-	    ealg_id=p_ctx->ealg_getbyname(p_ctx->ealg_buf, strlen(p_ctx->ealg_buf), &auxinfo);
-	    if (ealg_id<0) {
-		p_ctx->err="enc_alg not found";
-		goto out;
-	    }
+    ealg_id=aalg_id=-1;
+    if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
+        auxinfo = 0;
+        ealg_id=p_ctx->ealg_getbyname(p_ctx->ealg_buf, strlen(p_ctx->ealg_buf), &auxinfo);
+        if (ealg_id<0) {
+            p_ctx->err="enc_alg not found";
+            goto out;
+        }
 
-            /* XXX SHOULD be validated in add routine, and should be table driven */
-	    /* AES_GCM_128, AES_GCM_192, AES_GCM_256 */
-	    if(ealg_id == ESP_AES_GCM_8
-		|| ealg_id == ESP_AES_GCM_12
-		|| ealg_id == ESP_AES_GCM_16) {
+        /* XXX SHOULD be validated in add routine, and should be table driven */
+        /* AES_GCM_128, AES_GCM_192, AES_GCM_256 */
+        if(ealg_id == ESP_AES_GCM_8
+           || ealg_id == ESP_AES_GCM_12
+           || ealg_id == ESP_AES_GCM_16) {
 
-			/* AES-GCM length key length + 4 bytes (32 bits) */
-			if( p_ctx->eklen != 128
-				&& p_ctx->eklen != 192
-				&& p_ctx->eklen != 256 ) {
-				p_ctx->err="wrong encryption key length with AES-GCM";
-				goto out;
-			}
-			else {
-				/* increase key length by 4 bytes, RFC 4106 */
-				p_ctx->eklen = p_ctx->eklen + 4 *  BITS_PER_BYTE;
-			}
-
-	    } else if(p_ctx->eklen == 0) {
-                p_ctx->eklen = auxinfo;
-            }
-
-	    DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
-				   "ealg_getbyname(\"%s\")=%d",
-				   p_ctx->ealg_buf,
-				   ealg_id));
-	}
-	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
-            auxinfo = 0;
-	    aalg_id=p_ctx->aalg_getbyname(p_ctx->aalg_buf, strlen(p_ctx->aalg_buf), &auxinfo);
-	    if (aalg_id<0) {
-		p_ctx->err="hash_alg not found";
-		goto out;
-	    }
-
-
-            if(p_ctx->aklen == 0) {
-                p_ctx->aklen = auxinfo;
-            }
-
-#ifdef HAVE_LIBNSS
-            if ( Pluto_IsFIPS() && ((aalg_id == OAKLEY_SHA2_256 ) ||(aalg_id == OAKLEY_SHA2_384 ) || (aalg_id == OAKLEY_SHA2_512 ))  ) {
-                p_ctx->err="SHA2 Not supported in FIPS mode with NSS";
+            /* AES-GCM length key length + 4 bytes (32 bits) */
+            if( p_ctx->eklen != 128
+                && p_ctx->eklen != 192
+                && p_ctx->eklen != 256 ) {
+                p_ctx->err="wrong encryption key length with AES-GCM";
                 goto out;
             }
-#endif
-	    DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
-				   "aalg_getbyname(\"%s\")=%d",
-				   p_ctx->aalg_buf,
-				   aalg_id));
-	}
-
-        modp_id   = OAKLEY_INVALID_GROUP;
-        prfalg_id = -1;
-        if(p_ctx->prfalg_getbyname && *p_ctx->prfalg_buf) {
-            auxinfo = 0;
-            prfalg_id = p_ctx->prfalg_getbyname(p_ctx->prfalg_buf, strlen(p_ctx->prfalg_buf), &auxinfo);
-
-            if(prfalg_id <= 0) {
-                /* see if it's a modp algorithm! */
-                strcpy(p_ctx->modp_buf, p_ctx->prfalg_buf);
-                p_ctx->prfalg_buf[0]='\0';
-                prfalg_id = -1;
+            else {
+                /* increase key length by 4 bytes, RFC 4106 */
+                p_ctx->eklen = p_ctx->eklen + 4 *  BITS_PER_BYTE;
             }
-        }
-        if(p_ctx->prfalg_getbyname && prfalg_id == -1) {
-            /* only set this if caller was seeking a PRF value */
-            prfalg_id = alg_info_ikev2_integ2prf(aalg_id);
-        }
 
-	if (modp_id == OAKLEY_INVALID_GROUP && p_ctx->modp_getbyname && *p_ctx->modp_buf) {
-            auxinfo = 0;
-	    modp_id=p_ctx->modp_getbyname(p_ctx->modp_buf, strlen(p_ctx->modp_buf), &auxinfo);
-	    if (modp_id == OAKLEY_INVALID_GROUP) {
-		p_ctx->err="modp group not found";
-		goto out;
-	    }
-
-	    DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
-				   "modp_getbyname(\"%s\")=%d",
-				   p_ctx->modp_buf,
-				   modp_id));
+        } else if(p_ctx->eklen == 0) {
+            p_ctx->eklen = auxinfo;
         }
 
-        if (modp_id != OAKLEY_INVALID_GROUP && lookup_group && !lookup_group(modp_id)) {
-            p_ctx->err="found modp group id, but not supported";
+        DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
+                               "ealg_getbyname(\"%s\")=%d",
+                               p_ctx->ealg_buf,
+                               ealg_id));
+    }
+    if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
+        auxinfo = 0;
+        aalg_id=p_ctx->aalg_getbyname(p_ctx->aalg_buf, strlen(p_ctx->aalg_buf), &auxinfo);
+        if (aalg_id<0) {
+            p_ctx->err="hash_alg not found";
             goto out;
-	}
+        }
 
-	(*alg_info_add)(alg_info
-			,ealg_id, p_ctx->eklen
-			,aalg_id, p_ctx->aklen
-                        ,prfalg_id
-			,modp_id);
-	return 0;
+
+        if(p_ctx->aklen == 0) {
+            p_ctx->aklen = auxinfo;
+        }
+
+#ifdef HAVE_LIBNSS
+        if ( Pluto_IsFIPS() && ((aalg_id == OAKLEY_SHA2_256 ) ||(aalg_id == OAKLEY_SHA2_384 ) || (aalg_id == OAKLEY_SHA2_512 ))  ) {
+            p_ctx->err="SHA2 Not supported in FIPS mode with NSS";
+            goto out;
+        }
+#endif
+        DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
+                               "aalg_getbyname(\"%s\")=%d",
+                               p_ctx->aalg_buf,
+                               aalg_id));
+    }
+
+    modp_id   = OAKLEY_INVALID_GROUP;
+    prfalg_id = -1;
+    if(p_ctx->prfalg_getbyname && *p_ctx->prfalg_buf) {
+        auxinfo = 0;
+        prfalg_id = p_ctx->prfalg_getbyname(p_ctx->prfalg_buf, strlen(p_ctx->prfalg_buf), &auxinfo);
+
+        if(prfalg_id <= 0) {
+            /* see if it's a modp algorithm! */
+            strcpy(p_ctx->modp_buf, p_ctx->prfalg_buf);
+            p_ctx->prfalg_buf[0]='\0';
+            prfalg_id = -1;
+        }
+    }
+    if(p_ctx->prfalg_getbyname && prfalg_id == -1) {
+        /* only set this if caller was seeking a PRF value */
+        prfalg_id = alg_info_ikev2_integ2prf(aalg_id);
+    }
+
+    if (modp_id == OAKLEY_INVALID_GROUP && p_ctx->modp_getbyname && *p_ctx->modp_buf) {
+        auxinfo = 0;
+        modp_id=p_ctx->modp_getbyname(p_ctx->modp_buf, strlen(p_ctx->modp_buf), &auxinfo);
+        if (modp_id == OAKLEY_INVALID_GROUP) {
+            p_ctx->err="modp group not found";
+            goto out;
+        }
+
+        DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
+                               "modp_getbyname(\"%s\")=%d",
+                               p_ctx->modp_buf,
+                               modp_id));
+    }
+
+    if (modp_id != OAKLEY_INVALID_GROUP && lookup_group && !lookup_group(modp_id)) {
+        p_ctx->err="found modp group id, but not supported";
+        goto out;
+    }
+
+    (*alg_info_add)(alg_info
+                    ,ealg_id, p_ctx->eklen
+                    ,aalg_id, p_ctx->aklen
+                    ,prfalg_id
+                    ,modp_id);
+    return 0;
  out:
-	return -1;
+    return -1;
 }
 
 int
