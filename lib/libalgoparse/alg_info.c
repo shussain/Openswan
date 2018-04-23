@@ -171,24 +171,29 @@ alg_enum_search_ppfix (enum_names *ed, const char *prefix
  * @param len Length of ALG (eg: 256,512)
  * @return int Registered # of ALG if loaded.
  */
-int ealg_getbyname(const char *const str, int len, unsigned int *auxp)
+enum ikev2_trans_type_encr ealg_getbyname(const char *const str, int len, unsigned int *auxp)
 {
     const struct keyword_enum_value *kev;
-    int ret=-1;
-	if (!str||!*str)
-		goto out;
-        /* look for the name by literal name, upcasing first */
-	ret = enum_search_nocase(ikev2_encr_names.official_names, str, len);
-	if (ret>=0) goto out;
+    int  search_ret = -1;
+    enum ikev2_trans_type_encr ret=IKEv2_ENCR_INVALID;
+    if (!str||!*str)
+        goto out;
 
-        kev = keyword_search_aux(&ikev2_encr_names.aliases, str);
-        if(kev == NULL) goto out;
+    /* look for the name by literal name, upcasing first */
+    search_ret = enum_search_nocase(ikev2_encr_names.official_names, str, len);
+    if (search_ret != -1) {
+        ret = search_ret;
+        goto out;
+    }
 
-        if(auxp) *auxp=kev->valueaux;
-        ret = kev->value;
+    kev = keyword_search_aux(&ikev2_encr_names.aliases, str);
+    if(kev == NULL) goto out;
 
-out:
-	return ret;
+    if(auxp) *auxp=kev->valueaux;
+    ret = kev->value;
+
+ out:
+    return ret;
 }
 /**
  * 	Search  oakley_hash_names for a match, eg:
@@ -538,11 +543,12 @@ parser_alg_info_add(struct parser_context *p_ctx
     enum ikev2_trans_type_integ aalg_id;
     enum ikev2_trans_type_dh    modp_id= OAKLEY_INVALID_GROUP;
 
-    ealg_id=aalg_id=-1;
+    ealg_id = IKEv2_ENCR_INVALID;
+    aalg_id = IKEv2_AUTH_INVALID;
     if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
         auxinfo = 0;
         ealg_id=p_ctx->ealg_getbyname(p_ctx->ealg_buf, strlen(p_ctx->ealg_buf), &auxinfo);
-        if (ealg_id<0) {
+        if (ealg_id == IKEv2_ENCR_INVALID) {
             p_ctx->err="enc_alg not found";
             goto out;
         }

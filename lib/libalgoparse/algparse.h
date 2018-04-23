@@ -9,7 +9,7 @@ struct parser_context {
   char aalg_buf[16];
   char prfalg_buf[16];
   char modp_buf[16];
-  int (*ealg_getbyname)(const char *const str, int len, unsigned int *auxp);
+  enum ikev2_trans_type_encr  (*ealg_getbyname)(const char *const str, int len, unsigned int *auxp);
   int (*aalg_getbyname)(const char *const str, int len, unsigned int *auxp);
   int (*prfalg_getbyname)(const char *const str, int len, unsigned int *auxp);
   int (*modp_getbyname)(const char *const str, int len, unsigned int *auxp);
@@ -46,7 +46,7 @@ enum parser_state_esp {
 };
 
 /* exported for unit tests only */
-extern int ealg_getbyname(const char *const str, int len, unsigned int *auxp);
+extern enum ikev2_trans_type_encr ealg_getbyname(const char *const str, int len, unsigned int *auxp);
 extern int aalg_getbyname(const char *const str, int len, unsigned int *auxp);
 extern int modp_getbyname(const char *const str, int len, unsigned int *auxp);
 
