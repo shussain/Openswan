@@ -48,46 +48,50 @@
  * @param len Length of Hash (eg: 256,512)
  * @return int Registered # of Hash ALG if loaded.
  */
-static int
+static enum ikev2_trans_type_prf
 prfalg_getbyname_ike(const char *const str, const int len, unsigned int *auxp)
 {
-	int ret=-1;
-        int algo=0;
-	unsigned num;
-	if (!str||!*str)
-            goto out;
+    int  search_ret = -1;
+    enum ikev2_trans_type_prf ret=IKEv2_PRF_INVALID;
+    int algo=0;
+    unsigned num;
+    if (!str||!*str)
+        goto out;
 
-        /* look for the name by literal name, upcasing first */
-	ret = enum_search_nocase(&ikev2_prf_names, str, len);
-	if (ret>=0) goto out;
+    /* look for the name by literal name, upcasing first */
+    search_ret = enum_search_nocase(&ikev2_prf_names, str, len);
+    if (search_ret>=0) goto out;
 
-        ret = keyword_search(&ikev2_prf_alg_names.aliases, str);
-	if (ret>=0) goto out;
-        if(strncasecmp(str, "prf", 3)==0) {
-            ret = keyword_search(&ikev2_prf_alg_names.aliases, str+3);
-            if (ret>=0) goto out;
+    search_ret = keyword_search(&ikev2_prf_alg_names.aliases, str);
+    if (search_ret>=0) goto out;
+    if(strncasecmp(str, "prf", 3)==0) {
+        search_ret = keyword_search(&ikev2_prf_alg_names.aliases, str+3);
+        if (search_ret>=0) goto out;
+    }
+
+    /* finally, try the name again with "prf" pre-pended to it */
+    {
+        char *prfname = alloca(len + 4);
+        if(prfname) {
+            strcpy(prfname, "prf");
+            strncat(prfname, str, len);
+            search_ret = enum_search_nocase(&ikev2_prf_names, prfname, strlen(prfname));
+            if (search_ret>=0) goto out;
         }
+    }
 
-        /* finally, try the name again with "prf" pre-pended to it */
-        {
-            char *prfname = alloca(len + 4);
-            if(prfname) {
-                strcpy(prfname, "prf");
-                strncat(prfname, str, len);
-                ret = enum_search_nocase(&ikev2_prf_names, prfname, strlen(prfname));
-                if (ret>=0) goto out;
-            }
-        }
-
-        /* let the user override with an explicit number! */
-        /* extract length that was consumed to check that it fit */
-	sscanf(str, "prf%d%n", &algo, &num);
-	if (algo >=0 && num == len) {
-            ret = algo;
-        }
+    /* let the user override with an explicit number! */
+    /* extract length that was consumed to check that it fit */
+    sscanf(str, "prf%d%n", &algo, &num);
+    if (algo >=0 && num == len) {
+        search_ret = algo;
+    }
 
 out:
-	return ret;
+    if (search_ret>=0) {
+        ret = search_ret;
+    }
+    return ret;
 }
 
 /**
@@ -192,7 +196,7 @@ static void
 alg_info_ike_add (struct alg_info *alg_info
 		  , enum ikev2_trans_type_encr  ealg_id, int ek_bits
 		  , enum ikev2_trans_type_integ aalg_id, int ak_bits
-                  , enum ikev2_trans_type_prf   prfalg_id UNUSED
+                  , enum ikev2_trans_type_prf   prfalg_id
 		  , enum ikev2_trans_type_dh    modp_id)
 {
     enum ikev2_trans_type_encr  *ciphers;
@@ -212,19 +216,19 @@ alg_info_ike_add (struct alg_info *alg_info
     ciphers =default_cipher_algs;
 
     /* for each item that is in fact specified, do not loop over the defaults */
-    if(modp_id > 0) {
+    if(modp_id != OAKLEY_INVALID_GROUP) {
         n_groups=1;
         groups = &modp_id;
     }
-    if(prfalg_id > 0) {
+    if(prfalg_id != IKEv2_PRF_INVALID) {
         n_prfs=1;
         prfs  = &prfalg_id;
     }
-    if(aalg_id  > 0) {
+    if(aalg_id != IKEv2_AUTH_INVALID) {
         n_integs = 1;
         integs= &aalg_id;
     }
-    if(ealg_id  > 0) {
+    if(ealg_id  != IKEv2_ENCR_INVALID) {
         n_ciphers = 1;
         ciphers = &ealg_id;
     }

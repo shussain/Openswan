@@ -11,7 +11,7 @@ struct parser_context {
   char modp_buf[16];
   enum ikev2_trans_type_encr  (*ealg_getbyname)(const char *const str, int len, unsigned int *auxp);
   enum ikev2_trans_type_integ (*aalg_getbyname)(const char *const str, int len, unsigned int *auxp);
-  int (*prfalg_getbyname)(const char *const str, int len, unsigned int *auxp);
+  enum ikev2_trans_type_prf   (*prfalg_getbyname)(const char *const str, int len, unsigned int *auxp);
   enum ikev2_trans_type_dh    (*modp_getbyname)(const char *const str, int len, unsigned int *auxp);
   char *ealg_str;
   char *aalg_str;

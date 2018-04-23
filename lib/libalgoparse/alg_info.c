@@ -595,7 +595,7 @@ parser_alg_info_add(struct parser_context *p_ctx
     if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
         auxinfo = 0;
         aalg_id=p_ctx->aalg_getbyname(p_ctx->aalg_buf, strlen(p_ctx->aalg_buf), &auxinfo);
-        if (aalg_id<0) {
+        if (aalg_id == IKEv2_AUTH_INVALID) {
             p_ctx->err="hash_alg not found";
             goto out;
         }
@@ -618,16 +618,16 @@ parser_alg_info_add(struct parser_context *p_ctx
     }
 
     modp_id   = OAKLEY_INVALID_GROUP;
-    prfalg_id = -1;
+    prfalg_id = IKEv2_PRF_INVALID;
     if(p_ctx->prfalg_getbyname && *p_ctx->prfalg_buf) {
         auxinfo = 0;
         prfalg_id = p_ctx->prfalg_getbyname(p_ctx->prfalg_buf, strlen(p_ctx->prfalg_buf), &auxinfo);
 
-        if(prfalg_id <= 0) {
+        if(prfalg_id == IKEv2_PRF_INVALID) {
             /* see if it's a modp algorithm! */
             strcpy(p_ctx->modp_buf, p_ctx->prfalg_buf);
             p_ctx->prfalg_buf[0]='\0';
-            prfalg_id = -1;
+            prfalg_id = IKEv2_PRF_INVALID;
         }
     }
     if(p_ctx->prfalg_getbyname && prfalg_id == IKEv2_PRF_INVALID) {
