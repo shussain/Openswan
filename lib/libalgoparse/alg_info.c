@@ -237,21 +237,26 @@ out:
  * @param len Length of Hash (eg: 1024,1536,2048)
  * @return int Registered # of MODP Group, if supported.
  */
-int modp_getbyname(const char *const str, int len, unsigned int *auxp)
+enum ikev2_trans_type_dh modp_getbyname(const char *const str, int len, unsigned int *auxp)
 {
-	int ret=-1;
-	if (!str||!*str)
-		goto out;
-	ret=alg_enum_search_prefix(ikev2_group_names.official_names,
-                                   "OAKLEY_GROUP_",str,len);
-	if (ret>=0) goto out;
+    int  search_ret = -1;
+    enum ikev2_trans_type_dh ret=OAKLEY_INVALID_GROUP;
 
-        /* finally, look for aliases. */
-        ret = keyword_search(&ikev2_group_names.aliases, str);
-	if (ret>=0) goto out;
+    if (!str||!*str)
+        goto out;
+    search_ret=alg_enum_search_prefix(ikev2_group_names.official_names,
+                               "OAKLEY_GROUP_",str,len);
+    if (search_ret>=0) goto out;
 
-out:
-	return ret;
+    /* finally, look for aliases. */
+    search_ret = keyword_search(&ikev2_group_names.aliases, str);
+    if (search_ret>=0) goto out;
+
+ out:
+    if (search_ret>=0) {
+        ret = search_ret;
+    }
+    return ret;
 }
 
 void
