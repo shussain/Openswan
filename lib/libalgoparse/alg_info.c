@@ -531,7 +531,9 @@ parser_alg_info_add(struct parser_context *p_ctx
 		    , const struct oakley_group_desc *(*lookup_group)(enum ikev2_trans_type_dh group))
 {
     unsigned int auxinfo;
-    int ealg_id, aalg_id, prfalg_id;
+    enum ikev2_trans_type_encr  ealg_id;
+    enum ikev2_trans_type_prf   prfalg_id;
+    enum ikev2_trans_type_integ aalg_id;
     enum ikev2_trans_type_dh    modp_id= OAKLEY_INVALID_GROUP;
 
     ealg_id=aalg_id=-1;
@@ -545,9 +547,9 @@ parser_alg_info_add(struct parser_context *p_ctx
 
         /* XXX SHOULD be validated in add routine, and should be table driven */
         /* AES_GCM_128, AES_GCM_192, AES_GCM_256 */
-        if(ealg_id == ESP_AES_GCM_8
-           || ealg_id == ESP_AES_GCM_12
-           || ealg_id == ESP_AES_GCM_16) {
+        if(ealg_id    == IKEv2_ENCR_AES_GCM_8
+           || ealg_id == IKEv2_ENCR_AES_GCM_12
+           || ealg_id == IKEv2_ENCR_AES_GCM_16) {
 
             /* AES-GCM length key length + 4 bytes (32 bits) */
             if( p_ctx->eklen != 128
