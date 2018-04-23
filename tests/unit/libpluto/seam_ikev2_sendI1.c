@@ -70,6 +70,7 @@ struct state *sendI1(struct connection *c1, int debugging, int calculate)
                                    , FALSE /* replacing */
                                    , pcim_demand_crypto, USER_SEC_CTX_NULL);
 
+        passert(GLOBALS_ARE_RESET());
 	/* find st involved */
 	st = state_with_serialno(newone);
 	enable_debugging_on_sa(1);

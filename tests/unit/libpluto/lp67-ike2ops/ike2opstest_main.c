@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
 
     sa_v2_print(sadb);
 
-    if(!extrapolate_v1_from_v2(sadb)) {
+    if(!extrapolate_v1_from_v2(sadb, POLICY_PSK, INITIATOR)) {
         DBG_log("failed to create v1");
         exit(11);
     }
-    printf("v1:");
+    printf("v1 (PSK):");
     sa_print(sadb);
     free_sa(sadb);
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     sadb->parentSA = TRUE;
 
     sa_v2_print(sadb);
-    if(!extrapolate_v1_from_v2(sadb)) {
+    if(!extrapolate_v1_from_v2(sadb, POLICY_RSASIG, INITIATOR)) {
         DBG_log("failed to create v1");
         exit(11);
     }
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     sadb->parentSA = TRUE;
 
     sa_v2_print(sadb);
-    if(!extrapolate_v1_from_v2(sadb)) {
+    if(!extrapolate_v1_from_v2(sadb, POLICY_PSK|POLICY_RSASIG, INITIATOR)) {
         DBG_log("failed to create v1");
         exit(11);
     }
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     sadb->parentSA = TRUE;
 
     sa_v2_print(sadb);
-    if(!extrapolate_v1_from_v2(sadb)) {
+    if(!extrapolate_v1_from_v2(sadb, POLICY_RSASIG, INITIATOR)) {
         DBG_log("failed to create v1");
         exit(11);
     }
