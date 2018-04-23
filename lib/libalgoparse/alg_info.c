@@ -203,7 +203,9 @@ int aalg_getbyname(const char *const str, int len, unsigned int *auxp)
 	unsigned num;
 	if (!str||!*str)
 		goto out;
-	ret=alg_enum_search_prefix(&oakley_hash_names,"OAKLEY_",str,len);
+
+        /* look for the name by literal name, upcasing first */
+	ret = enum_search_nocase(ikev2_auth_alg_names.official_names, str, len);
 	if (ret>=0) goto out;
 
         ret = keyword_search(&ikev2_auth_alg_names.aliases, str);
