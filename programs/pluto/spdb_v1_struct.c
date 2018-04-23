@@ -66,6 +66,10 @@
 #include "security_selinux.h"
 #endif
 
+/* enable this for deeper debugging into extrapolate loop */
+#define EXTRAPOLATE_DEBUG 0
+
+
 int v2tov1_encr(enum ikev2_trans_type_encr encr)
 {
     switch(encr) {
@@ -249,9 +253,20 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb, lset_t policy, enum phase1_role 
     /* first count number of combinations expressed in IKEv2, so we can
      * allocate a table big for all the combinations */
     tot_combos = 0;
+    prop_disj  = 0;
+#if EXTRAPOLATE_DEBUG
+    /* enable this when debugging problems with tot_combos */
+    DBG_log("%u disj_cnt: %d/%d", tot_combos, prop_disj, sadb->prop_disj_cnt);
+#endif
+
     for(prop_disj=0; prop_disj<sadb->prop_disj_cnt; prop_disj++) {
         unsigned int prop_conj;
         struct db_v2_prop *pd = &sadb->prop_disj[prop_disj];
+
+#if EXTRAPOLATE_DEBUG
+        /* enable this when debugging problems with tot_combos */
+        DBG_log("%u disj_cnt: %d/%d conj: 0/%d", tot_combos, prop_disj, sadb->prop_disj_cnt, pd->prop_cnt);
+#endif
 
         /* reset the transform values */
         for(i=0; i<IKEv2_TRANS_TYPE_COUNT; i++) {
@@ -262,16 +277,33 @@ bool extrapolate_v1_from_v2(struct db_sa *sadb, lset_t policy, enum phase1_role 
             unsigned int trans_i;
             struct db_v2_prop_conj *pc = &pd->props[prop_conj];
 
+#if EXTRAPOLATE_DEBUG
+            /* enable this when debugging problems with tot_combos */
+            DBG_log("%u disj_cnt: %d/%d conj: %d/%d trans: 0/%d"
+                    , tot_combos, prop_disj, sadb->prop_disj_cnt
+                    , prop_conj, pd->prop_cnt
+                    , pc->trans_cnt);
+#endif
+
             for(trans_i=0; trans_i < pc->trans_cnt; trans_i++) {
                 //unsigned int attr_i;
                 struct db_v2_trans *tr = &pc->trans[trans_i];
+
+#if EXTRAPOLATE_DEBUG
+                /* enable this when debugging problems with tot_combos */
+                DBG_log("%u disj_cnt: %d/%d conj: %d/%d trans: %d/%d type: %d"
+                        , tot_combos, prop_disj, sadb->prop_disj_cnt
+                        , prop_conj, pd->prop_cnt
+                        , trans_i, pc->trans_cnt, tr->transform_type);
+#endif
 
                 if(tr->transform_type >= IKEv2_TRANS_TYPE_COUNT) continue;
 
                 /* IKEv1 does not negotiate PRF, so ignore options like that */
                 if(tr->transform_type == IKEv2_TRANS_TYPE_PRF) continue;
 
-#if 0
+#if EXTRAPOLATE_DEBUG
+                /* enable this when debugging problems with tot_combos */
                 DBG_log("%u A: %u,%u,%u, noticing type[%u]=>%d (vs: %d)"
                         , tot_combos
                         , prop_disj, prop_conj, trans_i
