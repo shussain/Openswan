@@ -202,25 +202,32 @@ enum ikev2_trans_type_encr ealg_getbyname(const char *const str, int len, unsign
  * @param len Length of Hash (eg: 256,512)
  * @return int Registered # of Hash ALG if loaded.
  */
-int aalg_getbyname(const char *const str, int len, unsigned int *auxp)
+enum ikev2_trans_type_integ aalg_getbyname(const char *const str, int len, unsigned int *auxp)
 {
-	int ret=-1;
-	unsigned num;
-	if (!str||!*str)
-		goto out;
+    int  search_ret = -1;
+    enum ikev2_trans_type_integ ret=IKEv2_AUTH_INVALID;
+    unsigned num;
+    if (!str||!*str)
+        goto out;
 
-        /* look for the name by literal name, upcasing first */
-	ret = enum_search_nocase(ikev2_auth_alg_names.official_names, str, len);
-	if (ret>=0) goto out;
+    /* look for the name by literal name, upcasing first */
+    search_ret = enum_search_nocase(ikev2_auth_alg_names.official_names, str, len);
+    if (search_ret>=0) goto out;
 
-        ret = keyword_search(&ikev2_auth_alg_names.aliases, str);
-	if (ret>=0) goto out;
+    ret = keyword_search(&ikev2_auth_alg_names.aliases, str);
+    if (search_ret>=0) goto out;
 
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >=0 && num!=strlen(str))
-		ret=-1;
+    sscanf(str, "id%d%n", &search_ret, &num);
+
+    /* check if parsed part of a number only */
+    if (search_ret >=0 && num!=strlen(str))
+        search_ret=-1;
+
 out:
-	return ret;
+    if (search_ret>=0) {
+        ret = search_ret;
+    }
+    return ret;
 }
 
 /**
@@ -618,7 +625,7 @@ parser_alg_info_add(struct parser_context *p_ctx
             prfalg_id = -1;
         }
     }
-    if(p_ctx->prfalg_getbyname && prfalg_id == -1) {
+    if(p_ctx->prfalg_getbyname && prfalg_id == IKEv2_PRF_INVALID) {
         /* only set this if caller was seeking a PRF value */
         prfalg_id = alg_info_ikev2_integ2prf(aalg_id);
     }
