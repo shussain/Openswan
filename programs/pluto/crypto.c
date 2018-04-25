@@ -48,26 +48,6 @@
 
 /* moduli and generator. */
 
-#ifdef USE_1DES
-static void do_des(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc);
-
-static struct encrypt_desc crypto_encrypter_des =
-{
-    common: {name: "oakley_des_cbc",
-	     officname:         "1des",
-             algo_type:         IKE_ALG_ENCRYPT,
-             algo_id:           OAKLEY_DES_CBC,
-	     algo_v2id:         IKEv2_ENCR_DES,
-             algo_next:         NULL, },
-    enc_ctxsize:        sizeof(des_key_schedule),
-    enc_blocksize:      DES_CBC_BLOCK_SIZE,
-    keydeflen:  DES_CBC_BLOCK_SIZE * BITS_PER_BYTE,
-    keyminlen:  DES_CBC_BLOCK_SIZE * BITS_PER_BYTE,
-    keymaxlen:  DES_CBC_BLOCK_SIZE * BITS_PER_BYTE,
-    do_crypt:   do_des,
-};
-#endif
-
 #ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc);
 static struct ike_encr_desc crypto_encrypter_3des =
@@ -191,13 +171,6 @@ init_crypto(void)
 	    {
 		extern int ike_alg_blowfish_init(void);
 		ike_alg_blowfish_init();
-	    }
-#endif
-
-#ifdef USE_1DES
-/*#warning YOUR PLUTO IS INSECURE, IT HAS 1DES. DO NOT USE IT. */
-	    {
-		ike_alg_add((struct ike_alg *) &crypto_encrypter_des);
 	    }
 #endif
 
