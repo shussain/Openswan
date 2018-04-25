@@ -21,6 +21,7 @@ void sendI1b(struct connection *c1, int debugging, int calculate)
         }
 
 	run_continuation(crypto_req);
+        reset_globals();
 }
 
 struct state *sendI1(struct connection *c1, int debugging, int calculate)
@@ -28,6 +29,7 @@ struct state *sendI1(struct connection *c1, int debugging, int calculate)
 	struct state *st;
 	so_serial_t newone;
 
+        passert(GLOBALS_ARE_RESET());
 	c1->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
 	newone = ipsecdoi_initiate(/* whack-sock=stdout */1
                                    , NULL, NULL

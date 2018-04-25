@@ -83,6 +83,8 @@ int main(int argc, char *argv[])
      */
     assert(c1->end_addr_family == 0);
 
+    reset_globals();
+
     /* do calculation if not -r for regression */
     st = sendI1(c1, DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE, regression == 0);
 
