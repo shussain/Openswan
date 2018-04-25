@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
 #endif
     show_one_connection(c1, whack_log);
 
+    reset_globals();
+
 #ifndef SKIP_INITIATE
     /* do calculation if not -r for regression */
     st = sendI1(c1, DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE, regression == 0);

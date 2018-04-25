@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
     assert(orient(c1, 500));
     show_one_connection(c1, whack_log);
 
+    reset_globals();
+
     st = sendI1(c1, DBG_CONTROL, regression == 0);
 
     /* now accept the reply packet */
