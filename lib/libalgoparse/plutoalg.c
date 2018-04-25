@@ -518,9 +518,10 @@ alg_info_ike_defaults(void)
     ike_info->alg_info_protoid=PROTO_ISAKMP;
 
     /* call with all zeros, to get entire default permutation */
-    alg_info_ike_add (IKETOINFO(ike_info),0,0,
-                      0,0,
-                      0,0);
+    alg_info_ike_add (IKETOINFO(ike_info),IKEv2_ENCR_INVALID,0,
+                      IKEv2_AUTH_INVALID, 0,
+                      IKEv2_PRF_INVALID, OAKLEY_INVALID_GROUP);
+
  out:
     return ike_info;
 }
