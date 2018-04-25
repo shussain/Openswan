@@ -611,17 +611,6 @@ enum_names
     auth_alg_names =
 	{ AUTH_ALGORITHM_NONE, AUTH_ALGORITHM_AES_CBC , auth_alg_name, &auth_alg_names_stolen_use };
 
-const struct keyword_enum_value ikev2_auth_alg_aliases[]={
-    { "sha256",      IKEv2_AUTH_HMAC_SHA2_256_128 },
-    { "sha384",      IKEv2_AUTH_HMAC_SHA2_384_192 },
-    { "sha512",      IKEv2_AUTH_HMAC_SHA2_512_256 },
-};
-
-enum_and_keyword_names ikev2_auth_alg_names = {
- official_names: &auth_alg_names,
- aliases: { ikev2_auth_alg_aliases, elemsof(ikev2_auth_alg_aliases) },
-};
-
 const char *const modecfg_cisco_attr_name[] = {
         "CISCO_BANNER",
         "CISCO_SAVE_PW",
@@ -1226,9 +1215,14 @@ enum_names trans_type_integ_names =
 { IKEv2_AUTH_NONE, IKEv2_AUTH_HMAC_SHA2_512_256, trans_type_integ_name, NULL};
 
 const struct keyword_enum_value ikev2_integ_name_aliases[]={
+    { "md5",        IKEv2_AUTH_HMAC_MD5_96 },
+    { "sha1",       IKEv2_AUTH_HMAC_SHA1_96 },
     { "hmac_md5",   IKEv2_AUTH_HMAC_MD5_96 },
     { "hmac_sha1",  IKEv2_AUTH_HMAC_SHA1_96 },
     { "sha1",       IKEv2_AUTH_HMAC_SHA1_96 },
+    { "sha2_256",     IKEv2_AUTH_HMAC_SHA2_256_128 },
+    { "sha2_384",     IKEv2_AUTH_HMAC_SHA2_384_192 },
+    { "sha2_512",     IKEv2_AUTH_HMAC_SHA2_512_256 },
     { "sha256",     IKEv2_AUTH_HMAC_SHA2_256_128 },
     { "sha384",     IKEv2_AUTH_HMAC_SHA2_384_192 },
     { "sha512",     IKEv2_AUTH_HMAC_SHA2_512_256 },

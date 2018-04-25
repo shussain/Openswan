@@ -112,6 +112,12 @@ struct artab {
     IKEv2_PRF_HMAC_SHA1,OAKLEY_GROUP_MODP1536,
     "aes_cbc(12)_128-hmac_sha1_96(2)-prfsha1(2)-MODP1536(5); flags=-strict", FALSE,},
 
+  /* from DTP ikev1/alg-sha512 */
+  { "aes256-sha2_512;modp4096",
+    IKEv2_ENCR_AES_CBC, 256, IKEv2_AUTH_HMAC_SHA2_512_256,
+    IKEv2_PRF_HMAC_SHA2_512, OAKLEY_GROUP_MODP4096,
+    "aes_cbc(12)_256-hmac_sha2_512_256(14)-prfsha2_512(7)-MODP4096(16); flags=-strict", FALSE, },
+
   /* a modern definition from draft-ietf-ipsecme-rfc7321bis/ */
   { "aes256-sha256-prfsha256-modp2048",
     IKEv2_ENCR_AES_CBC, 256, IKEv2_AUTH_HMAC_SHA2_256_128,
@@ -126,7 +132,7 @@ char *pgm;
 {
 	int status = 0;
 	struct artab *r;
-	char buf[100];
+	char buf[1000];
 	size_t n;
 	struct alg_info_ike *alg_info_ike;
         const  char *err;

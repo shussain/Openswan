@@ -136,7 +136,7 @@ alg_enum_search_prefix (enum_names *ed, const char *prefix, const char *str, int
 
 	DBG(DBG_CRYPT, DBG_log("enum_search_prefix (\"%s\")", buf));
 
-	ret=enum_search(ed, buf);
+	ret=enum_search_nocase(ed, buf, strlen(buf));
 	return ret;
 }
 
@@ -158,7 +158,7 @@ alg_enum_search_ppfix (enum_names *ed, const char *prefix
 	*ptr=0;
 	DBG(DBG_CRYPT, DBG_log("enum_search_ppfixi () "
 				"calling enum_search(%p, \"%s\")", ed, buf));
-	ret=enum_search(ed, buf);
+	ret=enum_search_nocase(ed, buf, strlen(buf));
 	return ret;
 }
 
@@ -211,10 +211,14 @@ enum ikev2_trans_type_integ aalg_getbyname(const char *const str, int len, unsig
         goto out;
 
     /* look for the name by literal name, upcasing first */
-    search_ret = enum_search_nocase(ikev2_auth_alg_names.official_names, str, len);
+    search_ret = enum_search_nocase(ikev2_integ_names.official_names, str, len);
     if (search_ret>=0) goto out;
 
-    ret = keyword_search(&ikev2_auth_alg_names.aliases, str);
+    search_ret = keyword_search(&ikev2_integ_names.aliases, str);
+    if (search_ret>=0) goto out;
+
+    search_ret=alg_enum_search_prefix(ikev2_integ_names.official_names,
+                                      "HMAC_",str,len);
     if (search_ret>=0) goto out;
 
     sscanf(str, "id%d%n", &search_ret, &num);
