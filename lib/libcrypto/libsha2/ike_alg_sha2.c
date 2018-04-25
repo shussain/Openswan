@@ -76,6 +76,21 @@ struct ike_prf_desc hash_desc_sha2_256 = {
 	hash_final:(void (*)(u_char *, void *))sha256_hash_final,
 };
 
+struct ike_prf_desc hash_desc_sha2_512 = {
+	common:{officname:  "prfsha512",
+		algo_type: IKEv2_TRANS_TYPE_PRF,
+		algo_id:   OAKLEY_SHA2_512,
+		algo_v2id: IKEv2_PRF_HMAC_SHA2_512,
+		algo_next: NULL, },
+	hash_ctx_size: sizeof(sha512_context),
+	hash_key_size: SHA2_512_DIGEST_SIZE,
+	hash_digest_len: SHA2_512_DIGEST_SIZE,
+	hash_integ_len: 0,	/*Not applicable*/
+	hash_init: (void (*)(void *))sha512_init,
+	hash_update: (void (*)(void *, const u_char *, size_t ))sha512_write,
+	hash_final:(void (*)(u_char *, void *))sha512_hash_final,
+};
+
 struct ike_integ_desc integ_desc_sha2_256 = {
         common:{officname:  "sha256",
 		algo_type: IKEv2_TRANS_TYPE_INTEG,
@@ -110,6 +125,10 @@ int ike_alg_sha2_init(void)
 {
 	int ret;
 	ret = ike_alg_register_integ(&integ_desc_sha2_512);
+	if (!ret){
+	    ret = ike_alg_register_prf(&hash_desc_sha2_512);
+        }
+
 	if (!ret){
 	    ret = ike_alg_register_integ(&integ_desc_sha2_256);
         }
