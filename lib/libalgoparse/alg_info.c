@@ -610,7 +610,7 @@ parser_alg_info_add(struct parser_context *p_ctx
         }
 
 #ifdef HAVE_LIBNSS
-        if ( Pluto_IsFIPS() && ((aalg_id == OAKLEY_SHA2_256 ) ||(aalg_id == OAKLEY_SHA2_384 ) || (aalg_id == OAKLEY_SHA2_512 ))  ) {
+        if ( Pluto_IsFIPS() && ((aalg_id == IKEv2_AUTH_HMAC_SHA2_256_128 ) || (aalg_id == IKEv2_AUTH_HMAC_SHA2_384_192 ) || (aalg_id == IKEv2_AUTH_HMAC_SHA2_512_256 ))  ) {
             p_ctx->err="SHA2 Not supported in FIPS mode with NSS";
             goto out;
         }
