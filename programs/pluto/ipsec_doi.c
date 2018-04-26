@@ -326,7 +326,6 @@ ipsecdoi_initiate(int whack_sock
                                        , NULL, &created, policy, try, importance
                                        , uctx);
 
-            passert(GLOBALS_ARE_RESET());
             if(ret == STF_OK || ret == STF_SUSPEND) {
                 c->prospective_parent_sa = created;
                 return created;
