@@ -1,0 +1,19 @@
+# -*- makefile -*-
+CONNNAME=rw
+ENDNAME=moon
+UNITTEST1ARGS=${WHACKFILE} ${CONNNAME} v1sha512M1.pcap OUTPUT/${TESTNAME}.pcap
+WHACKFILE=${OUTPUTS}/ikev2client.record.${ARCH}
+
+TESTNAME=v1sha512N1
+
+EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev1.o
+EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev1_main.o
+EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/spdb_v1_struct.o
+EXTRAOBJS+=${OBJDIRTOP}/programs/pluto/ikev1_crypto.o
+
+EXTRALIBS+=${LIBPLUTO}
+
+pcapupdate:
+	cp ../lp92-v1sha512M1/OUTPUT/v1sha512M1.pcap v1sha512M1.pcap
+
+
