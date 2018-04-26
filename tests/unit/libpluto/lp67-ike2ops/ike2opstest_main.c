@@ -151,6 +151,31 @@ int main(int argc, char *argv[])
     free_sa(sadb);
 #endif
 
+#if 1
+    ikepolicy="aes256-sha2_512-modp2048";
+    DBG_log("for input ike=%s", ikepolicy);
+    ai = alg_info_ike_create_from_str(ikepolicy, &e);
+
+    if(e) {
+        DBG_log("failed to parse %s: %s\n", ikepolicy, e);
+        exit(10);
+    }
+    passert(ai != NULL);
+
+    sadb = alginfo2parent_db2(ai);
+    sadb->parentSA = TRUE;
+    sa_v2_print(sadb);
+
+    if(!extrapolate_v1_from_v2(sadb, POLICY_RSASIG, INITIATOR)) {
+        DBG_log("failed to create v1");
+        exit(11);
+    }
+    printf("strong v1 (RSA):");
+    sa_print(sadb);
+
+    free_sa(sadb);
+#endif
+
     report_leaks();
     tool_close_log();
     exit(0);

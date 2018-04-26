@@ -116,13 +116,35 @@ int v2tov1_encr_child(enum ikev2_trans_type_encr encr)
 
 int v2tov1_integ(enum ikev2_trans_type_integ v2integ)
 {
+     switch(v2integ) {
+     case IKEv2_AUTH_HMAC_MD5_96:
+         return OAKLEY_MD5;
+     case IKEv2_AUTH_HMAC_SHA1_96:
+         return OAKLEY_SHA1;
+     case IKEv2_AUTH_HMAC_SHA2_256_128:
+         return OAKLEY_SHA2_256;
+     case IKEv2_AUTH_HMAC_SHA2_384_192:
+         return OAKLEY_SHA2_384;
+     case IKEv2_AUTH_HMAC_SHA2_512_256:
+         return OAKLEY_SHA2_512;
+     default:
+         return -1;
+     }
+}
+
+int v2tov1_integ_child(enum ikev2_trans_type_integ v2integ)
+{
     switch(v2integ) {
     case IKEv2_AUTH_HMAC_MD5_96:
-        return OAKLEY_MD5;
+        return AUTH_ALGORITHM_HMAC_MD5;
     case IKEv2_AUTH_HMAC_SHA1_96:
-        return OAKLEY_SHA1;
+        return AUTH_ALGORITHM_HMAC_SHA1;
     case IKEv2_AUTH_HMAC_SHA2_256_128:
-        return OAKLEY_SHA2_256;
+        return AUTH_ALGORITHM_HMAC_SHA2_256;
+    case IKEv2_AUTH_HMAC_SHA2_384_192:
+        return AUTH_ALGORITHM_HMAC_SHA2_384;
+    case IKEv2_AUTH_HMAC_SHA2_512_256:
+        return AUTH_ALGORITHM_HMAC_SHA2_512;
     default:
         return IKEv2_AUTH_INVALID;
    }

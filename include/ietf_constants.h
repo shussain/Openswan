@@ -811,7 +811,7 @@ enum ikev1_ipsec_attr {
 # define ENCAPSULATION_MODE_UDP_TRANSPORT_RFC       4
 #endif
 
-/* Auth Algorithm attribute */
+/* Auth Algorithm attribute (for ESP transforms, not IKEv1 */
 
 /* extern enum_names auth_alg_names, extended_auth_alg_names; */
 
