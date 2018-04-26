@@ -4,7 +4,8 @@ so the resulting IKEv1 policy is empty, which causes the CONN to fail.
 
 This issue was found by DTP test cases: ikev1/alg-sha512, which fails
 because sha512 was not translated.  This test case uses a policy
-(v1empty) which can be translated because XYZ.
+(v1empty) which can be translated because sha384 is not enabled.
+
 
 
 
