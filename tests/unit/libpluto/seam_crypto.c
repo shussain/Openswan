@@ -16,7 +16,8 @@ lookup_group(enum ikev2_trans_type_dh group)
 
 
 bool ike_alg_enc_present(int ealg, unsigned int keysize) { return TRUE; }
-bool ike_alg_integ_present(int halg, unsigned int keysize)  { return TRUE; }
+bool ikev1_alg_integ_present(int halg, unsigned int keysize)  { return TRUE; }
+bool ikev2_alg_integ_present(int halg, unsigned int keysize)  { return TRUE; }
 bool ike_alg_prf_present(int halg)  { return TRUE; }
 bool ike_alg_group_present(int modpid) { return TRUE; }
 

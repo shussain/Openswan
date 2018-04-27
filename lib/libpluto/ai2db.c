@@ -53,7 +53,7 @@ struct db_sa *alginfo2parent_db2(struct alg_info_ike *ai)
     ALG_INFO_IKE_FOREACH((struct alg_info_ike *)ai, ike_info, cnt) {
 
         bool enc_present = ike_alg_enc_present(ike_info->ike_ealg, ike_info->ike_eklen);
-        bool integ_present=ike_alg_integ_present(ike_info->ike_halg, ike_info->ike_hklen);
+        bool integ_present=ikev2_alg_integ_present(ike_info->ike_halg, ike_info->ike_hklen);
         bool prf_present = ike_alg_prf_present(ike_info->ike_prfalg);
         bool group_present=ike_alg_group_present(ike_info->ike_modp);
 

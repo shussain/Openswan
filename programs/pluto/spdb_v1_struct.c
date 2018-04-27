@@ -1336,7 +1336,7 @@ parse_isakmp_sa_body(
                         break;
 
                     case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-                        if (ike_alg_integ_present(val, 0)) {
+                        if (ikev1_alg_integ_present(val, 0)) {
                               ta.integ_hasher = ikev1_crypto_get_hasher(val);
                               ta.integ_hash   = ta.integ_hasher->common.algo_v2id;
                               ta.prf_hasher   = ta.integ_hasher;

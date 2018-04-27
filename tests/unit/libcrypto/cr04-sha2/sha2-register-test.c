@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     /* register it! */
     ike_alg_sha2_init();
 
-    passert(ike_alg_integ_present(IKEv2_AUTH_HMAC_SHA2_256_128, 128));
+    passert(ikev2_alg_integ_present(IKEv2_AUTH_HMAC_SHA2_256_128, 128));
 
     sha256 = ike_alg_get_integ(IKEv2_AUTH_HMAC_SHA2_256_128);
 

@@ -1,5 +1,5 @@
 # -*- makefile -*-
-CONNNAME=rw
+CONNNAME=rw512
 ENDNAME=moon
 UNITTEST1ARGS=${WHACKFILE} ${CONNNAME} v1sha512M1.pcap OUTPUT/${TESTNAME}.pcap
 WHACKFILE=${OUTPUTS}/ikev2client.record.${ARCH}

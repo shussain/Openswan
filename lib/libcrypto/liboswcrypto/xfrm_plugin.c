@@ -85,7 +85,14 @@ bool ike_alg_enc_present(int ealg, unsigned keysize)
 }
 
 /*	check if IKE hash algo is present */
-bool ike_alg_integ_present(int halg, unsigned int keysize)
+bool ikev1_alg_integ_present(int halg, unsigned int keysize)
+{
+    struct ike_integ_desc *integ_desc = (struct ike_integ_desc *)ike_alg_ikev1_find(IKEv2_TRANS_TYPE_INTEG, halg, keysize);
+    return integ_desc ? integ_desc->hash_digest_len : 0;
+}
+
+/*	check if IKE hash algo is present */
+bool ikev2_alg_integ_present(int halg, unsigned int keysize)
 {
 	struct ike_integ_desc *integ_desc = ike_alg_get_integ(halg);
 	return integ_desc ? integ_desc->hash_digest_len : 0;
