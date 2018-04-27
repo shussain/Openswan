@@ -1,6 +1,6 @@
 OUTPUT
 core.*
-v1sha5112N1
+v1sha512N1
 *.o
 .gdb1init
 .gdb2init
