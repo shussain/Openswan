@@ -22,14 +22,14 @@ starting up X cryptographic helpers
 Using 'no_kernel' interface code on
   loaded CA cert file 'strongswanCert.pem' (1350 bytes)
   loading certificate from moonCert.pem 
-  loaded host cert file '/whopping/t6839-ikev1-responder/tests/functional/15-certload/OUTPUT/certs/moonCert.pem' (1493 bytes)
+  loaded host cert file '/PATH/tests/functional/15-certload/OUTPUT/certs/moonCert.pem' (1493 bytes)
   loading certificate from sunCert.pem 
-  loaded host cert file '/whopping/t6839-ikev1-responder/tests/functional/15-certload/OUTPUT/certs/sunCert.pem' (1493 bytes)
+  loaded host cert file '/PATH/tests/functional/15-certload/OUTPUT/certs/sunCert.pem' (1493 bytes)
 adding connection: "net-net-works"
   loading certificate from moonCert.pem 
-  loaded host cert file '/whopping/t6839-ikev1-responder/tests/functional/15-certload/OUTPUT/certs/moonCert.pem' (1493 bytes)
+  loaded host cert file '/PATH/tests/functional/15-certload/OUTPUT/certs/moonCert.pem' (1493 bytes)
   loading certificate from missingCert.pem 
-  could not open host cert file '/whopping/t6839-ikev1-responder/tests/functional/15-certload/OUTPUT/certs/missingCert.pem'
+  could not open host cert file '/PATH/tests/functional/15-certload/OUTPUT/certs/missingCert.pem'
 adding connection: "net-net-fails"
 Makefile:41: recipe for target 'step2b' failed
 000 using kernel interface: noklips

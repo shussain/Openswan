@@ -47,7 +47,7 @@ step4:
 	@${WHACKBIN} ${CTLBASE} --status
 
 check: OUTPUT
-	@(make --no-print-directory step1; sleep 1; make --no-print-directory step2 step2b; sleep 1; make --no-print-directory step4; make --no-print-directory step3)| tee ${OUTPUTS}/pluto.addconn.raw | sed -r -f ${TESTUTILS}/openswanver.sed -f ${REMOVEHELPERS} -f ${TESTUTILS}/randomhelper.sed | diff -w - pluto.addconn.out;
+	@(make --no-print-directory step1; sleep 1; make --no-print-directory step2 step2b; sleep 1; make --no-print-directory step4; make --no-print-directory step3)| tee ${OUTPUTS}/pluto.addconn.raw | sed -r -f ${TESTUTILS}/openswanver.sed -f ${REMOVEHELPERS} -f ${TESTUTILS}/randomhelper.sed -f ${TESTUTILS}/loadcertpath.sed | diff -w - pluto.addconn.out;
 
 OUTPUT:
 	@mkdir -p ${OUTPUTS}/base
@@ -55,7 +55,7 @@ OUTPUT:
 	-rm -f OUTPUT.pid
 
 update:
-	sed -r -f ${TESTUTILS}/openswanver.sed -f ${REMOVEHELPERS} -f ${TESTUTILS}/randomhelper.sed ${OUTPUTS}/pluto.addconn.raw >pluto.addconn.out
+	sed -r -f ${TESTUTILS}/openswanver.sed -f ${REMOVEHELPERS} -f ${TESTUTILS}/randomhelper.sed  -f ${TESTUTILS}/loadcertpath.sed ${OUTPUTS}/pluto.addconn.raw >pluto.addconn.out
 
 clean:
 	rm -rf OUTPUT OUTPUT.pid
