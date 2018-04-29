@@ -82,7 +82,12 @@ static const struct keyword_enum_values kw_failureshunt_list = VALUES_INITIALIZE
  * Values for keyexchange=
  */
 static const struct keyword_enum_value kw_keyexchange_values[]={
-    { "ike",  KE_IKE },
+    { "ike",    KE_IKE },
+    { "ikev1",  KE_IKEv1 },
+    { "isakmp", KE_IKEv1 },
+    { "oakley", KE_IKEv1 },
+    { "ikev2",  KE_IKEv2 },
+    { "rfc7296",KE_IKEv2 },
 };
 
 static const struct keyword_enum_values kw_keyexchange_list = VALUES_INITIALIZER(kw_keyexchange_values);

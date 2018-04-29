@@ -28,6 +28,7 @@ check: OUTPUT
 	../readwritetest ${READWRITE} dooku h2h.conf ../../unit/libpluto/samples/h2h.conf
 	../readwritetest ${READWRITE} dooku certpercent.conf berri-strongswan.conf
 	: ../readwritetest ${READWRITE} dooku brokenspace.conf brokenspace.conf
+	../readwritetest ${READWRITE} ikev1   dtp-ikev1.conf     dtp-ikev1.conf
 	[ ! -f core ]
 
 OUTPUT:
@@ -40,6 +41,7 @@ update:
 	cp OUTPUT/cassidy.conf.out       cassidy.conf.out
 	cp OUTPUT/h2h.conf.out           h2h.conf.out
 	cp OUTPUT/certpercent.conf.out           certpercent.conf.out
+	cp OUTPUT/dtp-ikev1.conf.out      dtp-ikev1.conf.out
 
 # Local Variables:
 # compile-command: "(cd ../../../programs/readwriteconf && make clean && make programs) && make check"

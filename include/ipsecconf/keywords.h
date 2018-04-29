@@ -213,7 +213,9 @@ enum keyword_valid {
 /* values keyexchange= */
 enum keyword_keyexchange {
     KE_NONE = 0,
-    KE_IKE  = 1,
+    KE_IKE  = 1,  /* any version of IKE, vs group keying methods */
+    KE_IKEv1= 2,  /* RFC4307 and friendds */
+    KE_IKEv2= 3,  /* RFC7296 and future */
 };
 
 /* values for auto={add,start,route,ignore} */
