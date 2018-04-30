@@ -698,7 +698,10 @@ decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
         if (r != c)
 	{
-            openswan_log("switched from \"%s\" to \"%s\"", c->name, r->name);
+            char instance[1 + 10 + 1];
+
+            openswan_log("switched from \"%s\" to \"%s\"%s", c->name, r->name
+                         , fmt_connection_inst_name(r, instance, sizeof(instance)));
 
 	    st->st_connection = r;	/* kill reference to c */
 
