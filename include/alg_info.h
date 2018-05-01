@@ -82,7 +82,7 @@ typedef void alg_info_adder(struct alg_info *alg_info
 #define ESPTOINFO(X) (struct alg_info *)X
 #define IKETOINFO(X) (struct alg_info *)X
 
-
+/* transition to these names */
 #define esp_ealg_id transid
 #define esp_aalg_id auth
 #define esp_ealg_keylen enckeylen	/* bits */

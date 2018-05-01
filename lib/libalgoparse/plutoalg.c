@@ -297,9 +297,9 @@ alg_info_snprint_esp(char *buf, size_t buflen, struct alg_info_esp *alg_info)
 
 	    ret=snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d"
 			 , sep
-			 , enum_name(&esp_transformid_names, esp_info->esp_ealg_id)+sizeof("ESP")
+			 , enum_name(&trans_type_encr_names, esp_info->esp_ealg_id)
 			 , esp_info->esp_ealg_id, eklen
-			 , enum_name(&auth_alg_names, esp_info->esp_aalg_id) + (esp_info->esp_aalg_id ? sizeof("AUTH_ALGORITHM_HMAC") : sizeof("AUTH_ALGORITHM"))
+			 , enum_name(&trans_type_integ_names, esp_info->esp_aalg_id)
 			 , esp_info->esp_aalg_id, aklen);
 
 	    if ( ret < 0 || (size_t)ret >= buflen) {
