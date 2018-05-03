@@ -32,6 +32,7 @@ FUNCTEST+=12-rwcertwrite
 FUNCTEST+=13-bigpubkey
 FUNCTEST+=14-deadalgos
 FUNCTEST+=15-certload
+FUNCTEST+=16-v4inv6
 
 clean check pcapupdate programs:
 	@set -e; for test in ${FUNCTEST}; do ${MAKE} -C $$test $@; done
