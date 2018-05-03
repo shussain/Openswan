@@ -11,33 +11,24 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-OPENSWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${OPENSWANSRCDIR}/tests/functional
+OPENSWANSRCDIR?=$(shell cd ../../..; pwd)
+srcdir?=${OPENSWANSRCDIR}/tests/functional/01-confread
 
 include ${OPENSWANSRCDIR}/Makefile.inc
 
-FUNCTEST=
-FUNCTEST+=01-confread
-FUNCTEST+=03-plutostart
-FUNCTEST+=04-whackwrite
-FUNCTEST+=05-addconn
-FUNCTEST+=06-dnsdelay
-FUNCTEST+=06-alsoflip
-FUNCTEST+=07-sourceipv6
-FUNCTEST+=08-sitelocalv6
-FUNCTEST+=09-v6inv4
-FUNCTEST+=10-defaultroute
-FUNCTEST+=11-subnets
-FUNCTEST+=12-rwcertwrite
-FUNCTEST+=13-bigpubkey
-FUNCTEST+=14-deadalgos
-FUNCTEST+=15-certload
-FUNCTEST+=16-v4inv6
-FUNCTEST+=17-connclientfamily
+READWRITE=${OBJDIRTOP}/programs/readwriteconf/readwriteconf
 
-clean check pcapupdate programs:
-	@set -e; for test in ${FUNCTEST}; do ${MAKE} -C $$test $@; done
+check: OUTPUT
+	-@rm -f core
+	../readwritetest ${READWRITE} connclientfamily  connclientfamily.conf  connclientfamily.conf
+	[ ! -f core ]
 
-testlist:
-	@echo ${FUNCTEST}
+OUTPUT:
+	mkdir -p OUTPUT
 
+update:
+	cp OUTPUT/connclientfamily.conf.out connclientfamily.conf.out
+
+# Local Variables:
+# compile-command: "(cd ../../../programs/readwriteconf && make clean && make programs) && make check"
+# End:
