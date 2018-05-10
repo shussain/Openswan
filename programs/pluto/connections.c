@@ -1140,6 +1140,14 @@ add_connection(const struct whack_message *wm)
 	    c->spd.that = t;
 	}
 
+        /* use any_id to see if this.id/that.id is valid) */
+        if(any_id(&c->spd.this.id)) {
+            openswan_log("my side id: is wildcard");
+        }
+        if(any_id(&c->spd.that.id)) {
+            openswan_log("their side id: is wildcard");
+        }
+
 	c->spd.next = NULL;
 	c->spd.reqid = gen_reqid();
 

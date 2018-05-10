@@ -388,8 +388,6 @@ unshare_id_content(struct id *id)
     case ID_IPV4_ADDR:
     case ID_IPV6_ADDR:
 	break;
-    default:
-	bad_case(id->kind);
     }
 }
 
@@ -410,8 +408,6 @@ free_id_content(struct id *id)
     case ID_IPV4_ADDR:
     case ID_IPV6_ADDR:
 	break;
-    default:
-	bad_case(id->kind);
     }
 }
 
@@ -434,10 +430,9 @@ any_id(const struct id *a)
     case ID_USER_FQDN:
     case ID_DER_ASN1_DN:
     case ID_KEY_ID:
+    case ID_FROMCERT:
 		return FALSE;
 
-    default:
-	bad_case(a->kind);
     }
     /* NOTREACHED */
     return FALSE;
@@ -480,15 +475,13 @@ same_exact_id(const struct id *a, const struct id *b)
 			       , (char *)b->name.ptr, al) == 0;
 	}
 
+    case ID_FROMCERT:
     case ID_DER_ASN1_DN:
 	return same_dn(a->name, b->name);
 
     case ID_KEY_ID:
 	return a->name.len == b->name.len
 	    && memcmp(a->name.ptr, b->name.ptr, a->name.len) == 0;
-
-    default:
-	bad_case(a->kind);
     }
     /* NOTREACHED */
     return FALSE;

@@ -24,6 +24,7 @@ Using 'no_kernel' interface code on
   loaded CA cert file 'strongswanCert.pem' (1350 bytes)
   loading certificate from bobCert.pem 
   loaded host cert file 'bob/certs/bobCert.pem' (1489 bytes)
+my side id: is wildcard
 adding connection: "nat-t"
 loading secrets from "bob.secrets"
   loaded private key file 'bob/private/bobKey.pem' (1675 bytes)
