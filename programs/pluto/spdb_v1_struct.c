@@ -1315,13 +1315,18 @@ parse_isakmp_sa_body(
 
               DBG(DBG_PARSING,
               {
-                  enum_names *vdesc = oakley_attr_val_descs[val];
+                  enum_names *vdesc;
+                  if(val < oakley_attr_val_descs_size) {
+                      vdesc = oakley_attr_val_descs[val];
 
-                  if (vdesc != NULL) {
-                      const char *nm = enum_name(vdesc, val);
+                      if (vdesc != NULL) {
+                          const char *nm = enum_name(vdesc, val);
 
-                      if (nm != NULL)
-                          DBG_log("   [%u is %s]", (unsigned)val, nm);
+                          if (nm != NULL)
+                              DBG_log("   [%u is %s]", (unsigned)val, nm);
+                      }
+                  } else {
+                      DBG_log("   invalid oakley attr: %d", val);
                   }
               });
 
