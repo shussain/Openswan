@@ -679,6 +679,11 @@ static void delete_state_function(struct state *this
 				  , struct connection *c UNUSED
 				  , void *arg UNUSED)
 {
+    so_serial_t *parent_sa = (void *)arg;
+
+    /* do not delete "self* */
+    if(parent_sa !=NULL && this->st_serialno == *parent_sa) return;
+
     if(this->st_event != NULL) delete_event(this);
     delete_state(this);
 }
@@ -737,6 +742,10 @@ static bool same_phase1_sa(struct state *this,
     return (this->st_connection == c);
 }
 
+/*
+ * delete all states that point to this same connection,
+ * but do not delete the newest_isakmp_sa!
+ */
 void
 delete_states_by_connection(struct connection *c, bool relations)
 {
