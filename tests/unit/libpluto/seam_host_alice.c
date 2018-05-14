@@ -1,5 +1,7 @@
 #define NAPT_ENABLED 1
+#ifdef FIREWALL_OUTSIDE
 #define FIREWALL_OUTSIDE "192.168.0.1"
+#endif
 
 struct iface_dev  alice_ifd1 = {
 	.id_count = 1,
