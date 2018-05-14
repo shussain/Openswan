@@ -1255,9 +1255,11 @@ static int load_conn (struct starter_config *cfg
         case KE_IKE:
             /* nothing, we do not support any other kind */
             break;
+
         case KE_IKEv1:
             /* normally allowed, so do not set IKEV1_DISABLED */
             conn->options[KBF_KEYEXCHANGE] = KE_IKE;
+	    conn->policy &= ~(POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE);
             break;
 
         case KE_IKEv2:

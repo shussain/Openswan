@@ -26,6 +26,7 @@ conn rw
 	ikev1=yes
 	authby=rsasig
 	phase2=esp
+	ikev2=never
 	endaddrfamily=ipv4
 	tunneladdrfamily=ipv4
 # end conn rw
