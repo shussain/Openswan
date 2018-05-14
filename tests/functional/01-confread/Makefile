@@ -44,7 +44,7 @@ update:
 	cp OUTPUT/h2h.conf.out           h2h.conf.out
 	cp OUTPUT/certpercent.conf.out           certpercent.conf.out
 	cp OUTPUT/dtp-ikev1.conf.out      dtp-ikev1.conf.out
-	cp OUTPUT/notrailingnewline.out   notrailingnewline.conf.out
+	: cp OUTPUT/notrailingnewline.out   notrailingnewline.conf.out
 
 # Local Variables:
 # compile-command: "(cd ../../../programs/readwriteconf && make clean && make programs) && make check"
