@@ -116,6 +116,10 @@ send_packet_srcnat(struct state *st, const char *where, bool verbose, ip_address
 unsigned short outside_port500 = 55044;
 unsigned short outside_port4500= 55045;
 
+#ifndef FIREWALL_OUTSIDE
+#define FIREWALL_OUTSIDE "93.184.216.34"
+#endif
+
 bool
 send_packet(struct state *st, const char *where, bool verbose)
 {
@@ -123,7 +127,7 @@ send_packet(struct state *st, const char *where, bool verbose)
 
     /* example.com: 93.184.216.34 */
     outsideoffirewall = st->st_interface->ip_addr;
-    inet_pton(AF_INET, "93.184.216.34", &outsideoffirewall.u.v4.sin_addr);
+    inet_pton(AF_INET, FIREWALL_OUTSIDE, &outsideoffirewall.u.v4.sin_addr);
 
     if(ntohs(outsideoffirewall.u.v4.sin_port) == pluto_port500) {
       outsideoffirewall.u.v4.sin_port = htons(outside_port500);
