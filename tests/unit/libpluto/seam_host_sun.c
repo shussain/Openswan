@@ -22,7 +22,7 @@ struct iface_port sun_if2 = {
 	.ip_addr.u.v4.sin_family = AF_INET,
 	.fd     = -1,
 	.next   = NULL,
-	.ike_float = 0,
+	.ike_float = 1,
 	.change    = IFN_KEEP
 };
 

@@ -1,5 +1,6 @@
 #define OMIT_MAIN_MODE 1
-
+#define FIREWALL_OUTSIDE "192.168.0.1"
+#define NAPT_ENABLED 1
 #include "../lp02-parentI1/parentI1_head.c"
 #include "seam_host_alice.c"
 #include "seam_demux.c"
