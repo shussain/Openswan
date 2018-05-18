@@ -2208,10 +2208,22 @@ static void look_for_replacement_state(struct state *st)
 static void
 build_desired_sr(struct state *st, struct spd_route *desired_sr)
 {
-    /* we started with a copy of the policy */
-    if(desired_sr->that.has_client == FALSE) {
+    /*
+     * in the case of a host that wants to create a /32 (or /128) for *ITSELF*,
+     * then NAT-Traversal must not have been detected.
+     *
+     * we started with a copy of the policy, so we can just modify it.
+     *
+     */
+    if(desired_sr->that.has_client == FALSE
+       && st->hidden_variables.st_nat_traversal == 0) {
+        char abuf[ADDRTOT_BUF];
+
         addrtosubnet(&st->st_remoteaddr, &desired_sr->that.client);
         setportof(0, &desired_sr->that.client.addr);
+
+        addrtot(&desired_sr->that.client.addr, 0, abuf, sizeof(abuf));
+        openswan_log("using peer address %s as peer subnet proposal", abuf);
     }
 }
 
