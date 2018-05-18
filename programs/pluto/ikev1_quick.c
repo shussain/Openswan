@@ -1646,14 +1646,28 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
     peer.protocol   = b->his.proto;
     peer.has_client = TRUE;
 
+    /*
+     * check that if we are not behind a NAT, that a /32 is proposed, and that the thing proposed
+     * is the same as the address from which the connection came from
+     */
+    if(p1st->hidden_variables.st_nat_traversal == 0
+       && subnetishost(&peer.client)
+       && addrinsubnet(&p1st->st_remoteaddr, &peer.client)) {
+        /* it's a proposal for hosts own IP address, not behind a NAT */
+        peer.client_is_self = TRUE;
+
+    } else if(is_virtual_net_allowed(c, &peer.client, &p1st->st_remoteaddr)) {
+        peer.client_is_self = TRUE;
+    }
+
     {
 	char s1[ENDCLIENTTOT_BUF],d1[ENDCLIENTTOT_BUF];
 
 	endclienttot(&our, s1, sizeof(s1));
 	endclienttot(&peer,d1, sizeof(d1));
 
-	openswan_log("the peer proposed: %s -> %s"
-		     , s1, d1);
+	openswan_log("the peer proposed: %s -> %s (self=%s)"
+		     , s1, d1, peer.client_is_self ? "true" : "false");
     }
 
     /* Now that we have identities of client subnets, we must look for
