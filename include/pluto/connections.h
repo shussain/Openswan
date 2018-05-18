@@ -172,14 +172,19 @@ struct end {
 	host_addr,
 	host_nexthop,
 	host_srcip;
-    ip_subnet client;           /* consider replacing this with p2id from ikev1_quick.c */
     ip_address saved_hint_addr;  /* the address we got from the cfg file if IPHOSTNAME */
     struct dns_end_list host_address_list;
 
     bool key_from_DNS_on_demand;
+
+    /* this section is about what's inside the SA */
+    ip_subnet client;           /* consider replacing this with p2id from ikev1_quick.c */
     bool has_client;
     bool has_client_wildcard;
     bool has_port_wildcard;
+    bool client_is_self;        /* true if the end point is the same as host */
+    struct virtual_t *virt;
+
     char *updown;
     u_int16_t host_port;	/* where the IKE port is */
     bool      host_port_specific; /* if TRUE, then IKE ports are tested for*/
@@ -196,7 +201,6 @@ struct end {
 
     struct ietfAttrList *groups;/* access control groups */
 
-    struct virtual_t *virt;
 /*#ifdef XAUTH*/
     bool xauth_server;
     bool xauth_client;
