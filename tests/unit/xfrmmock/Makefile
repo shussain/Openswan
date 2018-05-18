@@ -23,6 +23,8 @@ UNITTESTS+=xf79-childQR1
 
 UNITTESTS+=xf88-v1certQI1
 
+UNITTESTS+=xf109-v1rwnatQR1
+
 programs pcapupdate clean check:
 	@for unittest in ${UNITTESTS}; do ${MAKE} -C $$unittest $@; done
 
