@@ -418,15 +418,17 @@ default_end(struct end *e, ip_address *dflt_nexthop)
     err_t ugh = NULL;
     const struct af_info *afi = aftoinfo(addrtypeof(&e->host_addr));
 
-    if (afi == NULL)
-	return "unknown address family in default_end";
+    if(e->sendcert == 0) {
+	e->sendcert = cert_sendifasked;
+    }
 
-    /* default ID to IP (but only if not NO_IP -- WildCard) */
-    if (e->id.kind == ID_NONE && !isanyaddr(&e->host_addr))
-    {
-	e->id.kind = afi->id_addr;
-	e->id.ip_addr = e->host_addr;
-	e->id.has_wildcards = FALSE;
+    if (afi) {
+        /* default ID to IP (but only if not NO_IP -- WildCard) */
+        if (e->id.kind == ID_NONE && !isanyaddr(&e->host_addr)) {
+            e->id.kind = afi->id_addr;
+            e->id.ip_addr = e->host_addr;
+            e->id.has_wildcards = FALSE;
+        }
     }
 
     /* default nexthop to other side */
@@ -439,10 +441,6 @@ default_end(struct end *e, ip_address *dflt_nexthop)
      */
     if (!e->has_client)
 	ugh = addrtosubnet(&e->host_addr, &e->client);
-
-    if(e->sendcert == 0) {
-	e->sendcert = cert_sendifasked;
-    }
 
     return ugh;
 }
