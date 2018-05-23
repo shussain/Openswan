@@ -2684,6 +2684,9 @@ fc_try(const struct connection *c
     endclienttot(our_end,  s1, sizeof(s1));
     endclienttot(peer_end, d1, sizeof(d1));
 
+    DBG(DBG_CONTROLMORE
+        , DBG_log("   peer_net: %s", peer_net_is_host ? "yes" : "no"));
+
     for (d = hp->connections; d != NULL; d = d->IPhp_next)
     {
 	struct spd_route *sr;
@@ -2742,7 +2745,7 @@ fc_try(const struct connection *c
 		continue;
 	    }
 
-	    if (sr->that.has_client)
+	    if (sr->that.has_client && sr->that.host_type != KH_ANY)
 	    {
 		if (sr->that.has_client_wildcard) {
 		    if (!subnetinsubnet(&peer_end->client, &sr->that.client))
@@ -2969,7 +2972,9 @@ find_client_connection(struct connection *c
 		    return c;
 
 		unrouted = c;
-	    }
+	    } else {
+                DBG(DBG_CONTROLMORE, DBG_log("    not matched"))
+            }
 	}
 
 	/* exact match? */
