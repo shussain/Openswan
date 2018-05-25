@@ -1225,12 +1225,6 @@ quick_inI1_outR1(struct msg_digest *md)
     b.new_iv_len = p1st->st_new_iv_len;
     save_new_iv(p1st, b.new_iv);
 
-    /*
-     * FIXME - DAVIDM
-     * "b" is on the stack,  for OPPO  tunnels this will be bad, in
-     * quick_inI1_outR1_start_query it saves a pointer to it before
-     * a crypto (async op).
-     */
     return quick_inI1_outR1_authtail(&b, NULL);
 }
 
@@ -1324,7 +1318,7 @@ quick_inI1_outR1_start_query(struct verify_oppo_bundle *b
 
     /* Record that state is used by a suspended md */
     b->step = next_step;    /* not just vc->b.step */
-    vc->b = *b;
+    vc->b = *b;             /* copies entire structure */
     passert(p1st->st_suspended_md == NULL);
     set_suspended(p1st, b->md);
 
