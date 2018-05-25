@@ -1633,12 +1633,14 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
     our.port       = b->my.port;
     our.protocol   = b->my.proto;
     our.has_client = TRUE;
+    our.host_addr  = p1st->st_localaddr;
 
     peer.host_type  = KH_IPADDR;
     peer.client     = b->his.net;
     peer.port       = b->his.port;
     peer.protocol   = b->his.proto;
     peer.has_client = TRUE;
+    peer.host_addr  = p1st->st_remoteaddr;
 
     /*
      * check that if we are not behind a NAT, that a /32 is proposed, and that the thing proposed
@@ -1660,8 +1662,9 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	endclienttot(&our, s1, sizeof(s1));
 	endclienttot(&peer,d1, sizeof(d1));
 
-	openswan_log("the peer proposed: %s -> %s (self=%s)"
-		     , s1, d1, peer.client_is_self ? "true" : "false");
+	openswan_log("the peer proposed: %s -> %s (self=%s) [%s]"
+		     , s1, d1, peer.client_is_self ? "true" : "false"
+                     , );
     }
 
     /* Now that we have identities of client subnets, we must look for
@@ -1805,54 +1808,48 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 #endif
 	    c = p;
 	}
+    }
 
-	/* XXX Though c == p, they are used intermixed in the below section */
-	/* fill in the client's true ip address/subnet */
-	DBG(DBG_CONTROLMORE
-	    , DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s"
-		      , c->spd.that.has_client_wildcard ? "yes" : "no"
-		      , c->spd.that.has_port_wildcard  ? "yes" : "no"
-		      , is_virtual_connection(c) ? "yes" : "no"));
+    /* fill in the client's true ip address/subnet */
+    DBG(DBG_CONTROLMORE
+        , DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s"
+                  , c->spd.that.has_client_wildcard ? "yes" : "no"
+                  , c->spd.that.has_port_wildcard  ? "yes" : "no"
+                  , is_virtual_connection(c) ? "yes" : "no"));
 
-	if (c->spd.that.has_client_wildcard)
-	{
-	    c->spd.that.client = *his_net;
-	    c->spd.that.has_client_wildcard = FALSE;
-	}
+    if (c->spd.that.has_client_wildcard) {
+        c->spd.that.client = *his_net;
+        c->spd.that.has_client_wildcard = FALSE;
+    }
 
-        /* fill in the client's true port */
-        if (p->spd.that.has_port_wildcard)
-        {
-            int port = htons(b->his.port);
+    /* fill in the client's true port */
+    if (c->spd.that.has_port_wildcard) {
+        int port = htons(b->his.port);
 
-            setportof(port, &p->spd.that.host_addr);
-            setportof(port, &p->spd.that.client.addr);
+        setportof(port, &c->spd.that.host_addr);
+        setportof(port, &c->spd.that.client.addr);
 
-            p->spd.that.port = b->his.port;
-            p->spd.that.has_port_wildcard = FALSE;
+        c->spd.that.port = b->his.port;
+        c->spd.that.has_port_wildcard = FALSE;
+    }
+
+    if (is_virtual_connection(c)) {
+        char cthat[END_BUF];
+
+        c->spd.that.client = *his_net;
+        c->spd.that.has_client = TRUE;
+        c->spd.that.virt = NULL;
+
+        if (subnetishost(his_net)
+            && addrinsubnet(&c->spd.that.host_addr, his_net)) {
+
+            c->spd.that.has_client = FALSE;
         }
 
-
-
-	if (is_virtual_connection(c))
-	{
-	    char cthat[END_BUF];
-
-	    c->spd.that.client = *his_net;
-	    c->spd.that.has_client = TRUE;
-	    c->spd.that.virt = NULL;
-
-	    if (subnetishost(his_net)
-		&& addrinsubnet(&c->spd.that.host_addr, his_net)) {
-
-		c->spd.that.has_client = FALSE;
-	    }
-
-	    format_end(cthat, sizeof(cthat), &c->spd.that, NULL, TRUE, LEMPTY);
-	    DBG(DBG_CONTROLMORE
-		, DBG_log("setting phase 2 virtual values to %s"
-			  , cthat));
-	}
+        format_end(cthat, sizeof(cthat), &c->spd.that, NULL, TRUE, LEMPTY);
+        DBG(DBG_CONTROLMORE
+            , DBG_log("setting phase 2 virtual values to %s"
+                      , cthat));
     }
     passert((p1st->st_policy & POLICY_PFS)==0 || p1st->st_pfs_group != NULL );
 

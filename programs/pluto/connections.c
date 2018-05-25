@@ -2676,14 +2676,19 @@ fc_try(const struct connection *c
     int wildcards, pathlen;
     err_t virtualwhy = NULL;
     char s1[ENDCLIENTTOT_BUF],d1[ENDCLIENTTOT_BUF];
-    const bool peer_net_is_host = subnetisaddr(&peer_end->client, &c->spd.that.host_addr) ||
-        (c->spd.that.host_type == KH_ANY && c->spd.that.has_client == FALSE);
+    char our_end_buf[ADDRTOT_BUF], peer_end_buf[ADDRTOT_BUF];
+    const bool peer_net_is_host = subnetisaddr(&peer_end->client, &c->spd.that.host_addr);
 
     endclienttot(our_end,  s1, sizeof(s1));
     endclienttot(peer_end, d1, sizeof(d1));
 
+    addrtot(&our_end->host_addr,  0, our_end_buf,  sizeof(our_end_buf));
+    addrtot(&peer_end->host_addr, 0, peer_end_buf, sizeof(peer_end_buf));
+
     DBG(DBG_CONTROLMORE
-        , DBG_log("   peer_net: %s", peer_net_is_host ? "yes" : "no"));
+        , DBG_log("   peer_net: %s O:%s P:%s "
+                  , peer_net_is_host ? "yes" : "no"
+                  , our_end_buf, peer_end_buf));
 
     for (d = hp->connections; d != NULL; d = d->IPhp_next)
     {
