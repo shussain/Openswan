@@ -1662,9 +1662,8 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	endclienttot(&our, s1, sizeof(s1));
 	endclienttot(&peer,d1, sizeof(d1));
 
-	openswan_log("the peer proposed: %s -> %s (self=%s) [%s]"
-		     , s1, d1, peer.client_is_self ? "true" : "false"
-                     , );
+	openswan_log("the peer proposed: %s -> %s (self=%s)"
+		     , s1, d1, peer.client_is_self ? "true" : "false");
     }
 
     /* Now that we have identities of client subnets, we must look for
@@ -1676,7 +1675,7 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 #ifdef NAT_TRAVERSAL
 #ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
     if( (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
-	&& !(p1st->st_policy & POLICY_TUNNEL)
+	&& !(p1st->st_connection->policy & POLICY_TUNNEL)
 	&&  (p1st->hidden_variables.st_nat_traversal & (LELEM(NAT_TRAVERSAL_NAT_BHND_ME) | LELEM(NAT_TRAVERSAL_NAT_BHND_PEER)) )
 	&& (p == NULL) )
         {

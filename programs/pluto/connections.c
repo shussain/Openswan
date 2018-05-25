@@ -2779,6 +2779,13 @@ fc_try(const struct connection *c
 	    {
 		if (!peer_net_is_host)
 		    continue;
+
+                /* if host value is ANY, and it has no client, then client is self */
+                if(c->spd.that.host_type == KH_ANY
+                   && c->spd.that.has_client == FALSE
+                   && !(addrinsubnet(&peer_end->host_addr, &peer_end->client)
+                        && subnetishost(&peer_end->client)))
+                    continue;
 	    }
 
 	    /* We've run the gauntlet -- success:
