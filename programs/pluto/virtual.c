@@ -203,8 +203,7 @@ init_virtual_ip(const char *private_list)
  * @param string (virtual_private= from ipsec.conf)
  * @return virtual_t
  */
-struct virtual_t
-*create_virtual(const struct connection *c, const char *string)
+struct virtual_t *create_virtual(const struct connection *c, const char *string)
 {
     unsigned short flags=0, n_net=0, i;
     const char *str = string, *next, *first_net=NULL;

@@ -2677,7 +2677,7 @@ fc_try(const struct connection *c
     err_t virtualwhy = NULL;
     char s1[ENDCLIENTTOT_BUF],d1[ENDCLIENTTOT_BUF];
     char our_end_buf[ADDRTOT_BUF], peer_end_buf[ADDRTOT_BUF];
-    const bool peer_net_is_host = subnetisaddr(&peer_end->client, &c->spd.that.host_addr);
+    char this_host_buf[ADDRTOT_BUF], that_host_buf[ADDRTOT_BUF];
 
     endclienttot(our_end,  s1, sizeof(s1));
     endclienttot(peer_end, d1, sizeof(d1));
@@ -2686,8 +2686,7 @@ fc_try(const struct connection *c
     addrtot(&peer_end->host_addr, 0, peer_end_buf, sizeof(peer_end_buf));
 
     DBG(DBG_CONTROLMORE
-        , DBG_log("   peer_net: %s O:%s P:%s "
-                  , peer_net_is_host ? "yes" : "no"
+        , DBG_log("   fc_try outer us:%s peer:%s "
                   , our_end_buf, peer_end_buf));
 
     for (d = hp->connections; d != NULL; d = d->IPhp_next)
@@ -2724,8 +2723,12 @@ fc_try(const struct connection *c
 	for (sr = &d->spd; best != d && sr != NULL; sr = sr->next)
 	{
 	    policy_prio_t prio;
+
 #ifdef DEBUG
 	    char s3[ENDCLIENTTOT_BUF],d3[ENDCLIENTTOT_BUF];
+
+            addrtot(&sr->this.host_addr,  0, this_host_buf,  sizeof(this_host_buf));
+            addrtot(&sr->that.host_addr,  0, that_host_buf,  sizeof(that_host_buf));
 
 	    if (DBGP(DBG_CONTROLMORE))
 	    {
@@ -2748,44 +2751,47 @@ fc_try(const struct connection *c
 		continue;
 	    }
 
-	    if (sr->that.has_client && sr->that.host_type != KH_ANY)
-	    {
-		if (sr->that.has_client_wildcard) {
-		    if (!subnetinsubnet(&peer_end->client, &sr->that.client))
-			continue;
-		} else {
-		    if ((!samesubnet(&sr->that.client, &peer_end->client))
-			&& (!is_virtual_sr(sr))
-			) {
-			DBG(DBG_CONTROLMORE
-			     , DBG_log("   their client(%s) not in same peer_net (%s)"
-				       , d3, d1));
-			continue;
-		    }
+	    if (sr->that.has_client) {
+                if (sr->that.has_client_wildcard) {
+                    if (!subnetinsubnet(&peer_end->client, &sr->that.client))
+                        continue;
+                } else {
+                    if ((!samesubnet(&sr->that.client, &peer_end->client))
+                        && (!is_virtual_sr(sr))
+                        ) {
+                        DBG(DBG_CONTROLMORE
+                            , DBG_log("   their client(%s) not in same peer_net (%s)"
+                                      , d3, d1));
+                        continue;
+                    }
 
-                    /* XXX */
-		    virtualwhy=is_virtual_net_allowed(d, &peer_end->client, &sr->that.host_addr);
+                    virtualwhy=is_virtual_net_allowed(d, &peer_end->client, &sr->that.host_addr);
 
-		    if ((is_virtual_sr(sr)) &&
-			( (virtualwhy != NULL) ||
-			  (is_virtual_net_used(d, &peer_end->client, peer_id?peer_id:&sr->that.id)) )) {
-			DBG(DBG_CONTROLMORE
-			     , DBG_log("   virtual net not allowed"));
-			continue;
-		    }
-		}
-	    }
+                    if ((is_virtual_sr(sr)) &&
+                        ( (virtualwhy != NULL) ||
+                          (is_virtual_net_used(d, &peer_end->client, peer_id?peer_id:&sr->that.id)) )) {
+                        DBG(DBG_CONTROLMORE
+                            , DBG_log("   virtual net not allowed"));
+                        continue;
+                    }
+                }
+            }
 	    else
 	    {
-		if (!peer_net_is_host)
+		if (!subnetisaddr(&peer_end->client, &sr->that.host_addr)) {
+                    DBG(DBG_CONTROLMORE
+                        , DBG_log("   no match, peer proposed net is not proposing host (%s != %s)"
+                                  , that_host_buf, d1));
 		    continue;
+                }
 
-                /* if host value is ANY, and it has no client, then client is self */
-                if(c->spd.that.host_type == KH_ANY
-                   && c->spd.that.has_client == FALSE
-                   && !(addrinsubnet(&peer_end->host_addr, &peer_end->client)
-                        && subnetishost(&peer_end->client)))
+                /* if host value is ANY, and it has no client (or we'd be above),
+                 * then client is not self, then no match. */
+                if(c->spd.that.host_type != KH_ANY) {
+                    DBG(DBG_CONTROLMORE
+                        , DBG_log("   client subnet in policy, without subnet=%%self, ignoring"));
                     continue;
+                }
 	    }
 
 	    /* We've run the gauntlet -- success:
