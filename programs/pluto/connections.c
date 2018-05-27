@@ -2778,18 +2778,11 @@ fc_try(const struct connection *c
             }
 	    else
 	    {
-		if (!subnetisaddr(&peer_end->client, &sr->that.host_addr)) {
+                if(c->spd.that.host_type != KH_ANY
+                   && !subnetisaddr(&peer_end->client, &peer_end->host_addr)) {
                     DBG(DBG_CONTROLMORE
                         , DBG_log("   no match, peer proposed net is not proposing host (%s != %s)"
-                                  , that_host_buf, d1));
-		    continue;
-                }
-
-                /* if host value is ANY, and it has no client (or we'd be above),
-                 * then client is not self, then no match. */
-                if(c->spd.that.host_type != KH_ANY) {
-                    DBG(DBG_CONTROLMORE
-                        , DBG_log("   client subnet in policy, without subnet=%%self, ignoring"));
+                                  , d1, that_host_buf));
                     continue;
                 }
 	    }
