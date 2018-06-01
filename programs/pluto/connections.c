@@ -2778,11 +2778,11 @@ fc_try(const struct connection *c
             }
 	    else
 	    {
-                if(c->spd.that.host_type != KH_ANY
+                if(c->spd.that.host_type == KH_ANY
                    && !subnetisaddr(&peer_end->client, &peer_end->host_addr)) {
                     DBG(DBG_CONTROLMORE
                         , DBG_log("   no match, peer proposed net is not proposing host (%s != %s)"
-                                  , d1, that_host_buf));
+                                  , d1, peer_end_buf));
                     continue;
                 }
 	    }
