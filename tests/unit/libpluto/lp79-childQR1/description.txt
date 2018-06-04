@@ -1,5 +1,19 @@
 This test case is an IKEv1 responder, receive I3 message, send the R3.
 
+This tests peel (132.213.238.7) responding to berri, which is behind a NAT,
+but proposes a static set of IPv6 subnets.
+
+It is also used with lp73 thru lp80 to test that IKEv1 progresses through
+the quick mode correctly.   While the initiator is behind a NAT, and
+so has a random left=%any, the proposal is a definite IPv6 set of subnets.
+
+
+
+
+
+
+
+
 
 
 

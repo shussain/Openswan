@@ -1,3 +1,8 @@
 This test case is an IKEv1 initiator -- it exists so that we can test the
 reply of an IKEv2-only responder.
 
+It is also used with lp73 thru lp80 to test that IKEv1 progresses through
+the quick mode correctly.   While the initiator is behind a NAT, and
+so has a random left=%any, the proposal is a definite IPv6 set of subnets.
+
+
