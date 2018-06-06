@@ -470,6 +470,7 @@ alg_info_snprint_ike(char *buf, size_t buflen, struct alg_info_ike *alg_info)
 		    aklen=hash_desc->hash_digest_len * BITS_PER_BYTE;
 
                 ret=snprintf(ptr, buflen, "%s", sep);
+		sep = ", ";
                 if(ret >= 0 && ret <= buflen) {
                     ptr+= ret;  buflen-= ret;
                     alg_info_snprint_ike2(ike_info, eklen, aklen, &ret, ptr, buflen);
