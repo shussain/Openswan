@@ -360,7 +360,7 @@ enum phase1_role {
 
 #define IS_PARENT_SA_HALFOPEN(s) ((s) == STATE_PARENT_I1 || (s) == STATE_PARENT_R1)
 
-#define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I3 || (s) == STATE_PARENT_I2 || (s) == STATE_PARENT_R2 || (s) == STATE_IKESA_DEL)
+#define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I3 || (s) == STATE_PARENT_R2 || (s) == STATE_IKESA_DEL)
 /*
  * Issue here is that our child sa appears as a STATE_PARENT_I3/STATE_PARENT_R2 state which it should not
  * So we fall back to checking if it is cloned, and therefor really a child
