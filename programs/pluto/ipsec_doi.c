@@ -962,6 +962,8 @@ void __ikev2_validate_key_lengths(struct state *st, const char *fn, int ln)
 
     expected_enc_key_len = st->st_oakley.enckeylen / 8;
 
+    passert(st->st_oakley.encrypter != NULL);
+
     if (expected_enc_key_len != st->st_skey_ei.len)
         DBG_log("WARNING: %s:%u: encryptor '%s' expects keylen %ld/%d, SA #%ld INITIATOR keylen is %ld",
                 fn, ln,
