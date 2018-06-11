@@ -1,4 +1,6 @@
 #include "../lp12-parentR2/parentR2_head.c"
+#include "seam_gr_sha1_group14.c"
+#include "seam_finish.c"
 #include "seam_host_jamesjohnson.c"
 #include "seam_x509_list.c"
 
@@ -29,6 +31,9 @@ void recv_pcap_packet3(u_char *user
     struct state *st;
     struct pcr_kenonce *kn = &crypto_req->pcr_d.kn;
 
+    zero(kn);
+    clear_crypto_space(&kn->thespace, kn->space);
+
     recv_pcap_packet_gen(user, h, bytes);
 
     /* find st involved */
@@ -37,9 +42,10 @@ void recv_pcap_packet3(u_char *user
         st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
 
         /* now fill in the KE values from a constant.. not calculated */
-        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc14_secretr,tc14_secretr_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc14_nr, tc14_nr_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc14_gr, tc14_gr_len);
+        /* now fill in the KE values from a constant.. not calculated */
+        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secret.ptr),SS(secret.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   SS(nr.ptr), SS(nr.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  SS(gr.ptr), SS(gr.len));
 
         run_continuation(crypto_req);
     }
