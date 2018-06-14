@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     sadb->parentSA = TRUE;
 
     sa_v2_print(sadb);
-    if(!extrapolate_v1_from_v2(sadb, POLICY_RSASIG, INITIATOR)) {
+    if(!extrapolate_v1_from_v2(sadb)) {
         DBG_log("failed to create v1");
         exit(11);
     }
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     sadb->parentSA = TRUE;
 
     sa_v2_print(sadb);
-    if(!extrapolate_v1_from_v2(sadb, POLICY_PSK|POLICY_RSASIG, INITIATOR)) {
+    if(!extrapolate_v1_from_v2(sadb)) {
         DBG_log("failed to create v1");
         exit(11);
     }
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     sadb->parentSA = TRUE;
 
     sa_v2_print(sadb);
-    if(!extrapolate_v1_from_v2(sadb, POLICY_RSASIG, INITIATOR)) {
+    if(!extrapolate_v1_from_v2(sadb)) {
         DBG_log("failed to create v1");
         exit(11);
     }
