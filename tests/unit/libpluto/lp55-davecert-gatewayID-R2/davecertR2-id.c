@@ -5,7 +5,6 @@
 #include "seam_finish.c"
 #include "seam_crypt.c"
 #include "seam_rsasig.c"
-#include "seam_gr_sha1_group14.c"
 
 #define TESTNAME "davecertR2-id"
 

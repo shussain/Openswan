@@ -1,11 +1,11 @@
 #include "../lp12-parentR2/parentR2_head.c"
+#include "pluto_crypt.h"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_x509_list.c"
 #include "seam_host_jamesjohnson.c"
 #include "seam_crypt.c"
 #include "seam_rsasig.c"
-#include "seam_gi_sha256_group14.c"
 
 #define TESTNAME "certreplyselfR2"
 
