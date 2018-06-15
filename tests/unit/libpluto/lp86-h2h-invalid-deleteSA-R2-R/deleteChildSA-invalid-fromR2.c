@@ -2,7 +2,9 @@
 #include "seam_host_jamesjohnson.c"
 #include "seam_x509.c"
 #include "seam_gi_sha256_group14.c"
+#include "seam_crypt.c"
 #include "seam_finish.c"
+#include "seam_rsasig.c"
 
 #define TESTNAME "deleteChildSA-invalid-fromR2"
 
@@ -104,6 +106,7 @@ recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
 };
 #endif
 
+#include "seam_parentR2.c"
 #include "../lp12-parentR2/parentR2_main.c"
 
  /*

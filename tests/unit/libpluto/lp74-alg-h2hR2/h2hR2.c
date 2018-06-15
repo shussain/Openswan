@@ -2,7 +2,9 @@
 #include "seam_host_jamesjohnson.c"
 #include "seam_x509.c"
 #include "seam_gr_md5.c"
+#include "seam_crypt.c"
 #include "seam_finish.c"
+#include "seam_rsasig.c"
 
 #define TESTNAME "h2hR2"
 
@@ -22,6 +24,7 @@ static void init_fake_secrets(void)
 static void init_loaded(void)
 {   /* nothing */ }
 
+#include "seam_parentR2.c"
 #include "../lp12-parentR2/parentR2_main.c"
 
  /*
