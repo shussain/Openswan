@@ -12,11 +12,10 @@ void sendI1b(struct connection *c1, int debugging, int calculate)
             calc_ke(crypto_req);
             calc_nonce(crypto_req);
           } else {
-            passert(kn->oakley_group == tc3_oakleygroup);
             /* now fill in the KE values from a constant.. not calculated */
-            clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,tc3_secret_len);
-            clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_ni, tc3_ni_len);
-            clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gi, tc3_gi_len);
+            clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secret.ptr), SS(secret.len));
+            clonetowirechunk(&kn->thespace, kn->space, &kn->n,      SS(ni.ptr), SS(ni.len));
+            clonetowirechunk(&kn->thespace, kn->space, &kn->gi,     SS(gi.ptr), SS(gi.len));
           }
         }
 
