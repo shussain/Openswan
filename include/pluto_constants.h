@@ -1,5 +1,3 @@
-#ifndef _IKEV2_CONSTANTS_H
-#define _IKEV2_CONSTANTS_H
 /* manifest constants
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
