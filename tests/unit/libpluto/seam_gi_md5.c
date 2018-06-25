@@ -16,7 +16,7 @@
 /* test case 3 - DH operation, SHA1 + AES */
 u_int16_t     __tc71_oakleygroup  = OAKLEY_GROUP_MODP2048;
 oakley_auth_t __tc71_auth         = AUTH_ALGORITHM_HMAC_MD5;
-oakley_hash_t __tc71_hash         = OAKLEY_MD5;
+enum oakley_hash_t __tc71_hash         = OAKLEY_MD5;
 enum phase1_role __tc71_init      = INITIATOR;
 
 unsigned char __tc71_gi[] = {
