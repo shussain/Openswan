@@ -12,11 +12,14 @@
 #include "seam_rsasig.c"
 #include "seam_x509.c"
 #include "seam_dpd.c"
+#include "seam_gi_sha256_group14.c"
+#include "seam_finish.c"
+#include "seam_ikev2_sendI1.c"
+#include "seam_ikev1_crypto.c"
 #include "seam_ikev1_phase2.c"
 #include "seam_unpend.c"
 #include "seam_command.c"
 #include "seam_rsa_check.c"
-#include "seam_sendI1.c"
 
 #define TESTNAME "v1certM2"
 
