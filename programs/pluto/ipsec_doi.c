@@ -378,7 +378,7 @@ update_policy_from_state(const struct state *st, lset_t policy)
         if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL)
             policy |= POLICY_TUNNEL;
     }
-    if (st->st_esp.present && st->st_esp.attrs.transattrs.encrypt != ESP_NULL)
+    if (st->st_esp.present && st->st_esp.attrs.transattrs.encrypt != IKEv2_ENCR_NULL)
     {
         policy |= POLICY_ENCRYPT;
         if (st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL)
