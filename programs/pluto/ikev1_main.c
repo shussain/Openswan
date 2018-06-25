@@ -199,6 +199,7 @@ main_outI1(int whack_sock
 
         if(!extrapolate_v1_from_v2(st->st_sadb)) {
             openswan_log("can not derive IKEv1 policy from IKEv2 settings");
+            reset_cur_state();
             return STF_INTERNAL_ERROR;
         }
 

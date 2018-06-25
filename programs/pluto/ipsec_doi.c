@@ -322,11 +322,17 @@ ipsecdoi_initiate(int whack_sock
 	initiator_function *initiator = pick_initiator(c, policy);
 
 	if(initiator) {
-	    (void) initiator(whack_sock, c, NULL, &created, policy, try, importance
-                             , uctx
-                             );
-            c->prospective_parent_sa = created;
-	    return created;
+            stf_status ret = initiator(whack_sock, c
+                                       , NULL, &created, policy, try, importance
+                                       , uctx);
+
+            passert(GLOBALS_ARE_RESET());
+            if(ret == STF_OK || ret == STF_SUSPEND) {
+                c->prospective_parent_sa = created;
+                return created;
+            } else {
+                return SOS_NOBODY;
+            }
 	}
     }
     else if (HAS_IPSEC_POLICY(policy)) {

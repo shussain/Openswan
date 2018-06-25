@@ -533,7 +533,10 @@ out_sa(pb_stream *outs
           , esp_spi_generated = FALSE
           , ipcomp_cpi_generated = FALSE;
 
-    extrapolate_v1_from_v2(sadb);
+    if(!extrapolate_v1_from_v2(sadb, st->st_policy, role)) {
+        openswan_log("can not derive IKEv1 policy from IKEv2 settings, failed");
+        return_on(ret, FALSE);
+    }
 
     if(!phase_one_mode && ((st->st_policy) & POLICY_COMPRESS)) {
         /* add IPcomp proposal if policy asks for it */
@@ -1649,6 +1652,14 @@ init_am_st_oakley(struct state *st, lset_t policy)
     struct db_sa *sadb;
 
     sadb = ikev1_alg_makedb(policy, c->alg_info_ike, TRUE);
+
+    if(sadb == NULL) {
+        return FALSE;
+    }
+
+    if(sadb == NULL) {
+        return FALSE;
+    }
 
     /* now wanter into the proposed proposal, and extract what we need */
 

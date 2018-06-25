@@ -1154,12 +1154,14 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
 	u_char *sa_start = md->rbody.cur;
         struct db_sa *oakley_sa = ikev1_alg_makedb(st->st_policy
                                                    , c->alg_info_ike
-                                                   , TRUE /* one proposal for aggr */);
-	if (!out_sa(&md->rbody
-		    , oakley_sa, st
-		    , TRUE, TRUE, ISAKMP_NEXT_KE))
-	{
-	    cur_state = NULL;
+                                                   , TRUE /* one proposal for aggr */
+                                                   , INITIATOR);
+
+        if(oakley_sa == NULL
+           || !out_sa(&md->rbody
+                      , oakley_sa, st
+                      , /* oakley mode */TRUE, INITIATOR, /*aggr */TRUE, ISAKMP_NEXT_KE)) {
+            reset_cur_state();
 	    return STF_INTERNAL_ERROR;
 	}
 
