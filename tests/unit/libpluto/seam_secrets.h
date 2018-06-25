@@ -12,7 +12,7 @@ struct seam_secrets {
 
 	u_int16_t        oakleygroup;
 	oakley_auth_t    auth;
-	oakley_hash_t    hash;
+	enum oakley_hash_t hash;
 	enum phase1_role role;
 
 	/* intermediate */
