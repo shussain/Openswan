@@ -875,7 +875,7 @@ quick_outI1_tail(struct pluto_crypto_req_cont *pcrc
 
 	if (!out_sa(&rbody
                     , st->st_sadb
-		    , st, /*oakley_mode*/FALSE, INITIATOR, /* aggr */FALSE))
+		    , st, /*oakley_mode*/FALSE, INITIATOR, /* aggr */FALSE, ISAKMP_NEXT_NONCE))
 	{
 	    reset_cur_state();
 	    return STF_INTERNAL_ERROR;

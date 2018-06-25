@@ -141,7 +141,7 @@ extern int v2tov1_encr_child(enum ikev2_trans_type_encr encr);
 
 extern int v2tov1_integ(enum ikev2_trans_type_integ v2integ);
 
-extern bool extrapolate_v1_from_v2(struct db_sa *sadb);
+extern bool extrapolate_v1_from_v2(struct db_sa *sadb, lset_t policy, enum phase1_role role);
 
 /* in spdb_struct.c */
 extern bool out_attr(int type, unsigned long val, struct_desc *attr_desc

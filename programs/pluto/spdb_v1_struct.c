@@ -172,14 +172,15 @@ out_attr(int type
 #define return_on(var, val) do { var=val;goto return_out; } while(0);
 
 struct db_sa *
-ikev1_alg_makedb(lset_t policy UNUSED, struct alg_info_ike *ei, bool oneproposal UNUSED)
+ikev1_alg_makedb(lset_t policy, struct alg_info_ike *ei, bool oneproposal UNUSED
+                 , enum phase1_role role)
 {
     struct db_sa *sadb;
 
     sadb = alginfo2parent_db2(ei);
     sadb->parentSA = TRUE;
 
-    if(!extrapolate_v1_from_v2(sadb)) {
+    if(!extrapolate_v1_from_v2(sadb, policy, role)) {
         openswan_log("failed to create v1 PARENTSA policy from v2 settings");
         return NULL;
     }
@@ -193,14 +194,14 @@ ikev1_alg_makedb(lset_t policy UNUSED, struct alg_info_ike *ei, bool oneproposal
 }
 
 struct db_sa *
-kernel_alg_makedb(lset_t policy UNUSED, struct alg_info_esp *ei)
+kernel_alg_makedb(lset_t policy UNUSED, struct alg_info_esp *ei, enum phase1_role role)
 {
     struct db_sa *sadb;
 
     sadb = alginfo2child_db2(ei);
     sadb->parentSA = FALSE;
 
-    if(!extrapolate_v1_from_v2(sadb)) {
+    if(!extrapolate_v1_from_v2(sadb, policy, role)) {
         openswan_log("failed to create v1 IPsec policy from v2 settings");
         return NULL;
     }
@@ -223,7 +224,7 @@ struct db_trans_flat {
 };
 
 /* static, if not for unit testing */
-bool extrapolate_v1_from_v2(struct db_sa *sadb)
+bool extrapolate_v1_from_v2(struct db_sa *sadb, lset_t policy, enum phase1_role role)
 {
     unsigned int prop_disj;
     int tot_combos, cur_combo;
@@ -523,6 +524,7 @@ out_sa(pb_stream *outs
        , struct db_sa *sadb
        , struct state *st
        , bool phase_one_mode
+       , enum phase1_role role
        , bool aggressive_mode UNUSED
        , u_int8_t np)
 {
@@ -1651,7 +1653,7 @@ init_am_st_oakley(struct state *st, lset_t policy)
     struct connection *c = st->st_connection;
     struct db_sa *sadb;
 
-    sadb = ikev1_alg_makedb(policy, c->alg_info_ike, TRUE);
+    sadb = ikev1_alg_makedb(policy, c->alg_info_ike, TRUE, INITIATOR);
 
     if(sadb == NULL) {
         return FALSE;
