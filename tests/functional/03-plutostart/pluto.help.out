@@ -25,4 +25,4 @@ Debug Options
 	[--nat_traversal] [--keep_alive <delay_sec>]  
 	[--force_keepalive] [--disable_port_floating]  
 	[--virtual_private <network_list>] 
-Openswan VERSION
+Openswan nnB-84-g8e00810
