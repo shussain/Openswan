@@ -17,6 +17,9 @@
 #include "seam_dh_v2.c"
 #include "seam_ke.c"
 #include "seam_host_moon.c"
+#include "seam_ikev1_crypto.c"
+#include "seam_gi_sha256_group14.c"
+#include "seam_finish.c"
 
 #define TESTNAME "v1certN3"
 
@@ -79,9 +82,9 @@ static void update_ngi_tc3(struct pcr_kenonce *kn)
     }
 
     /* now fill in the KE values from a constant.. not calculated */
-    clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_nr, tc3_nr_len);
-    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gr, tc3_gr_len);
-    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret, tc3_secret_len);
+    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secret.ptr), SS(secret.len));
+    clonetowirechunk(&kn->thespace, kn->space, &kn->n,      SS(ni.ptr), SS(ni.len));
+    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,     SS(gi.ptr), SS(gi.len));
 }
 
 void recv_pcap_packet1ikev1(u_char *user

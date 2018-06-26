@@ -1,0 +1,2 @@
+The tests in this directory use faked DH exponents.
+But, they use real RSA signatures on the results.

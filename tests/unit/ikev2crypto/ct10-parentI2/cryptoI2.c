@@ -4,7 +4,6 @@
 #include "seam_finish.c"
 #include "seam_ikev2_sendI1.c"
 #include "seam_kernel.c"
-#include "ikev2sendI1.c"
 #include "seam_keys2.c"
 #include "seam_pending.c"
 #include "seam_ke.c"

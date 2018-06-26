@@ -1,3 +1,4 @@
+#define SEAM_RSASIG
 #define NAPT_ENABLED 1
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -6,6 +7,9 @@
 #include "seam_ke.c"
 #include "seam_dh_v2.c"
 #include "seam_kernel.c"
+#include "seam_gi_sha256_group14.c"
+#include "seam_ikev2_sendI1.c"
+#include "seam_finish.c"
 #include "seam_cryptocontinue.c"
 
 static void init_loaded(void)

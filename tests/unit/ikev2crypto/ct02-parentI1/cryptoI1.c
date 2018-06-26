@@ -1,3 +1,4 @@
+#define SEAM_RSASIG
 #include "../lp02-parentI1/parentI1_head.c"
 #include "seam_demux.c"
 #include "seam_pending.c"
@@ -15,6 +16,8 @@
 #include "seam_finish.c"
 
 #define TESTNAME "cryptoI1"
+
+void delete_cryptographic_continuation(struct state *st) {}
 
 static void init_local_interface(void)
 {
