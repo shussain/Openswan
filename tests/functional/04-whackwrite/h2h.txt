@@ -23,6 +23,20 @@ Loading conn mytunnel
 	while loading conn 'mytunnel' also including 'berri'
 # conn mytunnel processing alsoflips
 	while loading conn 'mytunnel' also including 'peel'
+Loading conn alttunnel
+# conn alttunnel processing alsos
+	while loading conn 'alttunnel' also including 'mytunnel'
+	while processing section 'mytunnel' added also=berri
+	while loading conn 'alttunnel' also including 'berri'
+# conn alttunnel processing alsoflips
+	while loading conn 'alttunnel' also including 'peel'
+Loading conn mytunnelnets
+# conn mytunnelnets processing alsos
+	while loading conn 'mytunnelnets' also including 'mytunnel'
+	while processing section 'mytunnel' added also=berri
+	while loading conn 'mytunnelnets' also including 'berri'
+# conn mytunnelnets processing alsoflips
+	while loading conn 'mytunnelnets' also including 'peel'
 Loading conn mytunnel-no-ikev1
 # conn mytunnel-no-ikev1 processing alsos
 	while loading conn 'mytunnel-no-ikev1' also including 'berri'
@@ -70,54 +84,86 @@ writing record 8 to whack file
 writing record 9 to whack file
 emitting conn mytunnel with end-family: 2 and tunnel-family: 0
 writing record 10 to whack file
-conn: "mytunnel-no-ikev1" sending RSA keys for left
+conn: "alttunnel" sending RSA keys for left
    looking for key1, result=0
    sending pubkey 1: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
 writing record 11 to whack file
    looking for key2, result=0
    sending pubkey 2: 66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
 writing record 12 to whack file
-conn: "mytunnel-no-ikev1" sending RSA keys for right
+conn: "alttunnel" sending RSA keys for right
    looking for key1, result=0
    sending pubkey 1: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
 writing record 13 to whack file
    looking for key2, result=0
    sending pubkey 2: 2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
 writing record 14 to whack file
-emitting conn mytunnel-no-ikev1 with end-family: 2 and tunnel-family: 0
+emitting conn alttunnel with end-family: 2 and tunnel-family: 0
 writing record 15 to whack file
-conn: "mytunnel-no-ikev2" sending RSA keys for left
+conn: "mytunnelnets" sending RSA keys for left
    looking for key1, result=0
    sending pubkey 1: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
 writing record 16 to whack file
    looking for key2, result=0
    sending pubkey 2: 66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
 writing record 17 to whack file
-conn: "mytunnel-no-ikev2" sending RSA keys for right
+conn: "mytunnelnets" sending RSA keys for right
    looking for key1, result=0
    sending pubkey 1: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
 writing record 18 to whack file
    looking for key2, result=0
    sending pubkey 2: 2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
 writing record 19 to whack file
-emitting conn mytunnel-no-ikev2 with end-family: 2 and tunnel-family: 0
+emitting conn mytunnelnets with end-family: 2 and tunnel-family: 2
 writing record 20 to whack file
-conn: "mytunnel-ikev1" sending RSA keys for left
+conn: "mytunnel-no-ikev1" sending RSA keys for left
    looking for key1, result=0
    sending pubkey 1: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
 writing record 21 to whack file
    looking for key2, result=0
    sending pubkey 2: 66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
 writing record 22 to whack file
-conn: "mytunnel-ikev1" sending RSA keys for right
+conn: "mytunnel-no-ikev1" sending RSA keys for right
    looking for key1, result=0
    sending pubkey 1: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
 writing record 23 to whack file
    looking for key2, result=0
    sending pubkey 2: 2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
 writing record 24 to whack file
-emitting conn mytunnel-ikev1 with end-family: 2 and tunnel-family: 0
+emitting conn mytunnel-no-ikev1 with end-family: 2 and tunnel-family: 0
 writing record 25 to whack file
+conn: "mytunnel-no-ikev2" sending RSA keys for left
+   looking for key1, result=0
+   sending pubkey 1: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
+writing record 26 to whack file
+   looking for key2, result=0
+   sending pubkey 2: 66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
+writing record 27 to whack file
+conn: "mytunnel-no-ikev2" sending RSA keys for right
+   looking for key1, result=0
+   sending pubkey 1: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
+writing record 28 to whack file
+   looking for key2, result=0
+   sending pubkey 2: 2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
+writing record 29 to whack file
+emitting conn mytunnel-no-ikev2 with end-family: 2 and tunnel-family: 0
+writing record 30 to whack file
+conn: "mytunnel-ikev1" sending RSA keys for left
+   looking for key1, result=0
+   sending pubkey 1: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
+writing record 31 to whack file
+   looking for key2, result=0
+   sending pubkey 2: 66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
+writing record 32 to whack file
+conn: "mytunnel-ikev1" sending RSA keys for right
+   looking for key1, result=0
+   sending pubkey 1: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
+writing record 33 to whack file
+   looking for key2, result=0
+   sending pubkey 2: 2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
+writing record 34 to whack file
+emitting conn mytunnel-ikev1 with end-family: 2 and tunnel-family: 0
+writing record 35 to whack file
 opening file: ../../unit/libpluto/samples/h2h.conf
 processing conn: berri 
 processing conn: peel 
@@ -125,6 +171,8 @@ processing conn: berrinet
 processing conn: peelnet 
 processing conn: green 
 processing conn: mytunnel 
+processing conn: alttunnel 
+processing conn: mytunnelnets 
 processing conn: mytunnel-no-ikev1 
 processing conn: mytunnel-no-ikev2 
 processing conn: mytunnel-ikev1 
