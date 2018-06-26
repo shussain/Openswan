@@ -13,7 +13,9 @@
 #include "seam_dh_v2.c"
 #include "seam_ke.c"
 #include "seam_mockxfrm.c"
-#include "seam_gr_sha1_group14.c"
+#include "seam_ikev1_crypto.c"
+#include "seam_gi_sha256_group14.c"
+#include "seam_finish.c"
 #include "seam_cryptocontinue.c"
 #include "seam_natt.c"
 
@@ -57,8 +59,8 @@ void recv_pcap_packet(u_char *user
         st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE;
 
         /* now fill in the KE values from a constant.. not calculated */
-        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc14_nr, tc14_nr_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc14_gr, tc14_gr_len);
+        clonetowirechunk(&kn->thespace, kn->space, &kn->n,      SS(ni.ptr), SS(ni.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,     SS(gi.ptr), SS(gi.len));
     }
 
     run_continuation(crypto_req);

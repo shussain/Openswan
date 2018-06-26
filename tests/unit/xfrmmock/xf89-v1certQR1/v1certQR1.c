@@ -17,6 +17,9 @@
 #include "seam_ke.c"
 #include "seam_dh_v2.c"
 #include "seam_nonce.c"
+#include "seam_gi_sha1.c"
+#include "seam_finish.c"
+#include "seam_ikev1_crypto.c"
 #include "seam_mockxfrm.c"
 #include "seam_host_moon.c"
 
@@ -80,10 +83,6 @@ static void update_ngi_tc3(struct pcr_kenonce *kn)
         exit(89);
     }
 
-    /* now fill in the KE values from a constant.. not calculated */
-    clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_nr, tc3_nr_len);
-    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gr, tc3_gr_len);
-    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret, tc3_secret_len);
 }
 
 void recv_pcap_packet1ikev1(u_char *user
@@ -130,7 +129,10 @@ void recv_pcap_packet3ikev1(u_char *user
     struct pcr_kenonce *kn = &crypto_req->pcr_d.kn;
 
     /* before receiving the packet, need to complete the async calculation of the g^xy */
-
+    /* now fill in the KE values from a constant.. not calculated */
+    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secret.ptr), SS(secret.len));
+    clonetowirechunk(&kn->thespace, kn->space, &kn->n,      SS(ni.ptr), SS(ni.len));
+    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,     SS(gi.ptr), SS(gi.len));
 
     cur_debugging |= DBG_PRIVATE|DBG_CRYPT|DBG_PARSING|DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
     recv_pcap_packet_gen(user, h, bytes);
