@@ -795,9 +795,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		 , natinfo
 		 , (unsigned long)ntohl(st->st_esp.attrs.spi)
 		 , (unsigned long)ntohl(st->st_esp.our_spi)
-		 , enum_show(&esp_transformid_names, st->st_esp.attrs.transattrs.encrypt)+strlen("ESP_")
+		 , enum_show(&trans_type_encr_names, st->st_esp.attrs.transattrs.encrypt)
 		 , st->st_esp.attrs.transattrs.enckeylen
-		 , enum_show(&auth_alg_names, st->st_esp.attrs.transattrs.integ_hash)+strlen("AUTH_ALGORITHM_"));
+		 , enum_show(&trans_type_integ_names, st->st_esp.attrs.transattrs.integ_hash));
 	ini = " ";
 	fin = "}";
     }
