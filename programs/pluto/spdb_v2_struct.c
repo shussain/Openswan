@@ -151,30 +151,17 @@ ikev2_out_sa(pb_stream *outs
     /* now send out all the proposals */
     for(pc_cnt=0; pc_cnt < sadb->prop_disj_cnt; pc_cnt++)
     {
-	struct db_v2_prop *vp;
+	struct db_v2_prop *vp = &sadb->prop_disj[pc_cnt];
 	unsigned int pr_cnt;
-
-	if (!sadb->prop_disj) {
-            openswan_log("%s: FATAL: prop_disj_cnt=%d, but prop_disj=NULL",
-                         __func__, sadb->prop_disj_cnt);
-            return STF_INTERNAL_ERROR;
-        }
-	vp = &sadb->prop_disj[pc_cnt];
 
 	/* now send out all the transforms */
 	for(pr_cnt=0; pr_cnt < vp->prop_cnt; pr_cnt++)
 	{
 	    unsigned int ts_cnt;
-	    struct db_v2_prop_conj *vpc;
+	    struct db_v2_prop_conj *vpc = &vp->props[pr_cnt];
+
 	    struct ikev2_prop p;
 	    pb_stream t_pbs;
-
-	    if (!vp->props) {
-                openswan_log("%s: FATAL: prop_cnt=%d, but props=NULL",
-                             __func__, vp->prop_cnt);
-                return STF_INTERNAL_ERROR;
-            }
-	    vpc = &vp->props[pr_cnt];
 
 	    memset(&p, 0, sizeof(p));
 
@@ -521,6 +508,10 @@ ikev2_process_transforms(struct ikev2_prop *prop
 			 , pb_stream *prop_pbs
 			 ,  struct ikev2_transform_list *itl)
 {
+    unsigned int encr_x, integ_x, prf_x, dh_x;
+
+    encr_x=integ_x=prf_x=dh_x=0;
+
     while(prop->isap_numtrans-- > 0) {
 	pb_stream trans_pbs;
 	pb_stream attr_pbs;
@@ -555,6 +546,7 @@ ikev2_process_transforms(struct ikev2_prop *prop
 	    if(itl->encr_trans_next < MAX_TRANS_LIST) {
 		itl->encr_keylens[itl->encr_trans_next]=keylen;
 		itl->encr_transforms[itl->encr_trans_next++]=trans.isat_transid;
+                encr_x = trans.isat_transid;
 	    } /* show failure with else */
 	    break;
 
@@ -562,6 +554,7 @@ ikev2_process_transforms(struct ikev2_prop *prop
 	    if(itl->integ_trans_next < MAX_TRANS_LIST) {
 		itl->integ_keylens[itl->integ_trans_next]=keylen;
 		itl->integ_transforms[itl->integ_trans_next++]=trans.isat_transid;
+                integ_x = trans.isat_transid;
 	    }
 	    break;
 
@@ -569,12 +562,14 @@ ikev2_process_transforms(struct ikev2_prop *prop
 	    if(itl->prf_trans_next < MAX_TRANS_LIST) {
 		itl->prf_keylens[itl->prf_trans_next]=keylen;
 		itl->prf_transforms[itl->prf_trans_next++]=trans.isat_transid;
+                prf_x = trans.isat_transid;
 	    }
 	    break;
 
 	case IKEv2_TRANS_TYPE_DH:
 	    if(itl->dh_trans_next < MAX_TRANS_LIST) {
 		itl->dh_transforms[itl->dh_trans_next++]=trans.isat_transid;
+                dh_x = trans.isat_transid;
 	    }
 	    break;
 
@@ -584,7 +579,22 @@ ikev2_process_transforms(struct ikev2_prop *prop
 	    }
 	    break;
 	}
+
+        DBG(DBG_PARSING,
+            DBG_log("collect encr: %u<=%u integ: %u<=%u prf: %u<=%u dh: %u<=%u",
+                    encr_x,  itl->encr_trans_next,
+                    integ_x, itl->integ_trans_next,
+                    prf_x,   itl->prf_trans_next,
+                    dh_x,    itl->dh_trans_next));
     }
+
+#if 0
+    DBG_log("collected %u encr %u integ %u prf and  %u dh",
+            itl->encr_trans_next,
+            itl->integ_trans_next,
+            itl->prf_trans_next,
+            itl->dh_trans_next);
+#endif
     return STF_OK;
 }
 
@@ -800,11 +810,6 @@ ikev2_parse_parent_sa_body(
 
 	    winning_prop = proposal;
 	    gotmatch = TRUE;
-	    /* gotmatch is true, so will never go inside if*/
-	    //if(selection && !gotmatch && np == ISAKMP_NEXT_P) {
-		//openswan_log("More than 1 proposal received from responder, ignoring rest. First one did not match");
-		//return NO_PROPOSAL_CHOSEN;
-	    //}
 	}
     }
 
