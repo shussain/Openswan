@@ -1,8 +1,8 @@
 # -*- makefile -*-
 CONNNAME=alttunnel
 ENDNAME=h2h
-UNITTESTARGS=-r ${WHACKFILE} ${CONNNAME}
 WHACKFILE=${OUTPUTS}/ikev2client.record.${ARCH}
+UNITTEST1ARGS=-r ${WHACKFILE} ${CONNNAME}
 
 TESTNAME=h2hI1
 

@@ -54,6 +54,7 @@ void sendI1b(struct connection *c1, int debugging, int calculate)
         }
 
 	run_continuation(crypto_req);
+        reset_globals();
 }
 
 struct state *sendI1(struct connection *c1, int debugging, int calculate)
