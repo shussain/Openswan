@@ -33,11 +33,23 @@ void finish_dh_v2(struct state *st,
 void finish_dh_secretiv(struct state *st,
 			struct pluto_crypto_req *r)
 {
-  /* XXX maybe should do something ... */
+    CLONEIT(shared);
+    CLONEIT(skey_d);
+    CLONEIT(skey_ai);
+    CLONEIT(skey_ar);
+    CLONEIT(skey_ei);
+    CLONEIT(skey_er);
+    CLONEIT(skey_pi);
+    CLONEIT(skey_pr);
+    CLONEIT(enc_key);
 
-  ikev2_validate_key_lengths(st);
+    memcpy(st->st_new_iv, SS(new_iv.ptr), SS(new_iv.len));
+    st->st_new_iv_len = SS(new_iv.len);
 
-  st->hidden_variables.st_skeyid_calculated = TRUE;
+    ikev2_validate_key_lengths(st);
+
+    st->hidden_variables.st_skeyid_calculated = TRUE;
+    r->pcr_success = TRUE;
 }
 
 void finish_dh_secret(struct state *st,

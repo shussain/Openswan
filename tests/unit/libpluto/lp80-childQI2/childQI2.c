@@ -12,6 +12,9 @@
 #include "seam_x509.c"
 #include "seam_dpd.c"
 #include "seam_command.c"
+#include "seam_gi_sha1.c"
+#include "seam_finish.c"
+#include "seam_ikev2_sendI1.c"
 #include "seam_ikev1_crypto.c"
 #include "seam_nonce.c"
 #include "seam_rsa_check.c"
@@ -56,9 +59,9 @@ void recv_pcap_packet(u_char *user
         st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_CRYPT|DBG_PRIVATE|DBG_NATT;
         st->hidden_variables.st_nat_traversal |= NAT_T_WITH_NATD;
 
-        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc14_ni, tc14_ni_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc14_gi, tc14_gi_len);
-        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc14_secretr,tc14_secretr_len);
+        clonetowirechunk(&kn->thespace, kn->space, &kn->n,   SS(ni.ptr), SS(ni.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  SS(gi.ptr), SS(gi.len));
+        clonetowirechunk(&kn->thespace, kn->space, &kn->secret, SS(secretr.ptr),SS(secretr.len));
     }
 
     run_continuation(crypto_req);

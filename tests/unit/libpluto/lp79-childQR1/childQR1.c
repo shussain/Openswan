@@ -16,7 +16,8 @@
 #include "seam_rsasig.c"
 #include "seam_rsa_check.c"
 #include "seam_ikev1_crypto.c"
-#include "seam_gr_sha1_group14.c"
+#include "seam_gi_sha1.c"
+#include "seam_finish.c"
 #include "seam_host_jamesjohnson.c"
 
 #define TESTNAME "childQR1"

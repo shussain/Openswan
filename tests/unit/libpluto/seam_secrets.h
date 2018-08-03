@@ -37,6 +37,10 @@ struct seam_secrets {
 	struct seam_chunk skey_er;
 	struct seam_chunk skey_pi;
 	struct seam_chunk skey_pr;
+
+  /* IKEv1 only */
+        struct seam_chunk new_iv;
+        struct seam_chunk enc_key;
 };
 
 /* Various test cases will define their own SECRETS macro, and common seam code
@@ -94,6 +98,8 @@ static inline void seam_chunk_set(struct seam_chunk *c,
 		__SS_SET(prefix##_results,skey_er), \
 		__SS_SET(prefix##_results,skey_pi), \
 		__SS_SET(prefix##_results,skey_pr), \
+		__SS_SET(prefix##_results,new_iv), \
+		__SS_SET(prefix##_results,enc_key), \
 		\
 		##__VA_ARGS__ \
 	)
