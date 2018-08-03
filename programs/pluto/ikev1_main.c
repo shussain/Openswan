@@ -1652,7 +1652,7 @@ main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc
   stf_status e;
 
   DBG(DBG_CONTROLMORE
-      , DBG_log("main inR2_outI3: calculated DH, sending R1"));
+      , DBG_log("main inR2_outI3: calculated DH, sending I3"));
 
   if (st == NULL) {
       loglog(RC_LOG_SERIOUS, "%s: Request was disconnected from state",
