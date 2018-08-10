@@ -16,7 +16,7 @@
 #include "seam_nonce.c"
 #include "seam_rsasig.c"
 #include "seam_rsa_check.c"
-#include "seam_gi_sha256_group14.c"
+#include "seam_gi_sha1.c"
 #include "seam_finish.c"
 #include "seam_ikev1_crypto.c"
 
