@@ -1,48 +1,79 @@
 ./h2hR2 ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
 ./h2hR2 ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
+./h2hR2 ike_alg_register_prf(): Activating prf-hmac-sha2-512: Ok (ret=0)
 ./h2hR2 ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
+./h2hR2 ike_alg_register_prf(): Activating prf-hmac-sha2-256: Ok (ret=0)
+./h2hR2 ike_alg_register_hash(): Activating OAKLEY_SHA1: Ok (ret=0)
+./h2hR2 ike_alg_register_prf(): Activating prf-hmac-sha1: Ok (ret=0)
+./h2hR2 ike_alg_register_prf(): Activating prf-hmac-md5: Ok (ret=0)
+./h2hR2 ike_alg_register_hash(): Activating OAKLEY_MD5: Ok (ret=0)
 ./h2hR2 loading secrets from "../samples/jj.secrets"
 ./h2hR2 loaded private key for keyid: PPK_RSA:AQOg5H7A4/2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
+./h2hR2 registed kernel encr algorithm aes_cbc [12, 128<=key<=512]
+./h2hR2 registed kernel encr algorithm 3des [3, 192<=key<=192]
+./h2hR2 registed kernel integ algorithm hmac_sha1_96 [2, 160<=key<=160]
+./h2hR2 registed kernel integ algorithm hmac_md5_96 [1, 128<=key<=128]
+./h2hR2 registed kernel integ algorithm hmac_sha2_256_128 [12, 256<=key<=256]
+./h2hR2 registed kernel integ algorithm hmac_sha2_512_256 [14, 256<=key<=256]
 | processing whack message of size: A
 | processing whack message of size: A
 processing whack msg time: X size: Y
 ./h2hR2 loaded key: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
 | processing whack message of size: A
 processing whack msg time: X size: Y
+./h2hR2 loaded key: 66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
+| processing whack message of size: A
+processing whack msg time: X size: Y
 ./h2hR2 loaded key: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
 | processing whack message of size: A
 processing whack msg time: X size: Y
+./h2hR2 loaded key: 2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
+| processing whack message of size: A
+processing whack msg time: X size: Y
+| find_host_pair: looking for me=<none>:500 %any him=<none>:500 any-match
+| find_host_pair: concluded with <none>
+| found_host_pair_conn (check_connection_end): %any:500 %any/%any:500 -> hp:none
 | Added new connection alttunnel with policy RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK
-./h2hR2 use keyid: 1:6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698 / 2:<>
-| counting wild cards for 192.168.1.1 is 0
-./h2hR2 use keyid: 1:AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C / 2:<>
+| from whack: got --esp=aes128-sha1;modp1536
+| esp string values: aes_cbc(12)_128-hmac_sha1_96(2)_000-MODP1536(5); flags=-strict
+| ike (phase1) algorihtm values: 3des(3)-hmac_md5_96(1)-prfmd5(1)-MODP2048(14); flags=-strict
+./h2hR2 can not find public key: 6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698
+./h2hR2 use keyid: 1:<> / 2:66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
+| counting wild cards for @berri.testing.xelerance.com is 0
+./h2hR2 can not find public key: AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C
+./h2hR2 use keyid: 1:<> / 2:2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701
 | counting wild cards for 132.213.238.7 is 0
+| alg_info_addref() alg_info->ref_cnt=1
+| alg_info_addref() alg_info->ref_cnt=1
+| orient alttunnel reference sr#1 this: addr:132.213.238.7 that: %any
 | orient alttunnel checking against if: eth0 (AF_INET:132.213.238.7:4500)
 | orient alttunnel checking against if: eth0 (AF_INET:132.213.238.7:500)
 |     orient matched on IP
 |   orient alttunnel finished with: 1 [132.213.238.7]
-| find_host_pair: looking for me=132.213.238.7:500 %address him=192.168.1.1:500 exact-match
+| find_host_pair: looking for me=132.213.238.7:500 %any him=0.0.0.0:500 exact-match
 | find_host_pair: concluded with <none>
-| connect_to_host_pair: 132.213.238.7:500 %address 192.168.1.1:500 -> hp:none
-| find_ID_host_pair: looking for me=132.213.238.7 him=192.168.1.1 (exact)
+| connect_to_host_pair: 132.213.238.7:500 %any 0.0.0.0:500 -> hp:none
+| find_ID_host_pair: looking for me=132.213.238.7 him=@berri.testing.xelerance.com (exact)
 |   concluded with <none>
 ./h2hR2 adding connection: "alttunnel"
-| 132.213.238.7...192.168.1.1
+| 132.213.238.7...%any[@berri.testing.xelerance.com]
 | ike_life: 3600s; ipsec_life: 1200s; rekey_margin: 180s; rekey_fuzz: 100%; keyingtries: 1; policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK
 |   orient alttunnel finished with: 1 [132.213.238.7]
-RC=0 "alttunnel": 132.213.238.7...192.168.1.1; unrouted; eroute owner: #0
+RC=0 "alttunnel": 132.213.238.7...%any[@berri.testing.xelerance.com]; unrouted; eroute owner: #0
 RC=0 "alttunnel":     myip=unset; hisip=unset;
-RC=0 "alttunnel":   keys: 1:AD2F DDF5 7ABE 6140 14AA B39E 50EB EC76 CA12 3C8C 2:none...
-RC=0 "alttunnel":        ....1:6DF7 E7A2 B017 2118 6525 1A9E FC30 F603 ADD5 6698 2:none
+RC=0 "alttunnel":   keys: 1:none 2:2A3A 92D4 E0FA 5CD7 8DE1 D133 0C62 6985 2B6E D701...
+RC=0 "alttunnel":        ....1:none 2:66A6 7046 BBAB E28F 310E C6C0 80EC 790E F556 2AB9
 RC=0 "alttunnel":   ike_life: 3600s; ipsec_life: 1200s; rekey_margin: 180s; rekey_fuzz: 100%; keyingtries: 1
 RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK; prio: 32,32; interface: eth0; kind=CK_PERMANENT
+RC=0 "alttunnel":   ESP algorithms wanted: aes_cbc(12)_128-hmac_sha1_96(2)_000-MODP1536(5); flags=-strict
+RC=0 "alttunnel":   ESP algorithms loaded: aes_cbc(12)_128-hmac_sha1_96(2)_160
 0: input from ../lp72-alg-h2hR1/h2hI1.pcap
 |   =========== input from pcap file ../lp72-alg-h2hR1/h2hI1.pcap ========
 | *received 428 bytes from 192.168.1.1:500 on eth0 (port=500)
 |   80 01 02 03  04 05 06 07  00 00 00 00  00 00 00 00
 |   21 20 22 08  00 00 00 00  00 00 01 ac  22 00 00 2c
 |   00 00 00 28  01 01 00 04  03 00 00 08  01 00 00 03
-|   03 00 00 08  03 00 00 01  03 00 00 08  02 00 00 01
+|   03 00 00 08  02 00 00 01  03 00 00 08  03 00 00 01
 |   00 00 00 08  04 00 00 0e  28 00 01 08  00 0e 00 00
 |   bf da ea a0  86 55 9f df  bf bb 5e 42  b9 a6 18 18
 |   ab ca 13 b4  cf 6a 92 77  44 6c 57 46  1c 07 a0 86
@@ -86,7 +117,7 @@ RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Ini
 | now proceed with state specific processing using state #3 responder-V2_init
 | find_host_connection2 called from ikev2parent_inI1outR1, me=132.213.238.7:500 him=192.168.1.1:500 policy=IKEv2ALLOW/-
 | find_host_pair: looking for me=132.213.238.7:500 %address him=192.168.1.1:500 any-match
-| find_host_pair: comparing to me=132.213.238.7:500 %address him=192.168.1.1:500
+| find_host_pair: comparing to me=132.213.238.7:500 %any him=0.0.0.0:500
 | find_host_pair: concluded with alttunnel
 | found_host_pair_conn (find_host_connection2): 132.213.238.7:500 %address/192.168.1.1:500 -> hp:alttunnel
 | searching for connection with policy = IKEv2ALLOW/-
@@ -94,6 +125,7 @@ RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Ini
 | find_host_connection2 returns alttunnel (ike=none/none)
 ./h2hR2 tentatively considering connection: alttunnel
 | creating state object #1 at Z
+| orient alttunnel reference sr#1 this: addr:132.213.238.7 that: %any
 | orient alttunnel checking against if: eth0 (AF_INET:132.213.238.7:4500)
 | orient alttunnel checking against if: eth0 (AF_INET:132.213.238.7:500)
 |     orient matched on IP
@@ -102,6 +134,7 @@ RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Ini
 | RCOOKIE:  de bc 58 3a  8f 40 d0 cf
 | state hash entry 28
 | inserting state object #1 bucket: 28
+| inserting event EVENT_SO_DISCARD, timeout in 0 seconds for #1
 | will not send/process a dcookie
 | received a notify..
 | processor 'responder-V2_init' returned STF_SUSPEND (2)
@@ -134,7 +167,6 @@ RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Ini
 |    message ID:  00 00 00 00
 | ***emit IKEv2 Security Association Payload:
 |    critical bit: none
-| no IKE algorithms for this connection
 | ****parse IKEv2 Proposal Substructure Payload:
 |    length: 40
 |    prop #: 1
@@ -145,30 +177,24 @@ RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Ini
 |    length: 8
 |    transform type: 1
 |    transform ID: 3
-| *****parse IKEv2 Transform Substructure Payload:
-|    length: 8
-|    transform type: 3
-|    transform ID: 1
+| collect encr: 3<=1 integ: 0<=0 prf: 0<=0 dh: 0<=0
 | *****parse IKEv2 Transform Substructure Payload:
 |    length: 8
 |    transform type: 2
 |    transform ID: 1
+| collect encr: 3<=1 integ: 0<=0 prf: 1<=1 dh: 0<=0
+| *****parse IKEv2 Transform Substructure Payload:
+|    length: 8
+|    transform type: 3
+|    transform ID: 1
+| collect encr: 3<=1 integ: 1<=1 prf: 1<=1 dh: 0<=0
 | *****parse IKEv2 Transform Substructure Payload:
 |    length: 8
 |    transform type: 4
 |    transform ID: 14
-| proposal 1 failed encr= (policy:aes-cbc vs offered:3des)
-|             failed integ=(policy:auth-hmac-sha1-96 vs offered:auth-hmac-md5-96)
-|             failed prf=  (policy:prf-hmac-sha1 vs offered:prf-hmac-md5)
-|             succeeded dh=   (policy:OAKLEY_GROUP_MODP2048 vs offered:OAKLEY_GROUP_MODP2048)
-| proposal 1 failed encr= (policy:aes-cbc vs offered:3des)
-|             succeeded integ=(policy:auth-hmac-md5-96 vs offered:auth-hmac-md5-96)
-|             succeeded prf=  (policy:prf-hmac-md5 vs offered:prf-hmac-md5)
-|             succeeded dh=   (policy:OAKLEY_GROUP_MODP2048 vs offered:OAKLEY_GROUP_MODP2048)
-| proposal 1 succeeded encr= (policy:3des vs offered:3des)
-|             failed integ=(policy:auth-hmac-sha1-96 vs offered:auth-hmac-md5-96)
-|             failed prf=  (policy:prf-hmac-sha1 vs offered:prf-hmac-md5)
-|             succeeded dh=   (policy:OAKLEY_GROUP_MODP2048 vs offered:OAKLEY_GROUP_MODP2048)
+| collect encr: 3<=1 integ: 1<=1 prf: 1<=1 dh: 14<=1
+| encr: 0<=1 integ: 0<=1 prf: 0<=1 dh: 0<=1
+| selected proposal 1 encr=3des[-1] integ=hmac_md5_96 prf=prf-hmac-md5 modp=OAKLEY_GROUP_MODP2048
 | ****emit IKEv2 Proposal Substructure Payload:
 |    prop #: 1
 |    proto ID: 1
@@ -269,6 +295,7 @@ RC=0 "alttunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Ini
 | Vendor ID  4f 45 70 6c  75 74 6f 75  6e 69 74 30
 | emitting length of ISAKMP Vendor ID Payload: 16
 | emitting length of ISAKMP Message: 428
+| inserting event EVENT_SO_DISCARD, timeout in 300 seconds for #1
 | #1 complete v2 state transition with STF_OK
 ./h2hR2 transition from state STATE_IKEv2_START to state STATE_PARENT_R1
 | v2_state_transition: st is #1; pst is #0; transition_st is #1
@@ -305,37 +332,31 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 1: output to OUTPUT/h2hR2.pcap
 1: input from h2hI2.pcap
 |   =========== input from pcap file h2hI2.pcap ========
-| *received 476 bytes from 192.168.1.1:500 on eth0 (port=500)
+| *received 372 bytes from 192.168.1.1:500 on eth0 (port=500)
 |   80 01 02 03  04 05 06 07  de bc 58 3a  8f 40 d0 cf
-|   2e 20 23 08  00 00 00 01  00 00 01 dc  23 00 01 c0
-|   80 01 02 03  04 05 06 07  04 b3 31 de  23 1d 20 a9
-|   b4 25 4d 02  53 f0 a7 98  4a 8f 24 99  39 61 ee 81
-|   ec 26 10 59  d9 e5 72 bb  39 11 ab 59  c3 a6 b5 3f
-|   be 0d df e0  5b 10 b0 e0  f8 5e 07 56  1a 0e bd 9c
-|   e0 76 8d 1d  5c 7e 0d a1  50 f7 e0 82  39 e9 23 02
-|   27 89 60 17  ba 6c 6f 24  42 1f 3a 40  ba c3 9f 33
-|   cd c4 b2 14  38 53 a4 61  00 79 4a 7d  b9 65 0c d5
-|   51 be 28 40  bb 25 eb 4b  0c a2 51 66  f1 be 04 16
-|   8b 6a bf ea  7e 74 4c 31  af 6a 0f f6  2a 68 e5 cf
-|   05 61 43 3b  11 ae 63 9c  76 10 21 88  9c b7 bd 7f
-|   68 c9 b5 b0  fe da 1e 08  4f a9 21 35  0e 7b e6 92
-|   18 8e f3 f8  62 26 b3 89  4a 55 c7 1c  ad f6 cc 31
-|   2a 69 3a 64  5d 81 0d 22  37 bf 0f 0c  d9 0f da 63
-|   e7 16 b3 3e  46 2f af 3a  4f 41 fe c0  01 4b 2e 30
-|   6f fd 49 a2  b3 a1 de 36  11 1a 34 84  65 fc 49 b4
-|   98 a9 e2 b0  55 46 ce f3  d2 85 7c 09  db 53 ce 4e
-|   8e bc 1d af  18 2b d3 5c  03 dc 85 de  bf 5d 43 aa
-|   ab 0b 6b 93  99 db 03 c2  fd 1f 48 44  3d e8 e4 8b
-|   4d f6 a9 b2  e5 39 d4 f2  df c5 de 53  42 94 fc 33
-|   67 b9 04 c5  3c 9a e0 33  43 76 46 c4  0d da 70 8e
-|   c0 a4 a6 1a  51 1e 7b a9  f5 51 c4 3a  7b 42 3f 15
-|   b9 af e9 c9  2b 2b 9e 0a  d0 71 b5 ec  30 de 7f 09
-|   df 41 63 87  53 87 4a 4f  f0 a6 f4 12  ea fd de 67
-|   9b eb cf 81  99 f4 2b 06  fc 16 96 48  11 a8 c8 d8
-|   ad 34 f1 9c  00 e0 9f fe  3c 34 bf da  b5 01 21 3d
-|   34 94 aa 3a  e8 d3 3f dd  4a e5 7a 66  4b d4 22 6d
-|   d5 6b c3 42  c0 d5 fb 20  34 0d 94 88  76 a7 7f 39
-|   0c 75 bb 6f  cd f4 6d 38  e6 c1 4d 56
+|   2e 20 23 08  00 00 00 01  00 00 01 74  23 00 01 58
+|   80 01 02 03  04 05 06 07  5c 38 67 5e  87 83 0f 85
+|   a7 09 8f 39  76 22 7e d9  eb 2c 66 0a  26 74 16 9f
+|   13 fa 8f 1c  95 3b 44 6c  49 53 06 9a  df b2 e7 8c
+|   b8 46 90 b9  6e 5e 92 8d  48 ff 7d 4b  4b bb ea 7d
+|   f4 05 94 51  fa 59 80 d3  fb 5c e9 f8  c9 8c a8 3b
+|   05 04 15 50  69 b7 5f 5e  95 c5 52 71  65 33 40 06
+|   2e 9c 34 c9  82 8a 54 88  8d 83 f9 ea  ae 91 45 48
+|   9a d3 24 89  b1 6a 46 fc  6c 00 70 24  2c e5 6b f0
+|   83 c0 03 e1  41 bf 8d 1f  83 9f 06 95  58 58 3e 43
+|   4a 66 d8 4a  b9 1d 8c e2  da 15 c5 ac  c8 26 8a a4
+|   f2 7b 15 19  6f f5 c9 4a  c2 08 5b 49  ae 9d a4 8e
+|   ba e5 d5 f0  cb c7 f4 17  c7 7e 73 05  01 2c 5d 4e
+|   04 6e ed 42  17 01 b7 97  3a 09 da 3d  46 6d e6 33
+|   c5 9f 41 4c  9a 0a 2e e5  65 81 3d 36  cf 4c 99 5c
+|   7a 1d 64 af  f0 77 3e c0  99 c8 e4 92  a7 cb 21 62
+|   f5 de c0 b8  e3 88 7e d1  be 6e 03 e9  c2 bf 53 12
+|   da 62 fa 45  c2 dd 63 66  76 fc cc 61  27 38 c6 ab
+|   ed 42 61 0b  a3 31 3b 63  bc 48 28 bc  99 26 de 82
+|   76 65 6c 0c  92 47 0a 74  4f 2a b3 83  6e 26 8e 6d
+|   55 3c 47 ca  b2 9f b8 17  75 4f 12 e2  9a 55 ab ee
+|   bb 22 f8 54  7c d7 30 cf  ea fd ca 74  b4 35 4e d8
+|   3e 29 8d 74
 |  processing version=2.0 packet with exchange type=ISAKMP_v2_AUTH (35), msgid: 00000001
 | I am IKE SA Responder
 | ICOOKIE:  80 01 02 03  04 05 06 07
@@ -367,67 +388,55 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 | ikev2 R 0x8001020304050607 0xdebc583a8f40d0cf md5:0xe7354351e9a081c365b2761ac5f815ea 3des192:0x8f01464a6b1a7aaf8b8a969c88f3cc8ef82a96cd7218fc11
 | decrypting as RESPONDER, using INITIATOR keys
 | data being hmac:  80 01 02 03  04 05 06 07  de bc 58 3a  8f 40 d0 cf
-|   2e 20 23 08  00 00 00 01  00 00 01 dc  23 00 01 c0
-|   80 01 02 03  04 05 06 07  04 b3 31 de  23 1d 20 a9
-|   b4 25 4d 02  53 f0 a7 98  4a 8f 24 99  39 61 ee 81
-|   ec 26 10 59  d9 e5 72 bb  39 11 ab 59  c3 a6 b5 3f
-|   be 0d df e0  5b 10 b0 e0  f8 5e 07 56  1a 0e bd 9c
-|   e0 76 8d 1d  5c 7e 0d a1  50 f7 e0 82  39 e9 23 02
-|   27 89 60 17  ba 6c 6f 24  42 1f 3a 40  ba c3 9f 33
-|   cd c4 b2 14  38 53 a4 61  00 79 4a 7d  b9 65 0c d5
-|   51 be 28 40  bb 25 eb 4b  0c a2 51 66  f1 be 04 16
-|   8b 6a bf ea  7e 74 4c 31  af 6a 0f f6  2a 68 e5 cf
-|   05 61 43 3b  11 ae 63 9c  76 10 21 88  9c b7 bd 7f
-|   68 c9 b5 b0  fe da 1e 08  4f a9 21 35  0e 7b e6 92
-|   18 8e f3 f8  62 26 b3 89  4a 55 c7 1c  ad f6 cc 31
-|   2a 69 3a 64  5d 81 0d 22  37 bf 0f 0c  d9 0f da 63
-|   e7 16 b3 3e  46 2f af 3a  4f 41 fe c0  01 4b 2e 30
-|   6f fd 49 a2  b3 a1 de 36  11 1a 34 84  65 fc 49 b4
-|   98 a9 e2 b0  55 46 ce f3  d2 85 7c 09  db 53 ce 4e
-|   8e bc 1d af  18 2b d3 5c  03 dc 85 de  bf 5d 43 aa
-|   ab 0b 6b 93  99 db 03 c2  fd 1f 48 44  3d e8 e4 8b
-|   4d f6 a9 b2  e5 39 d4 f2  df c5 de 53  42 94 fc 33
-|   67 b9 04 c5  3c 9a e0 33  43 76 46 c4  0d da 70 8e
-|   c0 a4 a6 1a  51 1e 7b a9  f5 51 c4 3a  7b 42 3f 15
-|   b9 af e9 c9  2b 2b 9e 0a  d0 71 b5 ec  30 de 7f 09
-|   df 41 63 87  53 87 4a 4f  f0 a6 f4 12  ea fd de 67
-|   9b eb cf 81  99 f4 2b 06  fc 16 96 48  11 a8 c8 d8
-|   ad 34 f1 9c  00 e0 9f fe  3c 34 bf da  b5 01 21 3d
-|   34 94 aa 3a  e8 d3 3f dd  4a e5 7a 66  4b d4 22 6d
-|   d5 6b c3 42  c0 d5 fb 20  34 0d 94 88  76 a7 7f 39
-| R2 calculated auth:  0c 75 bb 6f  cd f4 6d 38  e6 c1 4d 56
-| R2  provided  auth:  0c 75 bb 6f  cd f4 6d 38  e6 c1 4d 56
+|   2e 20 23 08  00 00 00 01  00 00 01 74  23 00 01 58
+|   80 01 02 03  04 05 06 07  5c 38 67 5e  87 83 0f 85
+|   a7 09 8f 39  76 22 7e d9  eb 2c 66 0a  26 74 16 9f
+|   13 fa 8f 1c  95 3b 44 6c  49 53 06 9a  df b2 e7 8c
+|   b8 46 90 b9  6e 5e 92 8d  48 ff 7d 4b  4b bb ea 7d
+|   f4 05 94 51  fa 59 80 d3  fb 5c e9 f8  c9 8c a8 3b
+|   05 04 15 50  69 b7 5f 5e  95 c5 52 71  65 33 40 06
+|   2e 9c 34 c9  82 8a 54 88  8d 83 f9 ea  ae 91 45 48
+|   9a d3 24 89  b1 6a 46 fc  6c 00 70 24  2c e5 6b f0
+|   83 c0 03 e1  41 bf 8d 1f  83 9f 06 95  58 58 3e 43
+|   4a 66 d8 4a  b9 1d 8c e2  da 15 c5 ac  c8 26 8a a4
+|   f2 7b 15 19  6f f5 c9 4a  c2 08 5b 49  ae 9d a4 8e
+|   ba e5 d5 f0  cb c7 f4 17  c7 7e 73 05  01 2c 5d 4e
+|   04 6e ed 42  17 01 b7 97  3a 09 da 3d  46 6d e6 33
+|   c5 9f 41 4c  9a 0a 2e e5  65 81 3d 36  cf 4c 99 5c
+|   7a 1d 64 af  f0 77 3e c0  99 c8 e4 92  a7 cb 21 62
+|   f5 de c0 b8  e3 88 7e d1  be 6e 03 e9  c2 bf 53 12
+|   da 62 fa 45  c2 dd 63 66  76 fc cc 61  27 38 c6 ab
+|   ed 42 61 0b  a3 31 3b 63  bc 48 28 bc  99 26 de 82
+|   76 65 6c 0c  92 47 0a 74  4f 2a b3 83  6e 26 8e 6d
+|   55 3c 47 ca  b2 9f b8 17  75 4f 12 e2  9a 55 ab ee
+|   bb 22 f8 54  7c d7 30 cf
+| R2 calculated auth:  ea fd ca 74  b4 35 4e d8  3e 29 8d 74
+| R2  provided  auth:  ea fd ca 74  b4 35 4e d8  3e 29 8d 74
 | authenticator matched, np=35
 | data before decryption:
-|   04 b3 31 de  23 1d 20 a9  b4 25 4d 02  53 f0 a7 98
-|   4a 8f 24 99  39 61 ee 81  ec 26 10 59  d9 e5 72 bb
-|   39 11 ab 59  c3 a6 b5 3f  be 0d df e0  5b 10 b0 e0
-|   f8 5e 07 56  1a 0e bd 9c  e0 76 8d 1d  5c 7e 0d a1
-|   50 f7 e0 82  39 e9 23 02  27 89 60 17  ba 6c 6f 24
-|   42 1f 3a 40  ba c3 9f 33  cd c4 b2 14  38 53 a4 61
-|   00 79 4a 7d  b9 65 0c d5  51 be 28 40  bb 25 eb 4b
-|   0c a2 51 66  f1 be 04 16  8b 6a bf ea  7e 74 4c 31
-|   af 6a 0f f6  2a 68 e5 cf  05 61 43 3b  11 ae 63 9c
-|   76 10 21 88  9c b7 bd 7f  68 c9 b5 b0  fe da 1e 08
-|   4f a9 21 35  0e 7b e6 92  18 8e f3 f8  62 26 b3 89
-|   4a 55 c7 1c  ad f6 cc 31  2a 69 3a 64  5d 81 0d 22
-|   37 bf 0f 0c  d9 0f da 63  e7 16 b3 3e  46 2f af 3a
-|   4f 41 fe c0  01 4b 2e 30  6f fd 49 a2  b3 a1 de 36
-|   11 1a 34 84  65 fc 49 b4  98 a9 e2 b0  55 46 ce f3
-|   d2 85 7c 09  db 53 ce 4e  8e bc 1d af  18 2b d3 5c
-|   03 dc 85 de  bf 5d 43 aa  ab 0b 6b 93  99 db 03 c2
-|   fd 1f 48 44  3d e8 e4 8b  4d f6 a9 b2  e5 39 d4 f2
-|   df c5 de 53  42 94 fc 33  67 b9 04 c5  3c 9a e0 33
-|   43 76 46 c4  0d da 70 8e  c0 a4 a6 1a  51 1e 7b a9
-|   f5 51 c4 3a  7b 42 3f 15  b9 af e9 c9  2b 2b 9e 0a
-|   d0 71 b5 ec  30 de 7f 09  df 41 63 87  53 87 4a 4f
-|   f0 a6 f4 12  ea fd de 67  9b eb cf 81  99 f4 2b 06
-|   fc 16 96 48  11 a8 c8 d8  ad 34 f1 9c  00 e0 9f fe
-|   3c 34 bf da  b5 01 21 3d  34 94 aa 3a  e8 d3 3f dd
-|   4a e5 7a 66  4b d4 22 6d  d5 6b c3 42  c0 d5 fb 20
-|   34 0d 94 88  76 a7 7f 39
-| decrypted payload:  27 00 00 0c  01 00 00 00  c0 a8 01 01  21 00 00 c8
-|   01 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
+|   5c 38 67 5e  87 83 0f 85  a7 09 8f 39  76 22 7e d9
+|   eb 2c 66 0a  26 74 16 9f  13 fa 8f 1c  95 3b 44 6c
+|   49 53 06 9a  df b2 e7 8c  b8 46 90 b9  6e 5e 92 8d
+|   48 ff 7d 4b  4b bb ea 7d  f4 05 94 51  fa 59 80 d3
+|   fb 5c e9 f8  c9 8c a8 3b  05 04 15 50  69 b7 5f 5e
+|   95 c5 52 71  65 33 40 06  2e 9c 34 c9  82 8a 54 88
+|   8d 83 f9 ea  ae 91 45 48  9a d3 24 89  b1 6a 46 fc
+|   6c 00 70 24  2c e5 6b f0  83 c0 03 e1  41 bf 8d 1f
+|   83 9f 06 95  58 58 3e 43  4a 66 d8 4a  b9 1d 8c e2
+|   da 15 c5 ac  c8 26 8a a4  f2 7b 15 19  6f f5 c9 4a
+|   c2 08 5b 49  ae 9d a4 8e  ba e5 d5 f0  cb c7 f4 17
+|   c7 7e 73 05  01 2c 5d 4e  04 6e ed 42  17 01 b7 97
+|   3a 09 da 3d  46 6d e6 33  c5 9f 41 4c  9a 0a 2e e5
+|   65 81 3d 36  cf 4c 99 5c  7a 1d 64 af  f0 77 3e c0
+|   99 c8 e4 92  a7 cb 21 62  f5 de c0 b8  e3 88 7e d1
+|   be 6e 03 e9  c2 bf 53 12  da 62 fa 45  c2 dd 63 66
+|   76 fc cc 61  27 38 c6 ab  ed 42 61 0b  a3 31 3b 63
+|   bc 48 28 bc  99 26 de 82  76 65 6c 0c  92 47 0a 74
+|   4f 2a b3 83  6e 26 8e 6d  55 3c 47 ca  b2 9f b8 17
+|   75 4f 12 e2  9a 55 ab ee  bb 22 f8 54  7c d7 30 cf
+| decrypted payload:  27 00 00 23  02 00 00 00  62 65 72 72  69 2e 74 65
+|   73 74 69 6e  67 2e 78 65  6c 65 72 61  6e 63 65 2e
+|   63 6f 6d 21  00 00 c8 01  00 00 00 00  00 00 00 00
 |   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
 |   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
 |   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
@@ -439,26 +448,18 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 |   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
 |   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
 |   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
-|   00 00 00 00  2c 00 00 9c  02 00 00 28  01 03 04 03
-|   12 34 56 78  03 00 00 0c  01 00 00 0c  80 0e 00 80
-|   03 00 00 08  03 00 00 02  00 00 00 08  05 00 00 00
-|   02 00 00 28  02 03 04 03  12 34 56 78  03 00 00 0c
-|   01 00 00 0c  80 0e 00 80  03 00 00 08  03 00 00 01
-|   00 00 00 08  05 00 00 00  02 00 00 24  03 03 04 03
-|   12 34 56 78  03 00 00 08  01 00 00 03  03 00 00 08
-|   03 00 00 02  00 00 00 08  05 00 00 00  00 00 00 24
-|   04 03 04 03  12 34 56 78  03 00 00 08  01 00 00 03
-|   03 00 00 08  03 00 00 01  00 00 00 08  05 00 00 00
-|   2d 00 00 18  01 00 00 00  07 00 00 10  00 00 ff ff
-|   c0 a8 01 01  c0 a8 01 01  00 00 00 18  01 00 00 00
-|   07 00 00 10  00 00 ff ff  84 d5 ee 07  84 d5 ee 07
-|   00 01 02 03  04 05 06 07
-| striping 8 bytes as pad
+|   00 00 00 00  00 00 00 00  00 00 00 2c  00 00 24 00
+|   00 00 20 01  03 04 02 12  34 56 78 03  00 00 0c 01
+|   00 00 0c 80  0e 00 80 00  00 00 08 03  00 00 02 2d
+|   00 00 18 01  00 00 00 07  00 00 10 00  00 ff ff c0
+|   a8 01 01 c0  a8 01 01 00  00 00 18 01  00 00 00 07
+|   00 00 10 00  00 ff ff 84  d5 ee 07 84  d5 ee 07 00
+| striping 1 bytes as pad
 | **parse IKEv2 Identification Payload:
 |    critical bit: none
-|    length: 12
-|    id_type: ID_IPV4_ADDR
-| processing payload: ISAKMP_NEXT_v2IDi (len=12)
+|    length: 35
+|    id_type: ID_FQDN
+| processing payload: ISAKMP_NEXT_v2IDi (len=35)
 | **parse IKEv2 Authentication Payload:
 |    critical bit: none
 |    length: 200
@@ -466,8 +467,8 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 | processing payload: ISAKMP_NEXT_v2AUTH (len=200)
 | **parse IKEv2 Security Association Payload:
 |    critical bit: none
-|    length: 156
-| processing payload: ISAKMP_NEXT_v2SA (len=156)
+|    length: 36
+| processing payload: ISAKMP_NEXT_v2SA (len=36)
 | **parse IKEv2 Traffic Selector Payload:
 |    critical bit: none
 |    length: 24
@@ -478,17 +479,21 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 |    length: 24
 |    number of TS: 1
 | processing payload: ISAKMP_NEXT_v2TSr (len=24)
-./h2hR2 IKEv2 mode peer ID is ID_IPV4_ADDR: '192.168.1.1'
-| find_ID_host_pair: looking for me=(none) him=192.168.1.1 (wildcard)
-|                   comparing to me=132.213.238.7 him=192.168.1.1 (alttunnel)
+./h2hR2 IKEv2 mode peer ID is ID_FQDN: '@berri.testing.xelerance.com'
+| find_ID_host_pair: looking for me=(none) him=@berri.testing.xelerance.com (wildcard)
+|                   comparing to me=132.213.238.7 him=@berri.testing.xelerance.com (alttunnel)
 |   concluded with alttunnel
-| idhash verify pi  d8 53 01 ed  30 8e 94 de  83 d2 32 45  9b 66 1c 96
-| idhash verify I2  01 00 00 00  c0 a8 01 01
+| parent SA IDi pi verify
+|   d8 53 01 ed  30 8e 94 de  83 d2 32 45  9b 66 1c 96
+| parent SA I2 idhash verify
+|   02 00 00 00  62 65 72 72  69 2e 74 65  73 74 69 6e
+|   67 2e 78 65  6c 65 72 61  6e 63 65 2e  63 6f 6d
 | ikev2 verify required CA is '%any'
 | checking alg=1 == 1, keyid=132.213.238.7 same_id=0
-| checking alg=1 == 1, keyid=192.168.1.1 same_id=1
+| checking alg=1 == 1, keyid=@berri.testing.xelerance.com same_id=1
 | key issuer CA is '%any'
-| PARENT SA now authenticated, building child and reply
+./h2hR2 PARENT SA now authenticated. Send R2 and considering Child-SA
+| inserting event EVENT_SA_REPLACE, timeout in 3600 seconds for #1
 | **emit ISAKMP Message:
 |    initiator cookie:
 |   80 01 02 03  04 05 06 07
@@ -546,8 +551,9 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 | parsing 4 raw bytes of IKEv2 Traffic Selector into ipv4 ts
 | ipv4 ts  84 d5 ee 07
 | ikev2_evaluate_connection_fit, evaluating base fit for alttunnel
-|   ikev2_evaluate_connection_fit evaluating our I=alttunnel:<noclient>:0/0 R=<noclient:0/0  to their:
-|     tsi[0]=192.168.1.1/192.168.1.1 proto=0 portrange 0-65535, tsr[0]=132.213.238.7/132.213.238.7 proto=0 portrange 0-65535
+|   ikev2_evaluate_connection_fit evaluating our I=alttunnel:<self>:0/0 R=<noclient:0/0  to their:
+|     tsi[0]=192.168.1.1/192.168.1.1 proto=0 portrange 0-65535
+|     tsr[0]=132.213.238.7/132.213.238.7 proto=0 portrange 0-65535
 | ei->port 0  tsi[tsi_ni].startport 0  tsi[tsi_ni].endport 65535
 |       has ts_range1=0 maskbits1=32 ts_range2=0 maskbits2=32 fitbits=8224 <> -1
 | bfit_n=ikev2_evaluate_connection_fit found better fit c alttunnel
@@ -559,17 +565,13 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 |     best ports fit so far: tsi[0] fitrange_i 65536, tsr[0] fitrange_r 65536, matchiness 131072
 |     port_fitness 131072
 | ikev2_evaluate_connection_port_fit found better fit c alttunnel, tsi[0],tsr[0]
-| find_ID_host_pair: looking for me=132.213.238.7 him=192.168.1.1 (wildcard)
-|                   comparing to me=132.213.238.7 him=192.168.1.1 (alttunnel)
-|   concluded with alttunnel
-|   checking hostpair 132.213.238.7/32 -> 192.168.1.1/32 is found
-| ikev2_evaluate_connection_fit, concluded with alttunnel
 | duplicating state object #1
 | creating state object #2 at Z
 | ICOOKIE:  80 01 02 03  04 05 06 07
 | RCOOKIE:  de bc 58 3a  8f 40 d0 cf
 | state hash entry 28
 | inserting state object #2 bucket: 28
+| inserting event EVENT_SO_DISCARD, timeout in 0 seconds for #2
 | printing contents struct traffic_selector
 |   ts_type: IKEv2_TS_IPV4_ADDR_RANGE
 |   ipprotoid: 0
@@ -587,13 +589,12 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 |    next-payload: ISAKMP_NEXT_v2SA [@12=0x21]
 | *****emit IKEv2 Security Association Payload:
 |    critical bit: none
-| empty esp_info, returning defaults
 | ***parse IKEv2 Proposal Substructure Payload:
-|    length: 40
+|    length: 32
 |    prop #: 1
 |    proto ID: 3
 |    spi size: 4
-|    # transforms: 3
+|    # transforms: 2
 | parsing 4 raw bytes of IKEv2 Proposal Substructure Payload into CHILD SA SPI
 | CHILD SA SPI  12 34 56 78
 | SPI received: 12345678
@@ -604,23 +605,12 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 | *****parse IKEv2 Attribute Substructure Payload:
 |    af+type: KEY_LENGTH
 |    length/value: 128
+| collect encr: 12<=1 integ: 0<=0 prf: 0<=0 dh: 0<=0
 | ****parse IKEv2 Transform Substructure Payload:
 |    length: 8
 |    transform type: 3
 |    transform ID: 2
-| ****parse IKEv2 Transform Substructure Payload:
-|    length: 8
-|    transform type: 5
-|    transform ID: 0
-| ***parse IKEv2 Proposal Substructure Payload:
-|    length: 40
-|    prop #: 2
-|    proto ID: 3
-|    spi size: 4
-|    # transforms: 3
-| parsing 4 raw bytes of IKEv2 Proposal Substructure Payload into CHILD SA SPI
-| CHILD SA SPI  12 34 56 78
-| SPI received: 12345678
+| collect encr: 12<=1 integ: 2<=1 prf: 0<=0 dh: 0<=0
 | ******emit IKEv2 Proposal Substructure Payload:
 |    prop #: 1
 |    proto ID: 3
@@ -677,6 +667,10 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 | emitting length of IKEv2 Traffic Selector: 16
 | emitting length of IKEv2 Traffic Selector Payload: 24
 | ikev2_derive_child_keys: using oakley_md5 for prf+ (SA #2 cloned from #1)
+| SA #2 IKE alg: 3des(3)-hmac_md5_96(1)-prfmd5(1)-MODP2048(14); flags=-strict
+| SA #2 ESP alg: aes_cbc(12)_128-hmac_sha1_96(2)_000-MODP1536(5); flags=-strict
+| SA #1 IKE alg: 3des(3)-hmac_md5_96(1)-prfmd5(1)-MODP2048(14); flags=-strict
+| SA #1 ESP alg: aes_cbc(12)_128-hmac_sha1_96(2)_000-MODP1536(5); flags=-strict
 | childsacalc.ni  3c d5 15 14  50 ab 73 9a  c8 ac 54 1c  0d e6 bc 04
 | childsacalc.nr  00 84 b6 7e  d1 b6 d1 52  89 0e d7 1c  74 b9 26 e4
 | ikev2_derive_child_keys: my role is RESPONDER
@@ -768,7 +762,7 @@ sending 428 bytes for STATE_IKEv2_START through eth0:500 [132.213.238.7:500] to 
 | v2_state_transition: st is #2; pst is #1; transition_st is #1
 ./h2hR2 STATE_PARENT_R2: received v2I2, PARENT SA established {auth=IKEv2 oursig=fakesig1 theirsig=fakecheck cipher=oakley_3des_cbc_192 integ=md5_96 prf=oakley_md5 group=modp2048} (msgid: 00000001/00000001)
 ./h2hR2 negotiated tunnel [132.213.238.7,132.213.238.7 proto:0 port:0-65535] -> [192.168.1.1,192.168.1.1 proto:0 port:0-65535]
-./h2hR2 STATE_CHILD_C1_KEYED: CHILD SA established tunnel mode {ESP=>0x12345678 <0x12345678 xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=none}
+./h2hR2 STATE_CHILD_C1_KEYED: CHILD SA established tunnel mode {ESP=>0x12345678 <0x12345678 xfrm=aes_cbc_128-hmac_sha1_96 NATOA=none NATD=none DPD=none}
 | sending reply packet to 192.168.1.1:500 (from port 500)
 sending 364 bytes for STATE_PARENT_R1 through eth0:500 [132.213.238.7:500] to 192.168.1.1:500 (using #2)
 |   80 01 02 03  04 05 06 07  de bc 58 3a  8f 40 d0 cf
@@ -796,27 +790,16 @@ sending 364 bytes for STATE_PARENT_R1 through eth0:500 [132.213.238.7:500] to 19
 |   d9 8c e8 6e  3e 8c a6 c1  50 10 e2 15
 | releasing whack for #X (sock=Y)
 | releasing whack for #X (sock=Y)
+| inserting event EVENT_SA_REPLACE, timeout in 1110 seconds for #2
 | freeing state object #1
 ./h2hR2 leak: reply packet, item size: X
 ./h2hR2 leak: skeyseed_t1, item size: X
 ./h2hR2 leak: responder keys, item size: X
 ./h2hR2 leak: initiator keys, item size: X
-./h2hR2 leak: db_v2_trans, item size: X
-./h2hR2 leak: db_v2_prop_conj, item size: X
-./h2hR2 leak: db_v2_prop, item size: X
-./h2hR2 leak: db_v2_trans, item size: X
-./h2hR2 leak: db_v2_prop_conj, item size: X
-./h2hR2 leak: db_attrs, item size: X
-./h2hR2 leak: db_v2_trans, item size: X
-./h2hR2 leak: db_v2_prop_conj, item size: X
-./h2hR2 leak: db_attrs, item size: X
-./h2hR2 leak: db_v2_trans, item size: X
-./h2hR2 leak: db_v2_prop_conj, item size: X
-./h2hR2 leak: 4 * sa copy attrs array, item size: X
-./h2hR2 leak: sa copy trans array, item size: X
-./h2hR2 leak: sa copy prop array, item size: X
-./h2hR2 leak: sa copy prop conj array, item size: X
-./h2hR2 leak: sa copy prop_conj, item size: X
+./h2hR2 leak: db_context->attrs, item size: X
+./h2hR2 leak: db_context->trans, item size: X
+./h2hR2 leak: 2 * db_context->conj, item size: X
+./h2hR2 leak: v2 policy database, item size: X
 ./h2hR2 leak: st_nr in duplicate_state, item size: X
 ./h2hR2 leak: st_ni in duplicate_state, item size: X
 ./h2hR2 leak: st_skey_pr in duplicate_state, item size: X
@@ -832,15 +815,19 @@ sending 364 bytes for STATE_PARENT_R1 through eth0:500 [132.213.238.7:500] to 19
 ./h2hR2 leak: ikev2_inI2outR2 KE, item size: X
 ./h2hR2 leak: ikev2_inI1outR1 KE, item size: X
 ./h2hR2 leak: msg_digest, item size: X
+./h2hR2 leak: keep id name, item size: X
 ./h2hR2 leak: ID host_pair, item size: X
 ./h2hR2 leak: host_pair, item size: X
-./h2hR2 leak: 2 * host ip, item size: X
+./h2hR2 leak: keep id name, item size: X
+./h2hR2 leak: host ip, item size: X
 ./h2hR2 leak: connection name, item size: X
+./h2hR2 leak: alg_info_esp, item size: X
 ./h2hR2 leak: struct connection, item size: X
 ./h2hR2 leak: alg_info_ike, item size: X
 ./h2hR2 leak: pubkey entry, item size: X
 ./h2hR2 leak: rfc3110 format of public key, item size: X
 ./h2hR2 leak: pubkey, item size: X
+./h2hR2 leak: keep id name, item size: X
 ./h2hR2 leak: pubkey entry, item size: X
 ./h2hR2 leak: rfc3110 format of public key, item size: X
 ./h2hR2 leak: pubkey, item size: X
@@ -848,7 +835,8 @@ sending 364 bytes for STATE_PARENT_R1 through eth0:500 [132.213.238.7:500] to 19
 ./h2hR2 leak: rfc3110 format of public key [created], item size: X
 ./h2hR2 leak: pubkey, item size: X
 ./h2hR2 leak: secret, item size: X
-./h2hR2 leak: 2 * hasher name, item size: X
+./h2hR2 leak: 4 * hasher name, item size: X
+./h2hR2 leak: 10 * group description, item size: X
 ./h2hR2 leak: policies path, item size: X
 ./h2hR2 leak: ocspcerts path, item size: X
 ./h2hR2 leak: aacerts path, item size: X
