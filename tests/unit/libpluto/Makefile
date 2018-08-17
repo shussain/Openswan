@@ -14,6 +14,8 @@
 OPENSWANSRCDIR?=$(shell cd ../../..; pwd)
 srcdir?=${OPENSWANSRCDIR}/tests/unit/libpluto
 
+all: programs
+
 include ${OPENSWANSRCDIR}/Makefile.inc
 
 UNITTESTS_0+=lp03-whacksemantics
@@ -31,6 +33,7 @@ UNITTESTS_0+=lp34-orientafterlisten
 UNITTESTS_0+=lp40-orientafterprivate
 UNITTESTS_0+=lp41-orientmoon
 UNITTESTS_0+=lp42-loadbobdefaultroute
+
 UNITTESTS_I4+=lp50-rekey-no-reply-rekey
 UNITTESTS_0+=lp60-bestif
 UNITTESTS_0+=lp66-db2ops
@@ -60,6 +63,7 @@ UNITTESTS_R2+=lp22-certreplymanyR2
 
 
 UNITTESTS_I1+=lp23-davecertI1
+
 UNITTESTS_R1+=lp70-certreplydaveR1
 UNITTESTS_I2+=lp26-davecertI2
 UNITTESTS_R2+=lp24-certreplydaveR2
@@ -158,6 +162,7 @@ UNITTESTS_I4+=lp72-msg1nopropchosen
 UNITTESTS=${UNITTESTS_0}
 # then run all the I1,R1,I2,R2,I3
 UNITTESTS+=${UNITTESTS_I1}
+
 UNITTESTS+=${UNITTESTS_v1I1}
 UNITTESTS+=${UNITTESTS_R1}
 UNITTESTS+=${UNITTESTS_v1R1}
@@ -178,6 +183,7 @@ UNITTESTS+=${UNITTESTS_v1Q1}
 # running 'make check KEEPGOING=1' will run through all tests w/o stopping
 ERROR_CHECK=$(if ${KEEPGOING},,set -e;)
 
+programs clean check pcapupdate:
 clean check pcapupdate programs:
 	@${ERROR_CHECK} for unittest in ${UNITTESTS}; do ${MAKE} -C $$unittest $@; done
 
