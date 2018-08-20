@@ -591,7 +591,7 @@ int ikev2_evaluate_connection_fit(struct connection *d
         if(er->has_client) {
             subnettot(&er->client,  0, er3, sizeof(er3));
         } else {
-            strcpy(er3, "<noclient");
+            strcpy(er3, "<noclient>");
 
             /* here, fill in new end with actual client info from the state */
             if(er->host_type == KH_ANY) {
