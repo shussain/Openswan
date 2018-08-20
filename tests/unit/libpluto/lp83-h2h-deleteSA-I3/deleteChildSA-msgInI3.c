@@ -1,5 +1,4 @@
 #include "../lp13-parentI3/parentI3_head.c"
-#include "seam_gi_sha1.c"
 #include "seam_gi_sha256_group14.c"
 #include "seam_finish.c"
 #include "seam_ikev2_sendI1.c"
@@ -11,28 +10,7 @@
 
 #define TESTNAME "deleteChildSA-msgInI3"
 
-/* this is replicated in the unit test cases since the patching up of the crypto values is case specific */
-void recv_pcap_packet(u_char *user
-		      , const struct pcap_pkthdr *h
-		      , const u_char *bytes)
-{
-    static int call_counter = 0;
-    struct pcr_kenonce *kn = &crypto_req->pcr_d.kn;
-
-    call_counter++;
-    DBG_log("%s() call %d: enter", __func__, call_counter);
-
-    enable_debugging();
-    enable_debugging_on_sa(1);
-    enable_debugging_on_sa(2);
-
-    recv_pcap_packet_gen(user, h, bytes);
-
-    DBG_log("%s() call %d: continuation", __func__, call_counter);
-    run_continuation(crypto_req);
-
-    DBG_log("%s() call %d: exit", __func__, call_counter);
-}
+extern void recv_pcap_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 
 void recv_pcap_packet2(u_char *user
                       , const struct pcap_pkthdr *h
@@ -75,6 +53,7 @@ recv_pcap recv_inputs[PCAP_INPUT_COUNT]={
     recv_pcap_packet2,
 };
 
+#include "seam_parentI2.c"
 
 #include "../lp13-parentI3/parentI3_main.c"
 

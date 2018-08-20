@@ -6,8 +6,8 @@ time.
 NOTE: To simulate behaviour of Strongswan, the other end (lp80) sent us
 a CREATE_CHILD_SA message with msgid of 0.
 
-This uses the I1/R1/I2/R2/I3 pcap files from lp36 thru lp39.  Some packets
-come from lp82.
+This uses the I1/R1/I2/R2/I3 pcap files from lp36 thru lp39.
+Two packets come from lp82 in a single pcap file.
 
 
 Initiator                                                             Responder
@@ -36,9 +36,9 @@ CREATE_CHILD_SA, I, id 2
                                                 <----- [ SA No TSi TSr ]
 
                               --- 08:43:03 ---
-                                                                                  <- 
+                                                                                  <-
                                                     INFORMATIONAL, id 0           <- lp82
-                                             <----- [ D ]                         <- state: R2 
+                                             <----- [ D ]                         <- state: R2
                                                                                   <-
 
                                                                                   <-
