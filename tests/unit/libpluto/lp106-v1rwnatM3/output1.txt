@@ -393,7 +393,7 @@ picking: eth0:500  outside: 55044 <=> d: 55044
 |   a8 88 13 5c  dc 67 3d d4  83 02 99 03  f3 a9 0e ca
 |   23 e1 ec 1e  27 03 31 b2  d0 50 f4 f7  58 f4 99 27
 | complete state transition with STF_SUSPEND
-| main inR2_outI3: calculated DH, sending R1
+| main inR2_outI3: calculated DH, sending I3
 | WARNING: ../seam_finish.c:49: encryptor '3des' expects keylen 24/192, SA #1 INITIATOR keylen is 16
 | WARNING: ../seam_finish.c:49: encryptor '3des' expects keylen 24/192, SA #1 RESPONDER keylen is 16
 | WARNING: ../seam_finish.c:49: hasher 'md5' expects keylen 16/16, SA #1 INITIATOR keylen is 20

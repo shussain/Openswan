@@ -625,9 +625,10 @@ int ikev2_evaluate_connection_fit(struct connection *d
 		addrtot(&tsr[tsr_ni].low,  0, lbr, sizeof(lbr));
 		addrtot(&tsr[tsr_ni].high, 0, hbr, sizeof(hbr));
 
-		DBG_log("    tsi[%u]=%s/%s proto=%d portrange %d-%d, tsr[%u]=%s/%s proto=%d portrange %d-%d"
+		DBG_log("    tsi[%u]=%s/%s proto=%d portrange %d-%d"
 			, tsi_ni, lbi, hbi
-			,  tsi[tsi_ni].ipprotoid, tsi[tsi_ni].startport, tsi[tsi_ni].endport
+			,  tsi[tsi_ni].ipprotoid, tsi[tsi_ni].startport, tsi[tsi_ni].endport);
+		DBG_log("    tsr[%u]=%s/%s proto=%d portrange %d-%d"
 			, tsr_ni, lbr, hbr
 			,  tsr[tsr_ni].ipprotoid, tsr[tsr_ni].startport, tsr[tsr_ni].endport);
 	    }

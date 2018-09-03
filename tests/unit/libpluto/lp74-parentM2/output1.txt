@@ -200,7 +200,7 @@ picking: eth0:500  outside: 55044 <=> d: 55044
 |   01 10 02 00  00 00 00 00  00 00 00 88  0d 00 00 34
 |   00 00 00 01  00 00 00 01  00 00 00 28  00 01 00 01
 |   00 00 00 20  00 01 00 00  80 0b 00 01  80 0c 0e 10
-|   80 03 00 03  80 01 00 07  80 02 00 02  80 04 00 0e
+|   80 03 00 03  80 01 00 07  80 02 00 02  80 04 00 05
 |   0d 00 00 10  4f 45 70 6c  75 74 6f 75  6e 69 74 30
 |   0d 00 00 14  af ca d7 13  68 a1 f1 c9  6b 86 96 fc
 |   77 57 01 00  00 00 00 14  4a 13 1c 81  07 03 58 45
@@ -264,7 +264,7 @@ picking: eth0:500  outside: 55044 <=> d: 55044
 |    [2 is OAKLEY_SHA1]
 | ******parse ISAKMP Oakley attribute:
 |    af+type: OAKLEY_GROUP_DESCRIPTION
-|    length/value: 14
+|    length/value: 5
 | Oakley Transform 0 accepted
 ./parentM2 enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 | complete state transition with STF_SUSPEND

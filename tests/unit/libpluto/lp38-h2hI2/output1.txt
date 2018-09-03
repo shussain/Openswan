@@ -162,6 +162,7 @@ sending 628 bytes for ikev2_parent_outI1_common through eth0:500 [192.168.1.1:50
 0: output to OUTPUT/h2hI2.pcap
 0: input from h2hR1.pcap
 |   =========== input from pcap file h2hR1.pcap ========
+| recv_pcap_packet() call 1: enter
 | *received 432 bytes from 132.213.238.7:500 on eth0 (port=500)
 |   80 01 02 03  04 05 06 07  de bc 58 3a  8f 40 d0 cf
 |   21 20 22 20  00 00 00 00  00 00 01 b0  22 00 00 30

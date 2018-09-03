@@ -288,7 +288,6 @@ sending 292 bytes for STATE_MAIN_R1 through eth0:500 [132.213.238.7:500] to 93.1
 | modecfg pull: noquirk policy:push not-client
 | phase 1 is done, looking for phase 2 to unpend
 | main inI2_outR2: calculated DH finished
-./parentN2 DH crypto failed, invalid keys
 | freeing state object #1
 ./parentN2 leak: main_inI2_outR2_tail, item size: X
 ./parentN2 leak: inI2_outR2 KE, item size: X

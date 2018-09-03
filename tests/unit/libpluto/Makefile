@@ -89,7 +89,7 @@ UNITTESTS_I3+=lp75-alg-h2hI3
 UNITTESTS_I3+=lp76-s2s-while-h2h-I1
 
 UNITTESTS_I3+=lp77-del-matching-st
-UNITTESTS_R4+=lp80-h2h-rekeyikev2-R2-msgid0
+UNITTESTS_R2+=lp80-h2h-rekeyikev2-R2-msgid0
 UNITTESTS_I3+=lp81-h2h-rekeyikev2-I3-msgid0
 UNITTESTS_R2+=lp82-h2h-deleteSA-R2
 UNITTESTS_I3+=lp83-h2h-deleteSA-I3

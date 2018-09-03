@@ -737,7 +737,7 @@ sending 416 bytes for STATE_PARENT_I1 through eth0:500 [192.168.1.1:500] to 132.
 | parsing 4 raw bytes of IKEv2 Traffic Selector into ipv4 ts
 | ipv4 ts  84 d5 ee 07
 | checking TSi(1)/TSr(1) selectors, looking for exact match
-|   ikev2_evaluate_connection_fit evaluating our I=mytunnel:<self>:0/0 R=<noclient:0/0  to their:
+|   ikev2_evaluate_connection_fit evaluating our I=mytunnel:<self>:0/0 R=<noclient>:0/0  to their:
 |     tsi[0]=192.168.1.1/192.168.1.1 proto=0 portrange 0-65535
 |     tsr[0]=132.213.238.7/132.213.238.7 proto=0 portrange 0-65535
 | prefix range fit c mytunnel c->name was rejected by port matching

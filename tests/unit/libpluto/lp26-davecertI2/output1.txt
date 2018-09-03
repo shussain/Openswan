@@ -113,6 +113,7 @@ sending 432 bytes for ikev2_parent_outI1_common through eth0:500 [93.184.216.35:
 0: output to OUTPUT/parentI2.pcap
 0: input from parentR1dave.pcap
 |   =========== input from pcap file parentR1dave.pcap ========
+| recv_pcap_packet() call 1: enter
 | *received 376 bytes from 132.213.238.7:500 on eth0 (port=500)
 |   8d 0e 0f 10  11 12 13 14  5d 73 ce 75  3d b1 db 6d
 |   21 20 22 20  00 00 00 00  00 00 01 78  22 00 00 30

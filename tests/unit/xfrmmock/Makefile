@@ -19,11 +19,17 @@ include ${OPENSWANSRCDIR}/Makefile.inc
 UNITTESTS=
 UNITTESTS+=xf12-parentR2
 UNITTESTS+=xf13-parentI3
-UNITTESTS+=xf79-childQR1
 
-UNITTESTS+=xf88-v1certQI1
+# disabled due to #7555
+#UNITTESTS+=xf79-childQR1
 
-UNITTESTS+=xf109-v1rwnatQR1
+# disabled due to #7554
+#UNITTESTS+=xf88-v1certQI1
+#UNITTESTS+=xf89-v1certQR1
+#UNITTESTS+=xf90-v1certQI2
+
+# disabled due to #7554
+#UNITTESTS+=xf109-v1rwnatQR1
 
 programs pcapupdate clean check:
 	@for unittest in ${UNITTESTS}; do ${MAKE} -C $$unittest $@; done
