@@ -42,11 +42,11 @@ extern stf_status ikev2parent_outI1_withstate(struct state *st
 
 extern void ikev2_delete_out(struct state *st);
 
-bool ikev2_out_attr(unsigned int type
-        , unsigned long val
-        , struct_desc *attr_desc
-        , enum_names **attr_val_descs USED_BY_DEBUG
-        , pb_stream *pbs);
+extern bool ikev2_out_attr(unsigned int type
+                           , unsigned long val
+                           , struct_desc *attr_desc
+                           , enum_names **attr_val_descs USED_BY_DEBUG
+                           , pb_stream *pbs);
 
 extern bool ikev2_out_sa(pb_stream *outs
 			 , unsigned int protoid
@@ -158,7 +158,7 @@ extern bool ikev2_calculate_psk_auth(struct state *st
 
 extern stf_status ikev2_verify_rsa_sha1(struct state *st
 					, enum phase1_role role
-                                        , struct IDhost_pair *hp
+                                     , struct IDhost_pair *hp
 				   , unsigned char *idhash
 				   , const struct pubkey_list *keys_from_dns
 				   , const struct gw_info *gateways_from_dns
@@ -166,7 +166,7 @@ extern stf_status ikev2_verify_rsa_sha1(struct state *st
 
 extern stf_status ikev2_verify_psk_auth(struct state *st
 					, enum phase1_role role
-                                        , struct IDhost_pair *hp
+                                     , struct IDhost_pair *hp
 				   , unsigned char *idhash
 				   , pb_stream *sig_pbs);
 
@@ -321,5 +321,4 @@ extern void ikev2_calculate_sighash(struct state *st
                                     , unsigned char *idhash
                                     , chunk_t firstpacket
                                     , unsigned char *sig_octets);
-
 extern bool ikev2_acceptable_group(struct state *st, enum ikev2_trans_type_dh group);
