@@ -3,7 +3,7 @@
 ENDNAME=h2h
 
 # this is the policy that will be load
-CONNNAME=mytunnel
+CONNNAME=mytunnel-byip
 
 TESTNAME=sarespond
 
