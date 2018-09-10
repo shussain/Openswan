@@ -1,9 +1,11 @@
+#conn berri-base loaded
 #conn berri loaded
 #conn peel loaded
 #conn berrinet loaded
 #conn peelnet loaded
 #conn green loaded
 #conn mytunnel loaded
+#conn mytunnel-byip loaded
 #conn alttunnel loaded
 #conn mytunnelnets loaded
 #conn mytunnel-no-ikev1 loaded
@@ -15,8 +17,32 @@ version 2.0
 config setup
 
 
+# begin conn berri-base
+conn berri-base
+	#left= not set
+	leftid="@berri.testing.xelerance.com"
+	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
+	leftrsakey2=0sAQN7wUerVXA6fSOOecdx8aWiAcy3FeRUVvTaETgC5+Fbt/6KeHf0buRCxf5Nvo2Zq0CzSucgXbX0CXzqJd+eFa8STub5YeF5sTQQtefcSejHUCaAbYacAufqKNVMTgS95jp3frpzyY2Bl70P2uFoLpq0AqzLaZscwjK1bOyFfCi4U5eW3sxNKYAvz8b41i7TfOvqL+vKIrzyXSJheIeir4HQzYwwJPWR4Ft+nB9HNiWVIGZseXJRTBi9EReN/dyr1jKV6HbRRAQJPjOZcwff0M1/ZCm+WNbBcy8zU40s9dldibi0RlM6NgbEN7FIpsilqaPKGNH0i3zad6X6Lc+tG3VF
+	#right= not set
+	salifetime=1200
+	rekeymargin=180
+	keyingtries=1
+	ikelifetime=3600
+	auto=ignore
+	type=tunnel
+	compress=no
+	pfs=yes
+	rekey=yes
+	overlapip=no
+	ikev1=no
+	authby=rsasig
+	phase2=esp
+	ikev2=insist
+# end conn berri-base
+
 # begin conn berri
 conn berri
+	#also = berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
@@ -63,7 +89,7 @@ conn peel
 
 # begin conn berrinet
 conn berrinet
-	#also = berri
+	#also = berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftsubnet=2620:120:9000:81::/64
@@ -149,7 +175,7 @@ conn green
 
 # begin conn mytunnel
 conn mytunnel
-	#also = berri
+	#also = berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
@@ -174,9 +200,36 @@ conn mytunnel
 	endaddrfamily=ipv4
 # end conn mytunnel
 
+# begin conn mytunnel-byip
+conn mytunnel-byip
+	#also = berri-base
+	left=192.168.1.1
+	leftid="@berri.testing.xelerance.com"
+	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
+	leftrsakey2=0sAQN7wUerVXA6fSOOecdx8aWiAcy3FeRUVvTaETgC5+Fbt/6KeHf0buRCxf5Nvo2Zq0CzSucgXbX0CXzqJd+eFa8STub5YeF5sTQQtefcSejHUCaAbYacAufqKNVMTgS95jp3frpzyY2Bl70P2uFoLpq0AqzLaZscwjK1bOyFfCi4U5eW3sxNKYAvz8b41i7TfOvqL+vKIrzyXSJheIeir4HQzYwwJPWR4Ft+nB9HNiWVIGZseXJRTBi9EReN/dyr1jKV6HbRRAQJPjOZcwff0M1/ZCm+WNbBcy8zU40s9dldibi0RlM6NgbEN7FIpsilqaPKGNH0i3zad6X6Lc+tG3VF
+	right=132.213.238.7
+	rightrsakey=0sAQNuCprJ/ikFt6nHrpWWOc0616DHG1JuvTwKffrqQCDNJb1PtXd6CGzJ12l8m56JBuV9FoGobEBVHtAFEnmnA9j/C9+am6SH+2ZY6pKqZARlldLcOXYyu0WHex4M89xNTFGew1SzHCQQMEWXVO7Q2gSv3yDzvGMdtaoZDOEcWVyByF0ZGPSqSrbeQ4J2+aYgeVqmmuXPGTCv+YfccQ3B6SYAoqkTimHzFvA5KqAEAxLK4wKnifFDKV0Wwx3oHLHS8vuf/R04zPkiJSPmrSluRI6xDJQ0/Dc8wWi5fIhT/WoQCfimbh/QVvS0Jcz1W3JehK9cyHLO/BWx0vcBWUC1kbgOyKATK14wsHNdqMlQ2kQdmWp/
+	rightrsakey2=0sAQOg5H7A4DPoQfz6KrLn/y/hWPHbgbafGYZlCaT605bm0kTNEJ4pzlAfW66jf4S6zYOc7XaD1PxDoXZE4iHFy9sE5uJr6H4pWGcop6Q8KKhLOq4Vh4GnFWi3NY7yOjrnW7otBWbdMNZb/s4+R6tRMw5DxaAGYM7CDFwkfeiBaX9+wOGmGt/rI3rflxBERAYmqflfylsFKt1YFWFPC3mKatEb2dZgJNyodFfcCc9VTHyTRJhGIEVCF9NS6DZkYYp/KgvIFfgLKg+lz0cllFvO25kGVhk0/W2BbkuF9dnuYu18a0dMPswmhY6AWHj6J2SSXPTMKSxd4PZcyshXN4iC50uVuzHrgxiXosmHrZ9OYXMIfyq7
+	salifetime=1200
+	rekeymargin=180
+	keyingtries=1
+	ikelifetime=3600
+	auto=add
+	type=tunnel
+	compress=no
+	pfs=yes
+	rekey=yes
+	overlapip=no
+	ikev1=no
+	authby=rsasig
+	phase2=esp
+	ikev2=insist
+	endaddrfamily=ipv4
+# end conn mytunnel-byip
+
 # begin conn alttunnel
 conn alttunnel
-	#also = mytunnel berri
+	#also = mytunnel berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
@@ -205,7 +258,7 @@ conn alttunnel
 
 # begin conn mytunnelnets
 conn mytunnelnets
-	#also = mytunnel berri
+	#also = mytunnel berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftsubnet=10.1.1.0/24
@@ -235,7 +288,7 @@ conn mytunnelnets
 
 # begin conn mytunnel-no-ikev1
 conn mytunnel-no-ikev1
-	#also = berri
+	#also = berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
@@ -262,7 +315,7 @@ conn mytunnel-no-ikev1
 
 # begin conn mytunnel-no-ikev2
 conn mytunnel-no-ikev2
-	#also = berri
+	#also = berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
@@ -288,7 +341,7 @@ conn mytunnel-no-ikev2
 
 # begin conn mytunnel-ikev1
 conn mytunnel-ikev1
-	#also = berri
+	#also = berri berri-base
 	left=%any
 	leftid="@berri.testing.xelerance.com"
 	leftrsakey=0sAQOpgzWyaBsBEOT2n1tRiQATrSn+GR9vsfXvMn+4V7xN2TjqjaFnNkTNPmvv7ICTw0T+rR2J57D91ZPjQnAlTy+URCSdfRI9Q3Eqwpqi2uD6WAus1iU7cEQeC2cTX8by2xvjrHXRu9Q1GY5OAzCzeT1HnNd+vfZv0ipy5wk5zqmfxc5BBxEf4bVsSYRE3xMyaszxXTQSQnEUHygpnbDxLaVQul5nXeSHcBYt2lDRzBSOZuHd5GbyV2K7OFkoxtp6qyQypTAR04Oyf6970qj6WfxoFUTfJm4nbJ4d4SzO03KJDx7Q+Qvs5u6+G5tvqc9lFMHMPBGLJvxCOJE+WpSp6riW9HZIdnLgiIU1G9lHLPZv8xB9
