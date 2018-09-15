@@ -6,3 +6,4 @@ s/leak: \(.*\), item size: .*/leak: \1, item size: X/
 /unreference key/d
 s/alg_info_delref(.*)/alg_info_delref(ADDRESS)/g
 s/WARNING: \/\(.*\): hasher/WARNING: FILE: hasher/
+s/WARNING: \/\(.*\): encryptor/WARNING: FILE: encryptor/
