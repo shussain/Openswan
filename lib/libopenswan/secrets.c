@@ -1007,8 +1007,9 @@ osw_process_rsa_secret(const struct secret *secrets
 		memcpy(rsak->ckaid,buf,sz);
 		rsak->ckaid_len=sz;
 	    }
-           else {
+            else
 #endif
+            {
                MP_INT *n = NULL;
 
                switch(p->type) {
@@ -1024,31 +1025,29 @@ osw_process_rsa_secret(const struct secret *secrets
                    break;
                }
 
-	    n_to_mpz(n, buf, sz);
-	    if (pb_next < &pub_bytes[elemsof(pub_bytes)])
-	    {
-		if (eb_next - ebytes + sz > sizeof(ebytes))
-		    return "public key takes too many bytes";
+               n_to_mpz(n, buf, sz);
+               if (pb_next < &pub_bytes[elemsof(pub_bytes)])
+                   {
+                       if (eb_next - ebytes + sz > sizeof(ebytes))
+                           return "public key takes too many bytes";
 
-		setchunk(*pb_next, eb_next, sz);
-		memcpy(eb_next, buf, sz);
-		eb_next += sz;
-		pb_next++;
-	    }
+                       setchunk(*pb_next, eb_next, sz);
+                       memcpy(eb_next, buf, sz);
+                       eb_next += sz;
+                       pb_next++;
+                   }
 #if 0	/* debugging info that compromises security */
-	    {
-		size_t sz = mpz_sizeinbase(n, 16);
-		char buf[RSA_MAX_OCTETS * 2 + 2];	/* ought to be big enough */
+               {
+                   size_t sz = mpz_sizeinbase(n, 16);
+                   char buf[RSA_MAX_OCTETS * 2 + 2];	/* ought to be big enough */
 
-		passert(sz <= sizeof(buf));
-		mpz_get_str(buf, 16, n);
+                   passert(sz <= sizeof(buf));
+                   mpz_get_str(buf, 16, n);
 
-		loglog(RC_LOG_SERIOUS, "%s: %s", p->name, buf);
-	    }
+                   loglog(RC_LOG_SERIOUS, "%s: %s", p->name, buf);
+               }
 #endif
-#ifdef HAVE_LIBNSS
-         }
-#endif
+            }
 	}
     }
 
