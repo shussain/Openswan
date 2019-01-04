@@ -17,11 +17,13 @@ srcdir?=${OPENSWANSRCDIR}/tests/unit/libpluto
 include ${OPENSWANSRCDIR}/Makefile.inc
 
 UNITTESTS=
-UNITTESTS+=lo01-samid
+UNITTESTS+=lo01-sameid
 UNITTESTS+=lo02-verifysigs
 UNITTESTS+=lo03-includesecrets
 UNITTESTS+=lo04-verifypubkeys
 UNITTESTS+=lo05-datatot
+UNITTESTS+=lo06-verifybadsigs
+UNITTESTS+=lo07-bleichenbacher-attack
 
 ERROR_CHECK=$(if ${KEEPGOING},,set -e;)
 
