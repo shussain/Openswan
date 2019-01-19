@@ -188,6 +188,7 @@ doinstall: all
 	mkdir -p -m 700 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(LIBEXECDIR)
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
+ifneq ($(USE_NOMANINSTALL),true)
 	$(INSTALL) $(INSTMANFLAGS) ${srcdir}pluto.8 $(PMANDIR)/ipsec_pluto.8
 	sh ${OPENSWANSRCDIR}/packaging/utils/manlink ${srcdir}pluto.8 | \
 		while read from to ; \
@@ -200,9 +201,11 @@ doinstall: all
 		do \
 		 ln -s -f $$from $(FMANDIR)/$$to; \
 		done
+endif
 
 install_file_list:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
+ifneq ($(USE_NOMANINSTALL),true)
 	@echo $(PMANDIR)/ipsec_pluto.8
 	@sh ${OPENSWANSRCDIR}/packaging/utils/manlink pluto.8 | \
 		while read from to; \
@@ -215,6 +218,7 @@ install_file_list:
 		do \
 			echo $(FMANDIR)/$$to; \
 		done
+endif
 
 ${LIBTPM}: $(wildcard ${srcdir}tpm/*.c) $(wildcard ${srcdir}tpm/*.h) $(wildcard ${srcdir}tpm/*.i)
 	@(cd tpm && ${MAKE} srcdir=${srcdir}tpm/ libtpm.a )
