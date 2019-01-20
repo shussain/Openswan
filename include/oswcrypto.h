@@ -16,6 +16,8 @@
  * for more details.
  */
 
+#ifndef _OSW_CRYPTO_H
+#define _OSW_CRYPTO_H
 #include <mpzfuncs.h>
 #include <crypto/aes.h>
 #include <crypto/aes_cbc.h>
@@ -65,4 +67,6 @@ extern void load_oswcrypto(void);
 #ifdef HAVE_OCF
 extern void load_cryptodev(void);
 #endif
+
+#endif /* _OSW_CRYPTO_H */
 
