@@ -19,6 +19,7 @@
 
 #include "pluto_crypt.h"
 #include "whackmsgtestlib.c"
+#include <pluto/vendor.h>
 #include "seam_debug.c"
 #include "seam_timer.c"
 #include "seam_fakevendor.c"

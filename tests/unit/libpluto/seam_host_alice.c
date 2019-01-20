@@ -3,6 +3,8 @@
 #define FIREWALL_OUTSIDE "192.168.0.1"
 #endif
 
+#include <arpa/inet.h>
+
 struct iface_dev  alice_ifd1 = {
 	.id_count = 1,
 	.id_vname = "ipsec0",

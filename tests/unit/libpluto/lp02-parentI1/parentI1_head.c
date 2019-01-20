@@ -12,6 +12,7 @@
 #include "oswconf.h"
 #include "oswcrypto.h"
 #include "whack.h"
+
 #include "../../programs/pluto/rcv_whack.h"
 
 #include "sysdep.h"
@@ -32,6 +33,8 @@
 #include "packet.h"
 #include "demux.h"	/* needs packet.h */
 #include "state.h"
+#include <pluto/vendor.h>
+#include <pluto/nat_traversal.h>
 #include "timer.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "pluto/server.h"
