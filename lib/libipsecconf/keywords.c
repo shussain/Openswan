@@ -40,6 +40,7 @@
 #define VALUES_INITIALIZER(t)	{ t, sizeof(t)/ sizeof(t[0]) }
 #undef KEYWORD_PARSE_DEBUG
 
+#ifdef KEYWORD_PARSE_DEBUG
 /*
  * values for keyword types  (used for debugging)
  */
@@ -64,7 +65,8 @@ static const struct keyword_enum_value kt_values[]={
     KEV_LITERAL(kt_bitstring),
     KEV_LITERAL(kt_comment),
 };
-const struct keyword_enum_values kt_values_list = VALUES_INITIALIZER(kt_values);
+static const struct keyword_enum_values kt_values_list = VALUES_INITIALIZER(kt_values);
+#endif
 
 /*
  * Values for failureshunt={passthrough, drop, reject, none}
@@ -107,6 +109,8 @@ static const struct keyword_enum_value kw_fourvalued_values[]={
 
 static const struct keyword_enum_values kw_fourvalued_list = VALUES_INITIALIZER(kw_fourvalued_values);
 
+#if 0
+/* No longer used */
 /*
  * Values for yes/no/force, used by ike_frag
  */
@@ -117,7 +121,8 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 	{ "insist",     ynf_force },
 	{ "force",     ynf_force },
 };
-const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
+static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
+#endif
 
 /*
  * Values for authby={rsasig, secret}
@@ -236,12 +241,15 @@ static const struct keyword_enum_value kw_remote_peer_type_list[]={
 };
 static const struct keyword_enum_values kw_remote_peer_type = VALUES_INITIALIZER(kw_remote_peer_type_list);
 
+#if 0
+/* no longer used */
 static const struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",        XAUTHBY_FILE },
 	{ "pam",         XAUTHBY_PAM },
 	{ "alwaysok",    XAUTHBY_ALWAYSOK },
 };
-const struct keyword_enum_values kw_xauthby = VALUES_INITIALIZER(kw_xauthby_list);
+static const struct keyword_enum_values kw_xauthby = VALUES_INITIALIZER(kw_xauthby_list);
+#endif
 
 /*
  * Values for right= and left=

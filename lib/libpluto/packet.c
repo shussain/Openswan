@@ -836,7 +836,7 @@ static field_desc ikev2_cert_fields[] = {
 struct_desc ikev2_certificate_desc = { "IKEv2 Certificate Payload", ikev2_cert_fields, IKEV2_CERT_SIZE };
 
 #if 0
-/* section 3.7
+/* section 3.7  [not yet used, but will be used later]
  *
  * The Certificate Request Payload is defined as follows:
  *
