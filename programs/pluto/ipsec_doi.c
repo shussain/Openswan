@@ -930,19 +930,19 @@ void __ikev2_validate_key_lengths(struct state *st, const char *fn, int ln)
         DBG_log("WARNING: %s:%u: encryptor '%s' expects keylen %ld/%d, SA #%ld INITIATOR keylen is %ld",
                 fn, ln,
                 st->st_oakley.encrypter->common.officname,
-                expected_enc_key_len,
+                (unsigned long)expected_enc_key_len,
                 st->st_oakley.enckeylen,
-                st->st_serialno,
-                st->st_skey_ei.len);
+                (unsigned long)st->st_serialno,
+                (unsigned long)st->st_skey_ei.len);
 
     if (expected_enc_key_len != st->st_skey_er.len)
         DBG_log("WARNING: %s:%u: encryptor '%s' expects keylen %ld/%d, SA #%ld RESPONDER keylen is %ld",
                 fn, ln,
                 st->st_oakley.encrypter->common.officname,
-                expected_enc_key_len,
+                (unsigned long)expected_enc_key_len,
                 st->st_oakley.enckeylen,
-                st->st_serialno,
-                st->st_skey_er.len);
+                (unsigned long)st->st_serialno,
+                (unsigned long)st->st_skey_er.len);
 
     expected_integ_key_len = st->st_oakley.integ_hasher->hash_key_size;
 
@@ -950,19 +950,19 @@ void __ikev2_validate_key_lengths(struct state *st, const char *fn, int ln)
         DBG_log("WARNING: %s:%u: hasher '%s' expects keylen %ld/%ld, SA #%ld INITIATOR keylen is %ld",
                 fn, ln,
                 st->st_oakley.integ_hasher->common.officname,
-                expected_integ_key_len,
-                st->st_oakley.integ_hasher->hash_key_size,
-                st->st_serialno,
-                st->st_skey_ai.len);
+                (unsigned long)expected_integ_key_len,
+                (unsigned long)st->st_oakley.integ_hasher->hash_key_size,
+                (unsigned long)st->st_serialno,
+                (unsigned long)st->st_skey_ai.len);
 
     if (expected_integ_key_len != st->st_skey_ar.len)
         DBG_log("WARNING: %s:%u: hasher '%s' expects keylen %ld/%ld, SA #%ld RESPONDER keylen is %ld",
                 fn, ln,
                 st->st_oakley.integ_hasher->common.officname,
-                expected_integ_key_len,
-                st->st_oakley.integ_hasher->hash_key_size,
-                st->st_serialno,
-                st->st_skey_ar.len);
+                (unsigned long)expected_integ_key_len,
+                (unsigned long)st->st_oakley.integ_hasher->hash_key_size,
+                (unsigned long)st->st_serialno,
+                (unsigned long)st->st_skey_ar.len);
 }
 
 
