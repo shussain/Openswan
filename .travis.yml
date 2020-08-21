@@ -1,5 +1,10 @@
-os:
-  - linux
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+    - os: linux
+      dist: focal
+
 
 language: c
 compiler:
