@@ -35,8 +35,8 @@ addons:
 
 cache:
   directories:
-  - $HOME/stuff
-  - $HOME/.ccache
+    - $HOME/stuff
+    - $HOME/.ccache
 
 env:
   global:
@@ -71,4 +71,3 @@ script:
   - "make env | sort -f"
   - git --version
   - ./tests/utils/$TEST_JOB
-
