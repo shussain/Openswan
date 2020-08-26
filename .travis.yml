@@ -1,11 +1,3 @@
-jobs:
-  include:
-    - os: linux
-      dist: bionic
-    - os: linux
-      dist: focal
-
-
 language: c
 compiler:
   - gcc
@@ -45,6 +37,10 @@ env:
     - TEST_JOB=build-and-check
     - TEST_JOB=build-every-version
     - TEST_JOB=validate-libpluto
+    - os: linux
+      dist: bionic
+    - os: linux
+      dist: focal
 
 
 # remove the oracle junk, because it otherwise gets updated, and we do not care about it.
