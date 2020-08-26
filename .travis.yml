@@ -37,9 +37,23 @@ env:
     - TEST_JOB=build-and-check
     - TEST_JOB=build-every-version
     - TEST_JOB=validate-libpluto
-    - os: linux
+    - TEST_JOB=build-and-check:
+      os: linux
       dist: bionic
-    - os: linux
+    - TEST_JOB=build-every-version:
+      os: linux
+      dist: bionic
+    - TEST_JOB=validate-libpluto:
+      os: linux
+      dist: bionic
+    - TEST_JOB=build-and-check:
+      os: linux
+      dist: focal
+    - TEST_JOB=build-every-version:
+      os: linux
+      dist: focal
+    - TEST_JOB=validate-libpluto:
+      os: linux
       dist: focal
 
 
